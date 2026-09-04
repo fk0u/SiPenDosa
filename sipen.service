@@ -1,0 +1,28 @@
+[Unit]
+Description=SiPen — Advanced WhatsApp Assistant Bot (Daemon)
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/sipen
+ExecStart=/opt/sipen/sipen
+Restart=always
+RestartSec=5s
+LimitNOFILE=65535
+EnvironmentFile=/opt/sipen/.env
+
+# Security Hardening
+PrivateTmp=true
+ProtectSystem=full
+NoNewPrivileges=true
+
+# Standard logging to journald
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sipen
+
+[Install]
+WantedBy=multi-user.target

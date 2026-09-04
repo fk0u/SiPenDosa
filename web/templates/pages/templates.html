@@ -1,0 +1,208 @@
+{{define "content"}}
+<div class="space-y-6">
+
+    <!-- Header & Action Button -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-xl font-bold text-white tracking-tight">Template Pesan WhatsApp</h2>
+            <p class="text-xs text-slate-400">Rancang format pesan pengingat kuliah dengan variabel otomatis dan pratinjau langsung (Live Preview).</p>
+        </div>
+        <button onclick="modal_add_template.showModal()" class="btn btn-primary btn-sm gap-2 shadow-lg shadow-indigo-600/20 text-white font-bold">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            Buat Template Baru
+        </button>
+    </div>
+
+    <!-- Template Selector Tabs -->
+    <div class="flex flex-wrap gap-2 border-b border-base-content/10 pb-3">
+        {{range .Data.Templates}}
+        <a href="/templates?id={{.ID}}" class="btn btn-sm {{if and $.Data.Selected (eq $.Data.Selected.ID .ID)}}btn-primary text-white font-bold shadow-md shadow-indigo-600/30{{else}}btn-ghost text-slate-300{{end}} gap-2">
+            <span>{{.Name}}</span>
+            {{if .IsDefault}}<span class="badge badge-xs badge-neutral">Default</span>{{end}}
+        </a>
+        {{end}}
+    </div>
+
+    {{if .Data.Selected}}
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Editor Column (7 cols) -->
+        <div class="lg:col-span-7 card bg-base-100 border border-base-content/10 shadow-xl">
+            <div class="card-body p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-white text-base">Editor: {{.Data.Selected.Name}}</h3>
+                    <div class="flex items-center gap-2">
+                        <form action="/templates/{{.Data.Selected.ID}}/delete" method="POST" onsubmit="return confirm('Hapus template ini?')" class="inline">
+                            <button type="submit" class="btn btn-ghost btn-xs text-rose-400">Hapus Template</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Variable Quick Tags -->
+                <div class="space-y-1">
+                    <span class="text-[11px] font-semibold text-slate-400">Klik untuk menyisipkan variabel:</span>
+                    <div class="flex flex-wrap gap-1 text-[11px]">
+                        <button type="button" onclick="insertVariable('{{.NamaDosen}}')" class="btn btn-xs btn-outline btn-primary py-0">NamaDosen</button>
+                        <button type="button" onclick="insertVariable('{{.Matkul}}')" class="btn btn-xs btn-outline btn-primary py-0">Matkul</button>
+                        <button type="button" onclick="insertVariable('{{.Hari}}')" class="btn btn-xs btn-outline btn-primary py-0">Hari</button>
+                        <button type="button" onclick="insertVariable('{{.Tanggal}}')" class="btn btn-xs btn-outline btn-primary py-0">Tanggal</button>
+                        <button type="button" onclick="insertVariable('{{.JamMulai}}')" class="btn btn-xs btn-outline btn-primary py-0">JamMulai</button>
+                        <button type="button" onclick="insertVariable('{{.JamSelesai}}')" class="btn btn-xs btn-outline btn-primary py-0">JamSelesai</button>
+                        <button type="button" onclick="insertVariable('{{.Lokasi}}')" class="btn btn-xs btn-outline btn-primary py-0">Lokasi</button>
+                        <button type="button" onclick="insertVariable('{{.LinkGroup}}')" class="btn btn-xs btn-outline btn-primary py-0">LinkGroup</button>
+                        <button type="button" onclick="insertVariable('{{.NamaMahasiswa}}')" class="btn btn-xs btn-outline btn-primary py-0">NamaMahasiswa</button>
+                        <button type="button" onclick="insertVariable('{{.NIM}}')" class="btn btn-xs btn-outline btn-primary py-0">NIM</button>
+                    </div>
+                </div>
+
+                <!-- Form Editor -->
+                <form action="/templates/{{.Data.Selected.ID}}/update" method="POST" class="space-y-3">
+                    <div class="form-control">
+                        <label class="label py-1"><span class="label-text text-xs text-slate-300 font-semibold">Nama Template</span></label>
+                        <input type="text" name="name" value="{{.Data.Selected.Name}}" required
+                               class="input input-sm input-bordered bg-base-200 focus:input-primary w-full text-xs font-semibold" />
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label py-1"><span class="label-text text-xs text-slate-300 font-semibold">Konten Template (Go Template Engine)</span></label>
+                        <textarea id="template-editor" name="content" rows="14" required
+                                  hx-post="/templates/preview"
+                                  hx-trigger="keyup changed delay:250ms"
+                                  hx-target="#live-preview-box"
+                                  class="textarea textarea-bordered bg-slate-900/90 font-mono text-xs text-slate-100 leading-relaxed focus:textarea-primary w-full">{{.Data.Selected.Content}}</textarea>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-2">
+                        <label class="cursor-pointer label gap-2 p-0">
+                            <input type="checkbox" name="is_default" {{if .Data.Selected.IsDefault}}checked{{end}} class="checkbox checkbox-primary checkbox-xs" />
+                            <span class="label-text text-xs text-slate-300">Jadikan Sebagai Template Utama (Default)</span>
+                        </label>
+                        <button type="submit" class="btn btn-primary btn-sm text-white font-bold shadow-lg shadow-indigo-600/30">
+                            💾 Simpan & Catat Versi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Live Preview & Version History Column (5 cols) -->
+        <div class="lg:col-span-5 space-y-6">
+            
+            <!-- Live Preview Card -->
+            <div class="card bg-base-100 border border-base-content/10 shadow-xl">
+                <div class="card-body p-6 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Live Preview Render
+                        </h3>
+                        <span class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Data Dummy Mahasiswa</span>
+                    </div>
+
+                    <div id="live-preview-box">
+                        <div class="whitespace-pre-wrap font-sans text-xs leading-relaxed text-slate-200 bg-slate-900/90 p-4 rounded-xl border border-slate-800 shadow-inner">
+                            {{.Data.PreviewText}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version History Card -->
+            <div class="card bg-base-100 border border-base-content/10 shadow-xl">
+                <div class="card-body p-6 space-y-3">
+                    <h3 class="font-bold text-white text-sm">Riwayat Versi Edit (Audit Log)</h3>
+                    <p class="text-xs text-slate-400">Setiap perubahan template disimpan otomatis sebagai checkpoint riwayat.</p>
+
+                    <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        {{if .Data.Versions}}
+                        {{range .Data.Versions}}
+                        <div class="p-3 bg-base-200/50 rounded-xl border border-base-content/5 flex items-center justify-between text-xs">
+                            <div>
+                                <span class="font-bold text-indigo-400">Versi {{.Version}}</span>
+                                <div class="text-[10px] text-slate-400">{{formatTime .CreatedAt "02 Jan 2006 15:04"}}</div>
+                            </div>
+                            <button type="button" onclick="loadVersionContent(`{{.Content}}`)" class="btn btn-ghost btn-xs text-slate-300">
+                                Muat Ulang
+                            </button>
+                        </div>
+                        {{end}}
+                        {{else}}
+                        <div class="text-xs text-slate-500 italic py-2">Belum ada riwayat versi.</div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+    {{else}}
+    <div class="card bg-base-100 border border-base-content/10 p-10 text-center text-slate-500 text-xs italic">
+        Belum ada template yang dipilih atau tersedia.
+    </div>
+    {{end}}
+
+</div>
+
+<!-- Modal Tambah Template Baru -->
+<dialog id="modal_add_template" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/10 max-w-lg">
+        <h3 class="font-bold text-lg text-white">Buat Template Pesan Baru</h3>
+        <p class="text-xs text-slate-400 mb-4">Tambahkan template pengingat kuliah dengan format kustom.</p>
+
+        <form action="/templates/create" method="POST" class="space-y-3">
+            <div class="form-control">
+                <label class="label py-1"><span class="label-text text-xs text-slate-300">Nama Template</span></label>
+                <input type="text" name="name" required placeholder="Contoh: Pengingat Santai Mahasiswa (H-1)"
+                       class="input input-sm input-bordered bg-base-200 focus:input-primary w-full text-xs font-semibold" />
+            </div>
+
+            <div class="form-control">
+                <label class="label py-1"><span class="label-text text-xs text-slate-300">Konten Awal</span></label>
+                <textarea name="content" rows="8" required placeholder="Tulis isi format pesan WhatsApp di sini..."
+                          class="textarea textarea-bordered bg-slate-900/90 font-mono text-xs text-slate-100 focus:textarea-primary w-full">*PENGINGAT KULIAH*&#10;&#10;Halo teman-teman, jangan lupa besok ada kuliah {{.Matkul}} pukul {{.JamMulai}} WITA di {{.Lokasi}}.&#10;&#10;Dosen: {{.NamaDosen}}</textarea>
+            </div>
+
+            <div class="form-control">
+                <label class="cursor-pointer label gap-2 justify-start p-0">
+                    <input type="checkbox" name="is_default" class="checkbox checkbox-primary checkbox-xs" />
+                    <span class="label-text text-xs text-slate-300">Jadikan Sebagai Template Utama</span>
+                </label>
+            </div>
+
+            <div class="modal-action justify-between pt-2">
+                <button type="button" onclick="modal_add_template.close()" class="btn btn-sm btn-ghost">Batal</button>
+                <button type="submit" class="btn btn-sm btn-primary text-white font-bold">Simpan Template</button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<script>
+function insertVariable(tag) {
+    const editor = document.getElementById('template-editor');
+    if (!editor) return;
+
+    const startPos = editor.selectionStart;
+    const endPos = editor.selectionEnd;
+    const currentVal = editor.value;
+
+    editor.value = currentVal.substring(0, startPos) + tag + currentVal.substring(endPos);
+    editor.selectionStart = editor.selectionEnd = startPos + tag.length;
+    editor.focus();
+
+    // Trigger HTMX preview
+    htmx.trigger(editor, 'keyup');
+}
+
+function loadVersionContent(content) {
+    const editor = document.getElementById('template-editor');
+    if (!editor) return;
+    if (confirm('Ganti konten editor dengan versi ini?')) {
+        editor.value = content;
+        htmx.trigger(editor, 'keyup');
+    }
+}
+</script>
+{{end}}

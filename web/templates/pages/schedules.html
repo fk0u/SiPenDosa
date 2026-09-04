@@ -1,0 +1,264 @@
+{{define "content"}}
+<div class="space-y-6">
+
+    <!-- Header & Action Button -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-xl font-bold text-white tracking-tight">Jadwal Mata Kuliah & Pengingat</h2>
+            <p class="text-xs text-slate-400">Atur jadwal perkuliahan mingguan, mode H-1, template pesan, dan penerima notifikasi otomatis.</p>
+        </div>
+        <button onclick="modal_add_schedule.showModal()" class="btn btn-primary btn-sm gap-2 shadow-lg shadow-indigo-600/20 text-white font-bold">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            Tambah Jadwal Baru
+        </button>
+    </div>
+
+    <!-- Schedules Grid/Table -->
+    <div class="card bg-base-100 border border-base-content/10 shadow-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="table table-sm md:table-md">
+                <thead>
+                    <tr class="text-xs text-slate-400 border-b border-base-content/10 bg-base-200/40">
+                        <th>Mata Kuliah</th>
+                        <th>Jadwal Kuliah</th>
+                        <th>Dosen Pengampu</th>
+                        <th>Target Penerima</th>
+                        <th>Pengiriman</th>
+                        <th>Status</th>
+                        <th class="text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{if .Data.Schedules}}
+                    {{range .Data.Schedules}}
+                    <tr class="border-b border-base-content/5 hover:bg-base-200/50 transition">
+                        <td>
+                            <div class="font-bold text-white text-sm">{{.Matkul}}</div>
+                            <div class="text-[11px] text-slate-400">{{.Title}}</div>
+                            {{if .Location}}<div class="text-[10px] text-slate-500">📍 {{.Location}}</div>{{end}}
+                        </td>
+                        <td>
+                            <div class="font-semibold text-indigo-300 text-xs">{{dayName .DayOfWeek}}</div>
+                            <div class="text-xs font-mono text-slate-300">{{.StartTime}} - {{.EndTime}} WITA</div>
+                        </td>
+                        <td class="text-xs text-slate-300">
+                            {{if .DosenName}}{{.DosenName}}{{else}}<span class="text-slate-500 italic">-</span>{{end}}
+                        </td>
+                        <td class="text-xs">
+                            <div class="font-medium text-white">{{if .RecipientName}}{{.RecipientName}}{{else}}Sesuai Nomor{{end}}</div>
+                            {{if .TargetPhone}}<div class="font-mono text-[11px] text-indigo-400">{{.TargetPhone}}</div>{{end}}
+                        </td>
+                        <td>
+                            <span class="badge badge-outline badge-sm font-mono">{{.Mode}}</span>
+                            <div class="text-[11px] text-slate-400 mt-0.5">Jam {{.SendAtTime}} WITA</div>
+                        </td>
+                        <td>
+                            <div class="flex flex-col gap-1 items-start">
+                                <form action="/schedules/{{.ID}}/toggle" method="POST">
+                                    <button type="submit" class="badge {{if .IsActive}}badge-success{{else}}badge-neutral{{end}} badge-sm font-semibold cursor-pointer">
+                                        {{if .IsActive}}Aktif{{else}}Nonaktif{{end}}
+                                    </button>
+                                </form>
+                                {{if .DryRun}}
+                                <span class="badge badge-secondary badge-xs">Dry-Run</span>
+                                {{end}}
+                            </div>
+                        </td>
+                        <td class="text-right">
+                            <div class="flex items-center justify-end gap-1">
+                                <!-- Manual Trigger Button -->
+                                <button onclick="openTriggerModal('{{.ID}}', '{{.Matkul}}')" class="btn btn-warning btn-outline btn-xs" title="Picu pesan jadwal sekarang">
+                                    ⚡ Picu
+                                </button>
+                                <form action="/schedules/{{.ID}}/delete" method="POST" onsubmit="return confirm('Hapus jadwal kuliah ini?')" class="inline">
+                                    <button type="submit" class="btn btn-ghost btn-xs text-rose-400 hover:text-rose-300">
+                                        Hapus
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {{end}}
+                    {{else}}
+                    <tr>
+                        <td colspan="7" class="text-center py-10 text-xs text-slate-500 italic">
+                            Belum ada jadwal kuliah. Tambahkan jadwal untuk memulai pengingat otomatis.
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal Tambah Jadwal -->
+<dialog id="modal_add_schedule" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/10 max-w-xl">
+        <h3 class="font-bold text-lg text-white">Tambah Jadwal Perkuliahan</h3>
+        <p class="text-xs text-slate-400 mb-4">Konfigurasi jadwal mata kuliah dan waktu pengiriman pesan H-1.</p>
+
+        <form action="/schedules/create" method="POST" class="space-y-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="form-control">
+                    <label class="label py-1"><span class="label-text text-xs text-slate-300">Nama Mata Kuliah</span></label>
+                    <input type="text" name="matkul" required placeholder="Contoh: Pemrograman Web Lanjut"
+                           class="input input-sm input-bordered bg-base-200 focus:input-primary w-full text-xs" />
+                </div>
+                <div class="form-control">
+                    <label class="label py-1"><span class="label-text text-xs text-slate-300">Judul Kelas / Sesi</span></label>
+                    <input type="text" name="title" required placeholder="Contoh: Kelas A (Reguler)"
+                           class="input input-sm input-bordered bg-base-200 focus:input-primary w-full text-xs" />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="form-control">
+                    <label class="label py-1"><span class="label-text text-xs text-slate-300">Dosen Pengampu</span></label>
+                    <select name="dosen_id" class="select select-sm select-bordered bg-base-200 w-full text-xs">
+                        <option value="">-- Pilih Dosen Pengampu --</option>
+                        {{range .Data.Contacts}}
+                        {{if eq .ContactType "dosen"}}
+                        <option value="{{.ID}}">{{.Name}}</option>
+                        {{end}}
+                        {{end}}
+                    </select>
+                </div>
+
+                <div class="form-control">
+                    <label class="label py-1"><span class="label-text text-xs text-slate-300">Target Kontak Penerima</span></label>
+                    <select name="recipient_id" class="select select-sm select-bordered bg-base-200 w-full text-xs">
+                        <option value="">-- Pilih Penerima / Grup --</option>
+                        {{range .Data.Contacts}}
+                        <option value="{{.ID}}">{{.Name}} ({{.ContactType}} - {{.Phone}})</option>
+                        {{end}}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-control">
+                <label class="label py-1"><span class="label-text text-xs text-slate-300">Nomor Telepon Cadangan (Opsional)</span></label>
+                <input type="text" name="target_phone" placeholder="Jika tidak memilih penerima di atas (08... / 628... / 120363...@g.us)"
+                       class="input input-sm input-bordered bg-base-200 focus:input-primary w-full text-xs font-mono" />
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+                <div class="form-control">
+                    <label class="label py-1"><span class="label-text text-xs text-slate-300">Hari Kuliah</span></label>
+                    <select name="day_of_week" class="select select-sm select-bordered bg-base-200 w-full text-xs">
+                        <option value="1">Senin</option>
+                        <option value="2">Selasa</option>
+                        <option value="3">Rabu</option>
+                        <option value="4">Kamis</option>
+                        <option value="5">Jumat</option>
+                        <option value="6">Sabtu</option>
+                        <option value="0">Minggu</option>
+                    </select>
+                </div>
+
+                <div class="form-control">
+                    <label class="label py-1"><span class="label-text text-xs text-slate-300">Jam Mulai Kuliah</span></label>
+                    <input type="text" name="start_time" required placeholder="08:00"
+                           class="input input-sm input-bordered bg-base-200 focus:input-primary w-full text-xs font-mono" />
+                </div>
+
+                <div class="form-control">
+                    <label class="label py-1"><span class="label-text text-xs text-slate-300">Jam Selesai Kuliah</span></label>
+                    <input type="text" name="end_time" required placeholder="09:40"
+                           class="input input-sm input-bordered bg-base-200 focus:input-primary w-full text-xs font-mono" />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="form-control">
+                    <label class="label py-1"><span class="label-text text-xs text-slate-300">Ruangan / Lokasi</span></label>
+                    <input type="text" name="location" placeholder="Ruang 301 / Lab Komputer 2"
+                           class="input input-sm input-bordered bg-base-200 focus:input-primary w-full text-xs" />
+                </div>
+
+                <div class="form-control">
+                    <label class="label py-1"><span class="label-text text-xs text-slate-300">Tautan Grup / Meeting</span></label>
+                    <input type="text" name="link_group" placeholder="https://chat.whatsapp.com/..."
+                           class="input input-sm input-bordered bg-base-200 focus:input-primary w-full text-xs" />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="form-control">
+                    <label class="label py-1"><span class="label-text text-xs text-slate-300">Mode Pengingat</span></label>
+                    <select name="mode" class="select select-sm select-bordered bg-base-200 w-full text-xs">
+                        <option value="H-1">H-1 (Satu Hari Sebelumnya)</option>
+                        <option value="H-0">H-0 (Hari H Perkuliahan)</option>
+                    </select>
+                </div>
+
+                <div class="form-control">
+                    <label class="label py-1"><span class="label-text text-xs text-slate-300">Jam Pengiriman Pesan</span></label>
+                    <input type="text" name="send_at_time" required value="08:00" placeholder="08:00"
+                           class="input input-sm input-bordered bg-base-200 focus:input-primary w-full text-xs font-mono" />
+                </div>
+            </div>
+
+            <div class="form-control">
+                <label class="label py-1"><span class="label-text text-xs text-slate-300">Template Pesan</span></label>
+                <select name="template_id" class="select select-sm select-bordered bg-base-200 w-full text-xs">
+                    <option value="">-- Gunakan Template Default --</option>
+                    {{range .Data.Templates}}
+                    <option value="{{.ID}}">{{.Name}} {{if .IsDefault}}(Default){{end}}</option>
+                    {{end}}
+                </select>
+            </div>
+
+            <div class="flex gap-6 py-2">
+                <label class="cursor-pointer label gap-2 p-0">
+                    <input type="checkbox" name="is_active" checked class="checkbox checkbox-primary checkbox-xs" />
+                    <span class="label-text text-xs text-slate-300">Aktifkan Otomatis</span>
+                </label>
+
+                <label class="cursor-pointer label gap-2 p-0">
+                    <input type="checkbox" name="dry_run" class="checkbox checkbox-secondary checkbox-xs" />
+                    <span class="label-text text-xs text-slate-300">Dry Run (Uji Coba Saja)</span>
+                </label>
+            </div>
+
+            <div class="modal-action justify-between pt-2">
+                <button type="button" onclick="modal_add_schedule.close()" class="btn btn-sm btn-ghost">Batal</button>
+                <button type="submit" class="btn btn-sm btn-primary text-white font-bold">Simpan Jadwal</button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<!-- Modal Manual Trigger -->
+<dialog id="modal_trigger_schedule" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/10 max-w-sm text-center">
+        <h3 class="font-bold text-lg text-white">Picu Pengiriman Pesan</h3>
+        <p class="text-xs text-slate-400 py-2">Anda akan membuat pesan antrian untuk jadwal <strong id="trigger-matkul-name" class="text-white"></strong> sekarang juga.</p>
+
+        <form id="form-trigger-schedule" action="" method="POST" class="space-y-4 pt-2">
+            <div class="form-control bg-base-200/60 p-3 rounded-xl border border-base-content/5">
+                <label class="cursor-pointer label gap-2 justify-center p-0">
+                    <input type="checkbox" name="dry_run" value="true" class="checkbox checkbox-secondary checkbox-sm" />
+                    <span class="label-text text-xs font-semibold text-slate-300">Kirim sebagai Dry-Run (Simulasi)</span>
+                </label>
+            </div>
+
+            <div class="modal-action justify-between">
+                <button type="button" onclick="modal_trigger_schedule.close()" class="btn btn-sm btn-ghost">Batal</button>
+                <button type="submit" class="btn btn-sm btn-warning text-slate-950 font-bold">Picu Sekarang 🚀</button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<script>
+function openTriggerModal(id, matkul) {
+    document.getElementById('form-trigger-schedule').action = '/schedules/' + id + '/trigger';
+    document.getElementById('trigger-matkul-name').innerText = matkul;
+    modal_trigger_schedule.showModal();
+}
+</script>
+{{end}}

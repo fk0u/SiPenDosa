@@ -1,0 +1,102 @@
+{{define "content"}}
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-xl font-bold text-white tracking-tight">Antrian Pesan (Live Queue)</h2>
+            <p class="text-xs text-slate-400">Pesan WhatsApp yang sedang menunggu jadwal pengiriman atau proses retry otomatis dengan jeda anti-ban.</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="window.location.reload()" class="btn btn-outline btn-sm gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Segarkan
+            </button>
+        </div>
+    </div>
+
+    <!-- Active Processing Banner if any -->
+    {{if .Data.Processing}}
+    <div class="alert alert-info shadow-lg py-3 px-4 flex items-center justify-between text-xs">
+        <div class="flex items-center gap-2">
+            <span class="loading loading-spinner loading-sm"></span>
+            <span><strong>Sedang Memproses Pengiriman:</strong> {{len .Data.Processing}} pesan sedang dikirim ke server WhatsApp dengan jitter anti-ban.</span>
+        </div>
+    </div>
+    {{end}}
+
+    <!-- Queue Table -->
+    <div class="card bg-base-100 border border-base-content/10 shadow-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="table table-sm md:table-md">
+                <thead>
+                    <tr class="text-xs text-slate-400 border-b border-base-content/10 bg-base-200/40">
+                        <th>Jadwal Kirim</th>
+                        <th>Target Penerima</th>
+                        <th>Isi Pesan</th>
+                        <th>Status</th>
+                        <th>Percobaan</th>
+                        <th class="text-right">Aksi Cepat</th>
+                    </tr>
+                </thead>
+                <tbody id="queue-table-body">
+                    {{if .Data.Pending}}
+                    {{range .Data.Pending}}
+                    <tr class="border-b border-base-content/5 hover:bg-base-200/50 transition">
+                        <td class="font-mono text-xs text-slate-300">
+                            <div>{{formatTime .ScheduledFor "02 Jan 15:04"}} WITA</div>
+                        </td>
+                        <td>
+                            <div class="font-bold text-white text-xs">{{.RecipientName}}</div>
+                            <div class="font-mono text-[10px] text-indigo-400">{{.RecipientJID}}</div>
+                        </td>
+                        <td class="text-xs text-slate-300 max-w-sm truncate">
+                            {{truncate .Message 75}}
+                            {{if .ErrorMessage}}
+                            <div class="text-[10px] text-amber-400 mt-0.5 truncate">⚠️ Percobaan lalu: {{.ErrorMessage}}</div>
+                            {{end}}
+                        </td>
+                        <td>
+                            {{statusBadge .Status}}
+                        </td>
+                        <td class="text-xs font-mono text-slate-400">
+                            {{.RetryCount}}/{{.MaxRetries}}
+                        </td>
+                        <td class="text-right">
+                            <div class="flex items-center justify-end gap-1">
+                                <!-- Send Now -->
+                                <form action="/queue/{{.ID}}/send-now" method="POST" class="inline">
+                                    <button type="submit" class="btn btn-warning btn-xs font-bold" title="Kirim sekarang tanpa menunggu jadwal">
+                                        🚀 Kirim Sekarang
+                                    </button>
+                                </form>
+                                <!-- Cancel -->
+                                <form action="/queue/{{.ID}}/cancel" method="POST" class="inline">
+                                    <button type="submit" class="btn btn-ghost btn-xs text-slate-400 hover:text-slate-200">
+                                        Batalkan
+                                    </button>
+                                </form>
+                                <!-- Delete -->
+                                <form action="/queue/{{.ID}}/delete" method="POST" onsubmit="return confirm('Hapus pesan dari antrian?')" class="inline">
+                                    <button type="submit" class="btn btn-ghost btn-xs text-rose-400">
+                                        Hapus
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {{end}}
+                    {{else}}
+                    <tr>
+                        <td colspan="6" class="text-center py-12 text-xs text-slate-500 italic">
+                            Tidak ada pesan dalam antrian saat ini. Antrian akan terisi otomatis sesuai jadwal pengingat H-1 atau manual trigger.
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{{end}}

@@ -1,0 +1,75 @@
+{{define "content"}}
+<div class="space-y-6">
+
+    <!-- Header & Category Filter -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-xl font-bold text-white tracking-tight">Log Aktivitas & Audit Sistem</h2>
+            <p class="text-xs text-slate-400">Pencatatan real-time untuk audit autentikasi, status koneksi WhatsApp, pemicu jadwal, dan aktivitas pengiriman.</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="/logs" class="btn btn-xs {{if eq .Data.SelectedCategory ""}}btn-primary{{else}}btn-ghost{{end}}">Semua</a>
+            <a href="/logs?category=auth" class="btn btn-xs {{if eq .Data.SelectedCategory "auth"}}btn-primary{{else}}btn-ghost{{end}}">Auth</a>
+            <a href="/logs?category=scheduler" class="btn btn-xs {{if eq .Data.SelectedCategory "scheduler"}}btn-primary{{else}}btn-ghost{{end}}">Scheduler</a>
+            <a href="/logs?category=queue" class="btn btn-xs {{if eq .Data.SelectedCategory "queue"}}btn-primary{{else}}btn-ghost{{end}}">Queue/WA</a>
+            <a href="/logs?category=contacts" class="btn btn-xs {{if eq .Data.SelectedCategory "contacts"}}btn-primary{{else}}btn-ghost{{end}}">Kontak</a>
+            <a href="/logs?category=template" class="btn btn-xs {{if eq .Data.SelectedCategory "template"}}btn-primary{{else}}btn-ghost{{end}}">Template</a>
+        </div>
+    </div>
+
+    <!-- Logs Table -->
+    <div class="card bg-base-100 border border-base-content/10 shadow-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="table table-sm">
+                <thead>
+                    <tr class="text-xs text-slate-400 border-b border-base-content/10 bg-base-200/40">
+                        <th>Waktu ({{.Data.Timezone}})</th>
+                        <th>Kategori</th>
+                        <th>Aktivitas</th>
+                        <th>Keterangan / Detail</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{if .Data.Logs}}
+                    {{range .Data.Logs}}
+                    <tr class="border-b border-base-content/5 hover:bg-base-200/50 transition">
+                        <td class="font-mono text-xs text-slate-400 whitespace-nowrap">
+                            {{formatTime .CreatedAt "02 Jan 15:04:05"}}
+                        </td>
+                        <td>
+                            {{if eq .Category "auth"}}
+                            <span class="badge badge-info badge-xs font-mono uppercase">Auth</span>
+                            {{else if eq .Category "scheduler"}}
+                            <span class="badge badge-warning badge-xs font-mono uppercase">Scheduler</span>
+                            {{else if eq .Category "queue"}}
+                            <span class="badge badge-success badge-xs font-mono uppercase">Queue</span>
+                            {{else if eq .Category "contacts"}}
+                            <span class="badge badge-accent badge-xs font-mono uppercase">Kontak</span>
+                            {{else if eq .Category "template"}}
+                            <span class="badge badge-secondary badge-xs font-mono uppercase">Template</span>
+                            {{else}}
+                            <span class="badge badge-ghost badge-xs font-mono uppercase">{{.Category}}</span>
+                            {{end}}
+                        </td>
+                        <td class="font-bold text-white text-xs whitespace-nowrap">
+                            {{.Message}}
+                        </td>
+                        <td class="text-xs text-slate-300 font-mono break-all">
+                            {{if .Details}}{{.Details}}{{else}}-{{end}}
+                        </td>
+                    </tr>
+                    {{end}}
+                    {{else}}
+                    <tr>
+                        <td colspan="4" class="text-center py-10 text-xs text-slate-500 italic">
+                            Belum ada catatan log aktivitas untuk kategori ini.
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{{end}}

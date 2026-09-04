@@ -1,0 +1,188 @@
+{{define "content"}}
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div>
+        <h2 class="text-xl font-bold text-white tracking-tight">Pengaturan Sistem SiPen</h2>
+        <p class="text-xs text-slate-400">Konfigurasi zona waktu, rentang jam pengiriman, proteksi anti-ban, kalender hari libur, dan pencadangan database.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- General System Settings (7 cols) -->
+        <div class="lg:col-span-7 space-y-6">
+            <div class="card bg-base-100 border border-base-content/10 shadow-xl">
+                <div class="card-body p-6 space-y-4">
+                    <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                        Konfigurasi Operasional & Anti-Ban
+                    </h3>
+
+                    <form action="/settings/update" method="POST" class="space-y-4">
+                        
+                        <!-- Global Dry Run Toggle -->
+                        <div class="p-4 bg-base-200/50 rounded-2xl border border-base-content/5 flex items-center justify-between">
+                            <div>
+                                <span class="font-bold text-xs text-white block">Mode Global Dry-Run</span>
+                                <span class="text-[11px] text-slate-400 block">Jika aktif, seluruh pesan hanya disimulasikan tanpa dikirim ke server WhatsApp.</span>
+                            </div>
+                            <input type="checkbox" name="global_dry_run" {{if .Data.Settings.GlobalDryRun}}checked{{end}} class="toggle toggle-secondary" />
+                        </div>
+
+                        <!-- Rentang Jam Kirim -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="form-control">
+                                <label class="label py-1"><span class="label-text text-xs text-slate-300">Awal Jam Kirim</span></label>
+                                <input type="text" name="send_window_start" value="{{.Data.Settings.SendWindowStart}}" required
+                                       class="input input-sm input-bordered bg-base-200 focus:input-primary w-full text-xs font-mono" />
+                            </div>
+
+                            <div class="form-control">
+                                <label class="label py-1"><span class="label-text text-xs text-slate-300">Akhir Jam Kirim</span></label>
+                                <input type="text" name="send_window_end" value="{{.Data.Settings.SendWindowEnd}}" required
+                                       class="input input-sm input-bordered bg-base-200 focus:input-primary w-full text-xs font-mono" />
+                            </div>
+                        </div>
+
+                        <!-- Timezone -->
+                        <div class="form-control">
+                            <label class="label py-1"><span class="label-text text-xs text-slate-300">Zona Waktu Sistem (Timezone)</span></label>
+                            <select name="timezone" class="select select-sm select-bordered bg-base-200 w-full text-xs">
+                                <option value="Asia/Makassar" {{if eq .Data.Settings.Timezone "Asia/Makassar"}}selected{{end}}>Asia/Makassar (WITA, UTC+8)</option>
+                                <option value="Asia/Jakarta" {{if eq .Data.Settings.Timezone "Asia/Jakarta"}}selected{{end}}>Asia/Jakarta (WIB, UTC+7)</option>
+                                <option value="Asia/Jayapura" {{if eq .Data.Settings.Timezone "Asia/Jayapura"}}selected{{end}}>Asia/Jayapura (WIT, UTC+9)</option>
+                            </select>
+                        </div>
+
+                        <!-- Anti-Ban Rate Limit & Retry Settings -->
+                        <div class="p-4 bg-base-200/50 rounded-2xl border border-base-content/5 space-y-3">
+                            <span class="font-bold text-xs text-indigo-400 block">Jeda Antar Pesan & Anti-Ban Rate Limiting</span>
+                            <div class="grid grid-cols-3 gap-3">
+                                <div class="form-control">
+                                    <label class="label py-1"><span class="label-text text-[11px] text-slate-400">Min Delay (detik)</span></label>
+                                    <input type="number" name="rate_limit_min_sec" value="{{.Data.Settings.RateLimitMinSec}}" min="3" max="60" required
+                                           class="input input-sm input-bordered bg-base-200 focus:input-primary w-full text-xs font-mono" />
+                                </div>
+                                <div class="form-control">
+                                    <label class="label py-1"><span class="label-text text-[11px] text-slate-400">Max Delay (detik)</span></label>
+                                    <input type="number" name="rate_limit_max_sec" value="{{.Data.Settings.RateLimitMaxSec}}" min="5" max="120" required
+                                           class="input input-sm input-bordered bg-base-200 focus:input-primary w-full text-xs font-mono" />
+                                </div>
+                                <div class="form-control">
+                                    <label class="label py-1"><span class="label-text text-[11px] text-slate-400">Maks. Percobaan</span></label>
+                                    <input type="number" name="max_retries" value="{{.Data.Settings.MaxRetries}}" min="1" max="10" required
+                                           class="input input-sm input-bordered bg-base-200 focus:input-primary w-full text-xs font-mono" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Allow Registration -->
+                        <div class="p-4 bg-base-200/50 rounded-2xl border border-base-content/5 flex items-center justify-between">
+                            <div>
+                                <span class="font-bold text-xs text-white block">Pendaftaran Pengguna Baru Terbuka</span>
+                                <span class="text-[11px] text-slate-400 block">Buka halaman /register untuk mendaftarkan akun admin tambahan.</span>
+                            </div>
+                            <input type="checkbox" name="registration_open" {{if .Data.Settings.RegistrationOpen}}checked{{end}} class="toggle toggle-primary" />
+                        </div>
+
+                        <div class="pt-2 flex justify-end">
+                            <button type="submit" class="btn btn-primary btn-sm text-white font-bold shadow-lg shadow-indigo-600/30">
+                                Simpan Pengaturan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Database Backup Card -->
+            <div class="card bg-base-100 border border-base-content/10 shadow-xl">
+                <div class="card-body p-6 space-y-3">
+                    <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Pencadangan Database SQLite (Backup)
+                    </h3>
+                    <p class="text-xs text-slate-400">Unduh salinan penuh seluruh data kontak, jadwal, template, dan konfigurasi sistem dalam bentuk file `.db` untuk backup berkala.</p>
+
+                    <div class="pt-2">
+                        <a href="/settings/backup/download" class="btn btn-outline btn-sm gap-2 text-emerald-400 hover:bg-emerald-600 hover:text-white">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            Unduh Cadangan Database (.db)
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Holidays & User Management (5 cols) -->
+        <div class="lg:col-span-5 space-y-6">
+            
+            <!-- Holidays Manager Card -->
+            <div class="card bg-base-100 border border-base-content/10 shadow-xl">
+                <div class="card-body p-6 space-y-4">
+                    <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        Daftar Hari Libur (Hindari Pengiriman)
+                    </h3>
+                    <p class="text-xs text-slate-400">Pengingat kuliah akan otomatis dilewati jika tanggal perkuliahan jatuh pada hari libur di bawah ini.</p>
+
+                    <form action="/settings/holidays/create" method="POST" class="space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="date" name="date" required class="input input-sm input-bordered bg-base-200 text-xs" />
+                            <input type="text" name="description" placeholder="Ket. Libur Nasional/Kampus" required class="input input-sm input-bordered bg-base-200 text-xs" />
+                        </div>
+                        <button type="submit" class="btn btn-warning btn-sm btn-outline w-full text-xs font-bold">
+                            + Tambah Hari Libur
+                        </button>
+                    </form>
+
+                    <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        {{if .Data.Holidays}}
+                        {{range .Data.Holidays}}
+                        <div class="p-2.5 bg-base-200/50 rounded-xl border border-base-content/5 flex items-center justify-between text-xs">
+                            <div>
+                                <span class="font-mono font-bold text-white">{{.Date}}</span>
+                                <div class="text-[11px] text-slate-400">{{.Description}}</div>
+                            </div>
+                            <form action="/settings/holidays/{{.ID}}/delete" method="POST" class="inline">
+                                <button type="submit" class="btn btn-ghost btn-xs text-rose-400">✕</button>
+                            </form>
+                        </div>
+                        {{end}}
+                        {{else}}
+                        <div class="text-xs text-slate-500 italic py-2">Belum ada hari libur yang didaftarkan.</div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users List Card -->
+            <div class="card bg-base-100 border border-base-content/10 shadow-xl">
+                <div class="card-body p-6 space-y-4">
+                    <h3 class="font-bold text-white text-sm">Pengguna & Hak Akses Administrator</h3>
+                    <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        {{range .Data.Users}}
+                        <div class="p-2.5 bg-base-200/50 rounded-xl border border-base-content/5 flex items-center justify-between text-xs">
+                            <div>
+                                <span class="font-bold text-white">{{.Username}}</span>
+                                <span class="badge badge-xs {{if eq .Role "superadmin"}}badge-primary{{else}}badge-neutral{{end}} ml-1 uppercase font-mono">{{.Role}}</span>
+                                <div class="text-[10px] text-slate-500">Terdaftar: {{formatDateIndo .CreatedAt}}</div>
+                            </div>
+                            {{if eq $.User.Role "superadmin"}}
+                            {{if ne $.User.ID .ID}}
+                            <form action="/settings/users/{{.ID}}/delete" method="POST" onsubmit="return confirm('Hapus admin ini?')" class="inline">
+                                <button type="submit" class="btn btn-ghost btn-xs text-rose-400">Hapus</button>
+                            </form>
+                            {{end}}
+                            {{end}}
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+{{end}}
