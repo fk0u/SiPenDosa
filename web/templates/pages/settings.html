@@ -1,93 +1,115 @@
 {{define "content"}}
 <div class="space-y-6">
 
-    <!-- Header -->
+    <!-- Header Section -->
     <div>
-        <h2 class="text-xl font-bold text-white tracking-tight">Pengaturan Sistem SiPenDosa</h2>
-        <p class="text-xs text-slate-400">Konfigurasi zona waktu, rentang jam pengiriman, proteksi anti-ban, kalender hari libur, dan pencadangan database.</p>
+        <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-2">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            System Parameters & Governance
+        </div>
+        <h1 class="text-2xl font-extrabold text-white tracking-tight">Pengaturan Sistem SiPenDosa</h1>
+        <p class="text-xs text-slate-400 mt-1">Konfigurasi zona waktu kampus, rentang window pengiriman, perlindungan anti-ban, libur akademik, dan pencadangan database.</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         <!-- General System Settings (7 cols) -->
         <div class="lg:col-span-7 space-y-6">
-            <div class="card bg-base-100 border border-base-content/10 shadow-xl">
-                <div class="card-body p-6 space-y-4">
-                    <h3 class="font-bold text-white text-sm flex items-center gap-2">
-                        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                        Konfigurasi Operasional & Anti-Ban
-                    </h3>
+            
+            <!-- Core Operational Card -->
+            <div class="bezel-outer p-1 rounded-2xl">
+                <div class="bezel-card rounded-xl p-6 space-y-5">
+                    <div class="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+                        <h2 class="text-sm font-bold text-white tracking-tight flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+                            Konfigurasi Operasional & Anti-Ban
+                        </h2>
+                        <span class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Daemon Policy</span>
+                    </div>
 
-                    <form action="/settings/update" method="POST" class="space-y-4">
+                    <form action="/settings/update" method="POST" class="space-y-5">
                         
                         <!-- Global Dry Run Toggle -->
-                        <div class="p-4 bg-base-200/50 rounded-2xl border border-base-content/5 flex items-center justify-between">
+                        <div class="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between gap-4">
                             <div>
-                                <span class="font-bold text-xs text-white block">Mode Global Dry-Run</span>
-                                <span class="text-[11px] text-slate-400 block">Jika aktif, seluruh pesan hanya disimulasikan tanpa dikirim ke server WhatsApp.</span>
+                                <div class="text-xs font-bold text-white">Mode Global Dry-Run (Simulasi)</div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">Jika aktif, seluruh pesan hanya dicatat ke database tanpa pernah dikirim ke nomor WhatsApp asli.</div>
                             </div>
-                            <input type="checkbox" name="global_dry_run" {{if .Data.Settings.GlobalDryRun}}checked{{end}} class="toggle toggle-secondary" />
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="global_dry_run" {{if .Data.Settings.GlobalDryRun}}checked{{end}} class="sr-only peer">
+                                <div class="w-11 h-6 bg-white/[0.1] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                            </label>
                         </div>
 
-                        <!-- Rentang Jam Kirim -->
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="form-control">
-                                <label class="label py-1"><span class="label-text text-xs text-slate-300">Awal Jam Kirim</span></label>
-                                <input type="text" name="send_window_start" value="{{.Data.Settings.SendWindowStart}}" required
-                                       class="input input-sm input-bordered bg-base-200 focus:input-primary w-full text-xs font-mono" />
-                            </div>
-
-                            <div class="form-control">
-                                <label class="label py-1"><span class="label-text text-xs text-slate-300">Akhir Jam Kirim</span></label>
-                                <input type="text" name="send_window_end" value="{{.Data.Settings.SendWindowEnd}}" required
-                                       class="input input-sm input-bordered bg-base-200 focus:input-primary w-full text-xs font-mono" />
+                        <!-- Rentang Jam Kirim (Window) -->
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-semibold text-slate-300">Rentang Waktu Pengiriman Diizinkan (Window Policy)</label>
+                            <p class="text-[11px] text-slate-500">Pesan tidak akan dikirim di luar jam ini untuk menjaga etika kesopanan menghubungi dosen.</p>
+                            <div class="grid grid-cols-2 gap-3 pt-1">
+                                <div>
+                                    <span class="text-[10px] font-mono text-slate-400 block mb-1">Awal Jam Kirim (HH:MM)</span>
+                                    <input type="text" name="send_window_start" value="{{.Data.Settings.SendWindowStart}}" required
+                                           class="w-full px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-indigo-500/50 font-mono text-xs text-white outline-none" />
+                                </div>
+                                <div>
+                                    <span class="text-[10px] font-mono text-slate-400 block mb-1">Batas Akhir Jam Kirim (HH:MM)</span>
+                                    <input type="text" name="send_window_end" value="{{.Data.Settings.SendWindowEnd}}" required
+                                           class="w-full px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-indigo-500/50 font-mono text-xs text-white outline-none" />
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Timezone -->
-                        <div class="form-control">
-                            <label class="label py-1"><span class="label-text text-xs text-slate-300">Zona Waktu Sistem (Timezone)</span></label>
-                            <select name="timezone" class="select select-sm select-bordered bg-base-200 w-full text-xs">
+                        <!-- Timezone Selector -->
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-semibold text-slate-300">Zona Waktu Sistem (Timezone)</label>
+                            <select name="timezone" class="w-full px-3.5 py-2 rounded-xl bg-[#090d16] border border-white/[0.08] focus:border-indigo-500/50 text-xs text-white outline-none">
                                 <option value="Asia/Makassar" {{if eq .Data.Settings.Timezone "Asia/Makassar"}}selected{{end}}>Asia/Makassar (WITA, UTC+8)</option>
                                 <option value="Asia/Jakarta" {{if eq .Data.Settings.Timezone "Asia/Jakarta"}}selected{{end}}>Asia/Jakarta (WIB, UTC+7)</option>
                                 <option value="Asia/Jayapura" {{if eq .Data.Settings.Timezone "Asia/Jayapura"}}selected{{end}}>Asia/Jayapura (WIT, UTC+9)</option>
                             </select>
                         </div>
 
-                        <!-- Anti-Ban Rate Limit & Retry Settings -->
-                        <div class="p-4 bg-base-200/50 rounded-2xl border border-base-content/5 space-y-3">
-                            <span class="font-bold text-xs text-indigo-400 block">Jeda Antar Pesan & Anti-Ban Rate Limiting</span>
-                            <div class="grid grid-cols-3 gap-3">
-                                <div class="form-control">
-                                    <label class="label py-1"><span class="label-text text-[11px] text-slate-400">Min Delay (detik)</span></label>
+                        <!-- Anti-Ban Rate Limit & Retry -->
+                        <div class="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-3">
+                            <div>
+                                <div class="text-xs font-bold text-indigo-400">Jeda Antar Pesan & Perlindungan Anti-Ban</div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">Sistem menyisipkan jeda acak (jitter) di antara setiap pengiriman pesan WhatsApp.</div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-3 pt-1">
+                                <div>
+                                    <label class="text-[10px] font-mono text-slate-400 block mb-1">Min Delay (detik)</label>
                                     <input type="number" name="rate_limit_min_sec" value="{{.Data.Settings.RateLimitMinSec}}" min="3" max="60" required
-                                           class="input input-sm input-bordered bg-base-200 focus:input-primary w-full text-xs font-mono" />
+                                           class="w-full px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] focus:border-indigo-500/50 font-mono text-xs text-white outline-none" />
                                 </div>
-                                <div class="form-control">
-                                    <label class="label py-1"><span class="label-text text-[11px] text-slate-400">Max Delay (detik)</span></label>
+                                <div>
+                                    <label class="text-[10px] font-mono text-slate-400 block mb-1">Max Delay (detik)</label>
                                     <input type="number" name="rate_limit_max_sec" value="{{.Data.Settings.RateLimitMaxSec}}" min="5" max="120" required
-                                           class="input input-sm input-bordered bg-base-200 focus:input-primary w-full text-xs font-mono" />
+                                           class="w-full px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] focus:border-indigo-500/50 font-mono text-xs text-white outline-none" />
                                 </div>
-                                <div class="form-control">
-                                    <label class="label py-1"><span class="label-text text-[11px] text-slate-400">Maks. Percobaan</span></label>
+                                <div>
+                                    <label class="text-[10px] font-mono text-slate-400 block mb-1">Maks. Percobaan</label>
                                     <input type="number" name="max_retries" value="{{.Data.Settings.MaxRetries}}" min="1" max="10" required
-                                           class="input input-sm input-bordered bg-base-200 focus:input-primary w-full text-xs font-mono" />
+                                           class="w-full px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] focus:border-indigo-500/50 font-mono text-xs text-white outline-none" />
                                 </div>
                             </div>
                         </div>
 
                         <!-- Allow Registration -->
-                        <div class="p-4 bg-base-200/50 rounded-2xl border border-base-content/5 flex items-center justify-between">
+                        <div class="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between gap-4">
                             <div>
-                                <span class="font-bold text-xs text-white block">Pendaftaran Pengguna Baru Terbuka</span>
-                                <span class="text-[11px] text-slate-400 block">Buka halaman /register untuk mendaftarkan akun admin tambahan.</span>
+                                <div class="text-xs font-bold text-white">Registrasi Pengguna Baru Terbuka</div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">Buka rute pendaftaran /register untuk mengizinkan pembuatan akun admin tambahan.</div>
                             </div>
-                            <input type="checkbox" name="registration_open" {{if .Data.Settings.RegistrationOpen}}checked{{end}} class="toggle toggle-primary" />
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="registration_open" {{if .Data.Settings.RegistrationOpen}}checked{{end}} class="sr-only peer">
+                                <div class="w-11 h-6 bg-white/[0.1] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                            </label>
                         </div>
 
-                        <div class="pt-2 flex justify-end">
-                            <button type="submit" class="btn btn-primary btn-sm text-white font-bold shadow-lg shadow-indigo-600/30">
-                                Simpan Pengaturan
+                        <div class="flex justify-end pt-2">
+                            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition active:scale-95">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                Simpan Parameter Sistem
                             </button>
                         </div>
                     </form>
@@ -95,82 +117,114 @@
             </div>
 
             <!-- Database Backup Card -->
-            <div class="card bg-base-100 border border-base-content/10 shadow-xl">
-                <div class="card-body p-6 space-y-3">
-                    <h3 class="font-bold text-white text-sm flex items-center gap-2">
-                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        Pencadangan Database SQLite (Backup)
-                    </h3>
-                    <p class="text-xs text-slate-400">Unduh salinan penuh seluruh data kontak, jadwal, template, dan konfigurasi sistem dalam bentuk file `.db` untuk backup berkala.</p>
+            <div class="bezel-outer p-1 rounded-2xl">
+                <div class="bezel-card rounded-xl p-6 space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+                        <h2 class="text-sm font-bold text-white tracking-tight flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            Pencadangan Database SQLite (Sovereign Backup)
+                        </h2>
+                        <span class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Local-First</span>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Unduh salinan biner penuh file database SQLite (`sipen.db`). Berisi seluruh data kontak, jadwal kuliah, riwayat versi template, dan konfigurasi tanpa bergantung pada cloud eksternal.
+                    </p>
 
-                    <div class="pt-2">
-                        <a href="/settings/backup/download" class="btn btn-outline btn-sm gap-2 text-emerald-400 hover:bg-emerald-600 hover:text-white">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                            Unduh Cadangan Database (.db)
+                    <div class="pt-1">
+                        <a href="/settings/backup/download" class="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition">
+                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Unduh File Database Cadangan (.db)
                         </a>
                     </div>
                 </div>
             </div>
+
         </div>
 
         <!-- Holidays & User Management (5 cols) -->
         <div class="lg:col-span-5 space-y-6">
             
             <!-- Holidays Manager Card -->
-            <div class="card bg-base-100 border border-base-content/10 shadow-xl">
-                <div class="card-body p-6 space-y-4">
-                    <h3 class="font-bold text-white text-sm flex items-center gap-2">
-                        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                        Daftar Hari Libur (Hindari Pengiriman)
-                    </h3>
-                    <p class="text-xs text-slate-400">Pengingat kuliah akan otomatis dilewati jika tanggal perkuliahan jatuh pada hari libur di bawah ini.</p>
+            <div class="bezel-outer p-1 rounded-2xl">
+                <div class="bezel-card rounded-xl p-5 space-y-4">
+                    <div class="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                        <h2 class="text-xs font-bold text-white tracking-tight flex items-center gap-2">
+                            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            Kalender Hari Libur
+                        </h2>
+                        <span class="text-[10px] font-mono text-slate-400">{{len .Data.Holidays}} Terdaftar</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Pengingat otomatis akan dilewati jika perkuliahan jatuh pada tanggal libur ini.</p>
 
                     <form action="/settings/holidays/create" method="POST" class="space-y-2">
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="date" name="date" required class="input input-sm input-bordered bg-base-200 text-xs" />
-                            <input type="text" name="description" placeholder="Ket. Libur Nasional/Kampus" required class="input input-sm input-bordered bg-base-200 text-xs" />
+                        <div class="space-y-1.5">
+                            <input type="date" name="date" required 
+                                   class="w-full px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] focus:border-amber-500/50 text-xs text-white outline-none" />
+                            <input type="text" name="description" placeholder="Keterangan libur (e.g. Libur Nasional)" required 
+                                   class="w-full px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] focus:border-amber-500/50 text-xs text-white placeholder-slate-500 outline-none" />
                         </div>
-                        <button type="submit" class="btn btn-warning btn-sm btn-outline w-full text-xs font-bold">
-                            + Tambah Hari Libur
+                        <button type="submit" class="w-full py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold transition">
+                            + Daftarkan Hari Libur
                         </button>
                     </form>
 
-                    <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
                         {{if .Data.Holidays}}
                         {{range .Data.Holidays}}
-                        <div class="p-2.5 bg-base-200/50 rounded-xl border border-base-content/5 flex items-center justify-between text-xs">
+                        <div class="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.05] flex items-center justify-between text-xs">
                             <div>
-                                <span class="font-mono font-bold text-white">{{.Date}}</span>
+                                <span class="font-mono font-bold text-white text-xs">{{.Date}}</span>
                                 <div class="text-[11px] text-slate-400">{{.Description}}</div>
                             </div>
                             <form action="/settings/holidays/{{.ID}}/delete" method="POST" class="inline">
-                                <button type="submit" class="btn btn-ghost btn-xs text-rose-400">✕</button>
+                                <button type="submit" class="p-1 rounded hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition" title="Hapus hari libur">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
                             </form>
                         </div>
                         {{end}}
                         {{else}}
-                        <div class="text-xs text-slate-500 italic py-2">Belum ada hari libur yang didaftarkan.</div>
+                        <div class="text-xs text-slate-500 italic py-3 text-center">Belum ada hari libur yang didaftarkan.</div>
                         {{end}}
                     </div>
                 </div>
             </div>
 
-            <!-- Users List Card -->
-            <div class="card bg-base-100 border border-base-content/10 shadow-xl">
-                <div class="card-body p-6 space-y-4">
-                    <h3 class="font-bold text-white text-sm">Pengguna & Hak Akses Administrator</h3>
-                    <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+            <!-- Users & Permissions Card -->
+            <div class="bezel-outer p-1 rounded-2xl">
+                <div class="bezel-card rounded-xl p-5 space-y-4">
+                    <div class="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                        <h2 class="text-xs font-bold text-white tracking-tight flex items-center gap-2">
+                            <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                            Akun & Hak Akses Admin
+                        </h2>
+                        <span class="text-[10px] font-mono text-slate-400">{{len .Data.Users}} Pengguna</span>
+                    </div>
+
+                    <div class="space-y-2 max-h-52 overflow-y-auto pr-1">
                         {{range .Data.Users}}
-                        <div class="p-2.5 bg-base-200/50 rounded-xl border border-base-content/5 flex items-center justify-between text-xs">
-                            <div>
-                                <span class="font-bold text-white">{{.Username}}</span>
-                                <span class="badge badge-xs {{if eq .Role "superadmin"}}badge-primary{{else}}badge-neutral{{end}} ml-1 uppercase font-mono">{{.Role}}</span>
-                                <div class="text-[10px] text-slate-500">Terdaftar: {{formatDateIndo .CreatedAt}}</div>
+                        <div class="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.05] flex items-center justify-between text-xs">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-white/[0.05] border border-white/[0.08] text-slate-300 flex items-center justify-center font-bold text-xs">
+                                    {{slice .Username 0 1}}
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="font-bold text-white">{{.Username}}</span>
+                                        <span class="px-1.5 py-0.2 rounded text-[9px] font-mono uppercase {{if eq .Role "superadmin"}}bg-indigo-500/20 text-indigo-300 border border-indigo-500/30{{else}}bg-white/[0.05] text-slate-400 border border-white/[0.08]{{end}}">
+                                            {{.Role}}
+                                        </span>
+                                    </div>
+                                    <div class="text-[10px] text-slate-500 font-mono">Dibuat: {{formatDateIndo .CreatedAt}}</div>
+                                </div>
                             </div>
+
                             {{if eq $.User.Role "superadmin"}}
                             {{if ne $.User.ID .ID}}
-                            <form action="/settings/users/{{.ID}}/delete" method="POST" onsubmit="return confirm('Hapus admin ini?')" class="inline">
-                                <button type="submit" class="btn btn-ghost btn-xs text-rose-400">Hapus</button>
+                            <form action="/settings/users/{{.ID}}/delete" method="POST" onsubmit="return confirm('Hapus akses admin ini?')" class="inline">
+                                <button type="submit" class="p-1 rounded hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition" title="Cabut akses">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
                             </form>
                             {{end}}
                             {{end}}

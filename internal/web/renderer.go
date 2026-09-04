@@ -94,8 +94,13 @@ func NewViewRenderer(templateFS fs.FS, diskDir string) *ViewRenderer {
 	}
 }
 
-// Render renders a full page embedded within the base layout
+// Render renders a full page embedded within the base layout with 200 OK
 func (v *ViewRenderer) Render(w http.ResponseWriter, r *http.Request, pageTemplate string, data PageData) {
+	v.RenderWithStatus(w, r, pageTemplate, data, http.StatusOK)
+}
+
+// RenderWithStatus renders a full page embedded within the base layout with an explicit HTTP status code
+func (v *ViewRenderer) RenderWithStatus(w http.ResponseWriter, r *http.Request, pageTemplate string, data PageData, statusCode int) {
 	if data.User == nil {
 		data.User = auth.GetUserFromContext(r.Context())
 	}
@@ -136,6 +141,7 @@ func (v *ViewRenderer) Render(w http.ResponseWriter, r *http.Request, pageTempla
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(statusCode)
 	_, _ = io.Copy(w, &buf)
 }
 

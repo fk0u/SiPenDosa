@@ -48,6 +48,15 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 	r.Get("/logout", h.LogoutHandler)
 	r.Post("/logout", h.LogoutHandler)
 
+	// Informational & Error routes
+	r.Get("/terms", h.TermsHandler)
+	r.Get("/tos", h.TermsHandler)
+	r.Get("/privacy", h.PrivacyHandler)
+	r.Get("/about", h.AboutHandler)
+	r.Get("/404", h.NotFoundHandler)
+	r.Get("/500", h.InternalServerErrorHandler)
+	r.NotFound(h.NotFoundHandler)
+
 	// Protected routes (require session)
 	r.Group(func(protected chi.Router) {
 		protected.Use(h.authSvc.RequireAuth)

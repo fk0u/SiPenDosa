@@ -1,0 +1,75 @@
+{{define "content"}}
+<div class="space-y-8 max-w-4xl mx-auto py-4">
+    <!-- Header Section with Double-Bezel -->
+    <div class="rounded-3xl p-1 bg-gradient-to-b from-white/10 to-transparent border border-white/10">
+        <div class="bg-slate-950/70 backdrop-blur-xl rounded-[calc(1.5rem-0.25rem)] p-8 md:p-10 space-y-3">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-[10px] uppercase tracking-[0.2em] font-semibold text-emerald-400">
+                Kedaulatan & Keamanan
+            </div>
+            <h1 class="text-3xl md:text-5xl font-black text-white tracking-tight">
+                Kebijakan Privasi (Privacy Policy)
+            </h1>
+            <p class="text-slate-400 text-sm md:text-base leading-relaxed max-w-[65ch]">
+                Komitmen perlindungan data dan jaminan kedaulatan informasi pribadi pada platform <strong class="text-slate-200">SiPenDosa</strong>.
+            </p>
+            <div class="pt-2 text-xs text-slate-500 font-mono">
+                Terakhir diperbarui: 4 September 2026 • Kebijakan Mandiri (Self-Hosted)
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Content Cards -->
+    <div class="space-y-6 text-sm text-slate-300 leading-relaxed">
+        <!-- Section 1: Zero Cloud / Local Sovereign -->
+        <div class="rounded-2xl p-1 bg-white/[0.02] border border-white/5">
+            <div class="bg-slate-950/50 rounded-xl p-6 md:p-8 space-y-3">
+                <h2 class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-mono">1</span>
+                    Prinsip Kedaulatan Data Lokal (Zero Cloud Telemetry)
+                </h2>
+                <p>
+                    <strong>SiPenDosa</strong> dibangun dengan prinsip <em>local-first & self-hosted</em>. Seluruh informasi yang Anda masukkan—termasuk daftar kontak dosen, nomor ponsel, nama mata kuliah, riwayat percakapan, dan template pesan—<strong>disimpan secara eksklusif di dalam basis data lokal Anda</strong> (<code class="text-xs font-mono bg-white/5 px-2 py-0.5 rounded text-emerald-300">data/sipen.db</code>).
+                </p>
+                <p>
+                    Aplikasi ini <strong>TIDAK PERNAH</strong> mengirimkan data perkuliahan, log chat, nomor telepon, atau metrik telemetri ke server pihak ketiga mana pun. Server Anda adalah milik Anda sepenuhnya.
+                </p>
+            </div>
+        </div>
+
+        <!-- Section 2: Session & Authentication -->
+        <div class="rounded-2xl p-1 bg-white/[0.02] border border-white/5">
+            <div class="bg-slate-950/50 rounded-xl p-6 md:p-8 space-y-3">
+                <h2 class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-mono">2</span>
+                    Keamanan Kredensial & Autentikasi
+                </h2>
+                <p>
+                    Keamanan akun administrator dilindungi dengan standar industri:
+                </p>
+                <ul class="list-disc list-inside space-y-1 pl-2 text-slate-400">
+                    <li><strong>Hashing Kata Sandi:</strong> Semua kata sandi di-hash menggunakan algoritma <code>bcrypt</code> dengan salt acak yang tidak dapat di-dekripsi balik.</li>
+                    <li><strong>Cookie Berkeamanan Tinggi:</strong> Token sesi disimpan dalam HTTP-Only Cookie dengan flag <code>SameSite=Lax</code> untuk mencegah serangan Cross-Site Scripting (XSS) dan CSRF.</li>
+                    <li><strong>Kunci WhatsApp Terisolasi:</strong> Token sesi enkripsi WhatsApp tersimpan di <code class="text-xs font-mono bg-white/5 px-2 py-0.5 rounded text-emerald-300">session/whatsapp.db</code> dan hanya dapat diakses oleh daemon internal.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section 3: Data Export & Erasure -->
+        <div class="rounded-2xl p-1 bg-white/[0.02] border border-white/5">
+            <div class="bg-slate-950/50 rounded-xl p-6 md:p-8 space-y-3">
+                <h2 class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-mono">3</span>
+                    Hak Kendali & Portabilitas Data
+                </h2>
+                <p>
+                    Sebagai pemilik server, Anda memiliki kendali 100% atas data Anda:
+                </p>
+                <ul class="list-disc list-inside space-y-1 pl-2 text-slate-400">
+                    <li><strong>Ekspor Database:</strong> Anda dapat mengunduh salinan mentah file database SQLite (<code class="text-xs font-mono bg-white/5 px-2 py-0.5 rounded text-emerald-300">.db</code>) kapan saja langsung dari menu Pengaturan.</li>
+                    <li><strong>Penghapusan Total:</strong> Menghapus direktori data atau menjalankan skrip uninstaller akan menghapus permanen seluruh jejak data tanpa sisa di cloud.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

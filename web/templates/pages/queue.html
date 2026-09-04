@@ -1,100 +1,129 @@
 {{define "content"}}
 <div class="space-y-6">
 
-    <!-- Header -->
+    <!-- Header Section -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h2 class="text-xl font-bold text-white tracking-tight">Antrian Pesan (Live Queue)</h2>
-            <p class="text-xs text-slate-400">Pesan WhatsApp yang sedang menunggu jadwal pengiriman atau proses retry otomatis dengan jeda anti-ban.</p>
+            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-2">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                Rate-Limited Dispatch Pipeline
+            </div>
+            <h1 class="text-2xl font-extrabold text-white tracking-tight">Antrian Pesan (Live Queue)</h1>
+            <p class="text-xs text-slate-400 mt-1">Daftar pesan terencana yang siap dikirimkan melalui WhatsApp engine dengan jeda anti-ban dan retry otomatis.</p>
         </div>
         <div class="flex items-center gap-2">
-            <button onclick="window.location.reload()" class="btn btn-outline btn-sm gap-1">
+            <button onclick="window.location.reload()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/[0.08] text-xs font-semibold transition active:scale-95">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                Segarkan
+                Segarkan Antrian
             </button>
         </div>
     </div>
 
-    <!-- Active Processing Banner if any -->
+    <!-- Active Processing Alert -->
     {{if .Data.Processing}}
-    <div class="alert alert-info shadow-lg py-3 px-4 flex items-center justify-between text-xs">
-        <div class="flex items-center gap-2">
-            <span class="loading loading-spinner loading-sm"></span>
-            <span><strong>Sedang Memproses Pengiriman:</strong> {{len .Data.Processing}} pesan sedang dikirim ke server WhatsApp dengan jitter anti-ban.</span>
+    <div class="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-200 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-2.5 h-2.5 rounded-full bg-indigo-400 animate-ping"></div>
+            <div>
+                <div class="text-xs font-bold text-white">Memproses Pengiriman Aktif</div>
+                <div class="text-[11px] text-indigo-300/80">{{len .Data.Processing}} pesan sedang didispatch ke WhatsApp engine dengan jitter random anti-ban.</div>
+            </div>
         </div>
+        <span class="px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 font-mono text-xs font-bold">In Progress</span>
     </div>
     {{end}}
 
     <!-- Queue Table -->
-    <div class="card bg-base-100 border border-base-content/10 shadow-xl overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="table table-sm md:table-md">
-                <thead>
-                    <tr class="text-xs text-slate-400 border-b border-base-content/10 bg-base-200/40">
-                        <th>Jadwal Kirim</th>
-                        <th>Target Penerima</th>
-                        <th>Isi Pesan</th>
-                        <th>Status</th>
-                        <th>Percobaan</th>
-                        <th class="text-right">Aksi Cepat</th>
-                    </tr>
-                </thead>
-                <tbody id="queue-table-body">
-                    {{if .Data.Pending}}
-                    {{range .Data.Pending}}
-                    <tr class="border-b border-base-content/5 hover:bg-base-200/50 transition">
-                        <td class="font-mono text-xs text-slate-300">
-                            <div>{{formatTime .ScheduledFor "02 Jan 15:04"}} WITA</div>
-                        </td>
-                        <td>
-                            <div class="font-bold text-white text-xs">{{.RecipientName}}</div>
-                            <div class="font-mono text-[10px] text-indigo-400">{{.RecipientJID}}</div>
-                        </td>
-                        <td class="text-xs text-slate-300 max-w-sm truncate">
-                            {{truncate .Message 75}}
-                            {{if .ErrorMessage}}
-                            <div class="text-[10px] text-amber-400 mt-0.5 truncate">⚠️ Percobaan lalu: {{.ErrorMessage}}</div>
-                            {{end}}
-                        </td>
-                        <td>
-                            {{statusBadge .Status}}
-                        </td>
-                        <td class="text-xs font-mono text-slate-400">
-                            {{.RetryCount}}/{{.MaxRetries}}
-                        </td>
-                        <td class="text-right">
-                            <div class="flex items-center justify-end gap-1">
-                                <!-- Send Now -->
-                                <form action="/queue/{{.ID}}/send-now" method="POST" class="inline">
-                                    <button type="submit" class="btn btn-warning btn-xs font-bold" title="Kirim sekarang tanpa menunggu jadwal">
-                                        🚀 Kirim Sekarang
-                                    </button>
-                                </form>
-                                <!-- Cancel -->
-                                <form action="/queue/{{.ID}}/cancel" method="POST" class="inline">
-                                    <button type="submit" class="btn btn-ghost btn-xs text-slate-400 hover:text-slate-200">
-                                        Batalkan
-                                    </button>
-                                </form>
-                                <!-- Delete -->
-                                <form action="/queue/{{.ID}}/delete" method="POST" onsubmit="return confirm('Hapus pesan dari antrian?')" class="inline">
-                                    <button type="submit" class="btn btn-ghost btn-xs text-rose-400">
-                                        Hapus
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    {{end}}
-                    {{else}}
-                    <tr>
-                        <td colspan="6" class="text-center py-12 text-xs text-slate-500 italic">
-                            Tidak ada pesan dalam antrian saat ini. Antrian akan terisi otomatis sesuai jadwal pengingat H-1 atau manual trigger.
-                        </td>
-                    </tr>
-                    {{end}}
-                </tbody>
-            </table>
+    <div class="bezel-outer p-1 rounded-2xl">
+        <div class="bezel-card rounded-xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-white/[0.06] bg-white/[0.02] text-[11px] font-mono uppercase tracking-wider text-slate-400">
+                            <th class="py-3 px-4">Jadwal Kirim</th>
+                            <th class="py-3 px-4">Target Penerima</th>
+                            <th class="py-3 px-4">Isi Ringkasan Pesan</th>
+                            <th class="py-3 px-4">Status</th>
+                            <th class="py-3 px-4">Percobaan</th>
+                            <th class="py-3 px-4 text-right">Aksi Cepat</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/[0.04]">
+                        {{if .Data.Pending}}
+                        {{range .Data.Pending}}
+                        <tr class="hover:bg-white/[0.02] transition">
+                            <td class="py-3 px-4 whitespace-nowrap font-mono">
+                                <div class="text-xs font-medium text-slate-200">{{formatTime .ScheduledFor "02 Jan 15:04"}} WITA</div>
+                            </td>
+                            <td class="py-3 px-4 whitespace-nowrap">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs">
+                                        {{slice .RecipientName 0 1}}
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-bold text-white">{{.RecipientName}}</div>
+                                        <div class="text-[10px] font-mono text-slate-400">{{.RecipientJID}}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 max-w-xs sm:max-w-sm">
+                                <div class="text-xs text-slate-300 truncate">{{truncate .Message 70}}</div>
+                                {{if .ErrorMessage}}
+                                <div class="inline-flex items-center gap-1 text-[10px] text-amber-400 mt-1 font-mono">
+                                    <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                    <span class="truncate">Percobaan sebelumnya gagal: {{.ErrorMessage}}</span>
+                                </div>
+                                {{end}}
+                            </td>
+                            <td class="py-3 px-4 whitespace-nowrap">
+                                {{statusBadge .Status}}
+                            </td>
+                            <td class="py-3 px-4 whitespace-nowrap">
+                                <span class="text-xs font-mono text-slate-400 bg-white/[0.03] px-2 py-0.5 rounded border border-white/[0.05]">
+                                    {{.RetryCount}}/{{.MaxRetries}}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-right whitespace-nowrap">
+                                <div class="flex items-center justify-end gap-1.5">
+                                    <!-- Send Now -->
+                                    <form action="/queue/{{.ID}}/send-now" method="POST" class="inline">
+                                        <button type="submit" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 text-xs font-medium transition" title="Kirim sekarang tanpa menunggu jadwal">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                            Kirim Sekarang
+                                        </button>
+                                    </form>
+                                    <!-- Cancel -->
+                                    <form action="/queue/{{.ID}}/cancel" method="POST" class="inline">
+                                        <button type="submit" class="px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-400 hover:text-slate-200 border border-white/[0.06] text-xs font-medium transition">
+                                            Batalkan
+                                        </button>
+                                    </form>
+                                    <!-- Delete -->
+                                    <form action="/queue/{{.ID}}/delete" method="POST" onsubmit="return confirm('Hapus pesan ini dari antrian?')" class="inline">
+                                        <button type="submit" class="p-1 rounded-lg hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition" title="Hapus permanen">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {{end}}
+                        {{else}}
+                        <tr>
+                            <td colspan="6" class="py-14 text-center">
+                                <div class="max-w-xs mx-auto space-y-2">
+                                    <div class="w-10 h-10 rounded-2xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-center mx-auto text-slate-500">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    </div>
+                                    <div class="text-xs font-semibold text-slate-400">Antrian Kosong</div>
+                                    <div class="text-[11px] text-slate-500">Semua pesan terjadwal telah diproses. Antrian baru akan terisi otomatis sesuai evaluasi jadwal H-1 atau manual trigger.</div>
+                                </div>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 

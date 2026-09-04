@@ -61,7 +61,7 @@ func PrintBanner(cfg *config.Config) {
 	fmt.Printf("%s%s╠%s╣%s\n", Bold, Cyan, borderH, Reset)
 
 	formatRow("App Name", "SiPenDosa (Sistem Pengingat Dosen Saatnya)")
-	formatRow("Engine Version", "v1.0.0-PROD (Build 2026.09-OverPower)")
+	formatRow("Engine Version", "v1.0.0-PROD (Build 2026.09-Release)")
 	formatRow("Core Environment", fmt.Sprintf("%s (%s/%s)", runtime.Version(), runtime.GOOS, runtime.GOARCH))
 	formatRow("Web Dashboard", fmt.Sprintf("http://localhost:%s", cfg.Port))
 	formatRow("Listen Address", fmt.Sprintf("%s:%s", cfg.Host, cfg.Port))

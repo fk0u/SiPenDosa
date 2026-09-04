@@ -1,6 +1,6 @@
 {{define "base"}}
 <!DOCTYPE html>
-<html lang="id" data-theme="night">
+<html lang="id" data-theme="night" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,10 +11,27 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                        sans: ['Plus Jakarta Sans', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Menlo', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                            950: '#0a0d18',
+                        }
                     }
                 }
             }
@@ -22,69 +39,117 @@
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
-    <!-- SiPenDosa WebSocket & Realtime App Script -->
+    <!-- SiPenDosa WebSocket & Realtime Client Script -->
     <script src="/static/js/app.js" defer></script>
+
+    <style>
+        /* High-End Micro-Styles */
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #07090e;
+            color: #f1f5f9;
+        }
+        .bezel-card {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.08), 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+        }
+        .bezel-outer {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #07090e;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+    </style>
 </head>
-<body class="bg-base-300 min-h-screen font-sans text-slate-100 flex flex-col antialiased selection:bg-indigo-600 selection:text-white">
+<body class="min-h-[100dvh] flex flex-col antialiased selection:bg-indigo-600 selection:text-white relative overflow-x-hidden">
+
+    <!-- Fixed Ambient Glow Orbs (Zero Scroll Reflow) -->
+    <div class="fixed top-0 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-[140px] pointer-events-none -z-10"></div>
+    <div class="fixed bottom-10 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none -z-10"></div>
 
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast toast-top toast-end z-50 p-4 space-y-2"></div>
 
-    <div class="drawer lg:drawer-open min-h-screen">
+    <div class="drawer lg:drawer-open min-h-[100dvh]">
         <input id="main-drawer" type="checkbox" class="drawer-toggle" />
 
-        <!-- Drawer Content (Main Application) -->
-        <div class="drawer-content flex flex-col bg-base-200/50">
+        <!-- Drawer Content (Main Application Area) -->
+        <div class="drawer-content flex flex-col bg-[#07090e]">
             
-            <!-- Navbar -->
-            <header class="navbar bg-base-100/80 backdrop-blur border-b border-base-content/10 px-4 sticky top-0 z-30 justify-between">
-                <div class="flex items-center gap-2">
-                    <label for="main-drawer" class="btn btn-square btn-ghost lg:hidden drawer-button">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            <!-- Floating Modern Header Island -->
+            <header class="sticky top-0 z-30 px-4 py-3 bg-[#07090e]/80 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-between transition-all duration-300">
+                <div class="flex items-center gap-3">
+                    <label for="main-drawer" class="btn btn-square btn-ghost btn-sm lg:hidden drawer-button text-slate-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                     </label>
-                    <div class="flex flex-col">
-                        <span class="text-xs text-slate-400 font-medium">Sistem Pengingat Dosen Saatnya</span>
-                        <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-                            SiPenDosa <span class="badge badge-primary badge-outline text-[10px] font-bold uppercase tracking-wider">OverPower</span>
-                        </h1>
+                    <div class="hidden sm:flex flex-col">
+                        <span class="text-[10px] uppercase font-bold tracking-[0.2em] text-slate-400">Sistem Pengingat Dosen Saatnya</span>
+                        <div class="text-sm font-extrabold tracking-tight text-white flex items-center gap-2">
+                            <span>SiPenDosa</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Right Navbar Status & Profile -->
+                <!-- Right Header Actions & Live Telemetry -->
                 <div class="flex items-center gap-3">
                     <!-- WhatsApp Live Status Pill -->
-                    <div id="wa-status-badge" class="badge badge-neutral badge-sm gap-1.5 py-3 px-3 shadow">
+                    <div id="wa-status-badge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/80 border border-white/10 shadow-sm transition-all duration-300">
                         <span id="wa-status-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
-                        <span id="wa-status-text" class="text-xs font-semibold">Memeriksa Status...</span>
+                        <span id="wa-status-text" class="text-xs font-semibold tracking-tight text-slate-300">Memeriksa...</span>
                     </div>
 
-                    <!-- Scan QR Button (Opens Modal) -->
-                    <button id="btn-scan-qr" onclick="qr_modal.showModal()" class="btn btn-warning btn-xs gap-1 shadow hidden">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                    <!-- Scan QR Button (Hidden by default, shown when disconnected) -->
+                    <button id="btn-scan-qr" onclick="qr_modal.showModal()" class="btn btn-xs rounded-full bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 gap-1.5 shadow hidden font-medium transition-all duration-200">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
                         Scan QR
                     </button>
 
+                    <!-- Timezone & System Clock Pill -->
+                    <div class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/5 text-[11px] font-mono text-slate-400">
+                        <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+                        <span>WITA (UTC+8)</span>
+                    </div>
+
                     <!-- User Menu Dropdown -->
                     <div class="dropdown dropdown-end">
-                        <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar placeholder">
-                            <div class="bg-indigo-600/30 text-indigo-300 rounded-full w-9 border border-indigo-500/30">
-                                <span class="text-sm font-bold uppercase">{{if .User}}{{slice .User.Username 0 1}}{{else}}U{{end}}</span>
+                        <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-sm avatar placeholder">
+                            <div class="bg-indigo-600/20 text-indigo-300 rounded-full w-8 border border-indigo-500/30 shadow-inner">
+                                <span class="text-xs font-bold uppercase">{{if .User}}{{slice .User.Username 0 1}}{{else}}U{{end}}</span>
                             </div>
                         </div>
-                        <ul tabindex="0" class="mt-3 z-[1] p-2 shadow-2xl menu menu-sm dropdown-content bg-base-100 rounded-box w-52 border border-base-content/10">
-                            <li class="menu-title px-4 py-2 border-b border-base-content/10">
-                                <span class="font-bold text-white">{{if .User}}{{.User.Username}}{{end}}</span>
-                                <span class="text-[10px] uppercase font-semibold text-indigo-400">{{if .User}}{{.User.Role}}{{end}}</span>
+                        <ul tabindex="0" class="mt-3 z-[50] p-2 shadow-2xl menu menu-sm dropdown-content bg-slate-900/95 backdrop-blur-2xl rounded-2xl w-56 border border-white/10 space-y-1">
+                            <li class="menu-title px-4 py-2 border-b border-white/10 mb-1">
+                                <div class="font-bold text-white text-sm">{{if .User}}{{.User.Username}}{{else}}Administrator{{end}}</div>
+                                <div class="text-[10px] uppercase font-bold tracking-wider text-indigo-400">{{if .User}}{{.User.Role}}{{else}}superadmin{{end}}</div>
                             </li>
-                            <li class="mt-2"><a href="/settings">⚙️ Pengaturan</a></li>
-                            <li><a href="/logs">📜 Log Sistem</a></li>
-                            <li class="border-t border-base-content/10 mt-1">
+                            <li><a href="/settings" class="py-2 rounded-lg hover:bg-white/5">Pengaturan Sistem</a></li>
+                            <li><a href="/logs" class="py-2 rounded-lg hover:bg-white/5">Log Aktivitas & Audit</a></li>
+                            <li><a href="/about" class="py-2 rounded-lg hover:bg-white/5">Tentang & Filosofi</a></li>
+                            <li class="border-t border-white/10 pt-1 mt-1">
                                 <form action="/logout" method="POST" class="p-0">
-                                    <button type="submit" class="text-rose-400 hover:text-rose-300 w-full text-left py-2 px-3">🚪 Keluar</button>
+                                    <button type="submit" class="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 w-full text-left py-2 px-3 rounded-lg font-medium">
+                                        Keluar dari Sesi
+                                    </button>
                                 </form>
                             </li>
                         </ul>
@@ -93,18 +158,26 @@
             </header>
 
             <!-- Main Page Content Body -->
-            <main class="flex-1 p-4 md:p-6 max-w-7xl w-full mx-auto space-y-6">
+            <main class="flex-1 p-4 md:p-8 max-w-[1400px] w-full mx-auto space-y-8">
                 {{block "content" .}}{{end}}
             </main>
 
-            <!-- Footer -->
-            <footer class="footer items-center p-4 bg-base-100/50 text-base-content border-t border-base-content/5 text-xs">
-                <div class="items-center grid-flow-col">
-                    <p><strong>SiPenDosa</strong> &copy; {{.CurrentYear}} — Sistem Pengingat Dosen Saatnya. Rela "berdosa" demi kepastian jadwal.</p>
-                </div>
-                <div class="grid-flow-col gap-4 md:place-self-center md:justify-self-end text-slate-500">
-                    <span>Port 8473</span>
-                    <span>WITA Timezone</span>
+            <!-- Refined High-End Footer -->
+            <footer class="mt-auto px-6 py-8 border-t border-white/[0.06] bg-[#05070c] text-xs text-slate-400">
+                <div class="max-w-[1400px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="space-y-1 text-center md:text-left">
+                        <p><strong class="text-white">SiPenDosa</strong> &copy; {{.CurrentYear}} — Sistem Pengingat Dosen Saatnya.</p>
+                        <p class="text-slate-500 italic">"Rela 'berdosa' demi kepastian jadwal kuliah, agar mahasiswa tidak perlu sungkan."</p>
+                    </div>
+                    <div class="flex flex-wrap items-center justify-center gap-5 text-slate-400 font-medium">
+                        <a href="/about" class="hover:text-white transition-colors duration-200">Filosofi</a>
+                        <span class="text-slate-700">•</span>
+                        <a href="/terms" class="hover:text-white transition-colors duration-200">Ketentuan Layanan</a>
+                        <span class="text-slate-700">•</span>
+                        <a href="/privacy" class="hover:text-white transition-colors duration-200">Privasi Data</a>
+                        <span class="text-slate-700">•</span>
+                        <a href="/healthz" target="_blank" class="hover:text-white transition-colors duration-200 font-mono">API Health</a>
+                    </div>
                 </div>
             </footer>
         </div>
@@ -112,100 +185,104 @@
         <!-- Sidebar Navigation Drawer -->
         <div class="drawer-side z-40">
             <label for="main-drawer" class="drawer-overlay"></label>
-            <aside class="w-64 bg-base-100 text-base-content min-h-screen flex flex-col border-r border-base-content/10">
-                <!-- Brand logo -->
-                <div class="p-5 border-b border-base-content/10 flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-600/30">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+            <aside class="w-64 bg-[#090d16] text-slate-300 min-h-[100dvh] flex flex-col border-r border-white/[0.08] shadow-2xl">
+                
+                <!-- Brand logo with Gradient Squircle -->
+                <div class="p-6 border-b border-white/[0.08] flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-600/30 ring-1 ring-white/20">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
                     </div>
                     <div>
-                        <div class="font-extrabold text-white text-lg tracking-wide">SiPenDosa</div>
-                        <div class="text-[10px] font-semibold text-slate-400 tracking-wider">Sistem Pengingat Dosen</div>
+                        <div class="font-extrabold text-white text-lg tracking-tight">SiPenDosa</div>
+                        <div class="text-[10px] font-semibold tracking-wider uppercase text-slate-400">Pengingat Dosen</div>
                     </div>
                 </div>
 
-                <!-- Navigation Links -->
-                <ul class="menu p-3 flex-1 space-y-1 text-sm font-medium">
+                <!-- Navigation Links with Pill Highlight -->
+                <ul class="menu p-4 flex-1 space-y-1.5 text-sm font-medium">
                     <li>
-                        <a href="/" class="{{if eq .ActivePage "overview"}}active bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-600/20{{end}} flex items-center gap-3 py-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                        <a href="/" class="{{if eq .ActivePage "overview"}}bg-indigo-600/15 text-white font-semibold border border-indigo-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
+                            <svg class="w-5 h-5 {{if eq .ActivePage "overview"}}text-indigo-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                             Overview
                         </a>
                     </li>
                     <li>
-                        <a href="/contacts" class="{{if eq .ActivePage "contacts"}}active bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-600/20{{end}} flex items-center gap-3 py-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        <a href="/contacts" class="{{if eq .ActivePage "contacts"}}bg-indigo-600/15 text-white font-semibold border border-indigo-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
+                            <svg class="w-5 h-5 {{if eq .ActivePage "contacts"}}text-indigo-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                             Dosen & Kontak
                         </a>
                     </li>
                     <li>
-                        <a href="/schedules" class="{{if eq .ActivePage "schedules"}}active bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-600/20{{end}} flex items-center gap-3 py-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <a href="/schedules" class="{{if eq .ActivePage "schedules"}}bg-indigo-600/15 text-white font-semibold border border-indigo-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
+                            <svg class="w-5 h-5 {{if eq .ActivePage "schedules"}}text-indigo-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                             Jadwal Kuliah
                         </a>
                     </li>
                     <li>
-                        <a href="/templates" class="{{if eq .ActivePage "templates"}}active bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-600/20{{end}} flex items-center gap-3 py-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <a href="/templates" class="{{if eq .ActivePage "templates"}}bg-indigo-600/15 text-white font-semibold border border-indigo-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
+                            <svg class="w-5 h-5 {{if eq .ActivePage "templates"}}text-indigo-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             Template Pesan
                         </a>
                     </li>
                     <li>
-                        <a href="/history" class="{{if eq .ActivePage "history"}}active bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-600/20{{end}} flex items-center gap-3 py-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <a href="/history" class="{{if eq .ActivePage "history"}}bg-indigo-600/15 text-white font-semibold border border-indigo-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
+                            <svg class="w-5 h-5 {{if eq .ActivePage "history"}}text-indigo-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             Riwayat Kirim
                         </a>
                     </li>
                     <li>
-                        <a href="/queue" class="{{if eq .ActivePage "queue"}}active bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-600/20{{end}} flex items-center gap-3 py-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        <a href="/queue" class="{{if eq .ActivePage "queue"}}bg-indigo-600/15 text-white font-semibold border border-indigo-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
+                            <svg class="w-5 h-5 {{if eq .ActivePage "queue"}}text-indigo-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                             Antrian Pesan
                         </a>
                     </li>
-                    <li class="menu-title pt-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Administrasi</li>
+
+                    <li class="menu-title pt-6 px-3.5 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Administrasi</li>
                     <li>
-                        <a href="/settings" class="{{if eq .ActivePage "settings"}}active bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-600/20{{end}} flex items-center gap-3 py-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <a href="/settings" class="{{if eq .ActivePage "settings"}}bg-indigo-600/15 text-white font-semibold border border-indigo-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
+                            <svg class="w-5 h-5 {{if eq .ActivePage "settings"}}text-indigo-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                             Pengaturan
                         </a>
                     </li>
                     <li>
-                        <a href="/logs" class="{{if eq .ActivePage "logs"}}active bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-600/20{{end}} flex items-center gap-3 py-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <a href="/logs" class="{{if eq .ActivePage "logs"}}bg-indigo-600/15 text-white font-semibold border border-indigo-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
+                            <svg class="w-5 h-5 {{if eq .ActivePage "logs"}}text-indigo-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             Log Sistem
                         </a>
                     </li>
                 </ul>
 
                 <!-- Device Info Sidebar Bottom -->
-                <div class="p-4 bg-base-200/60 border-t border-base-content/10 text-xs text-slate-400 flex flex-col gap-1">
-                    <span class="font-semibold text-slate-300">Nomor WA Terhubung:</span>
-                    <span id="wa-phone-text" class="font-mono text-emerald-400 text-[11px] truncate">Memuat...</span>
+                <div class="p-4 mx-3 mb-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] text-xs text-slate-400 flex flex-col gap-1.5">
+                    <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400">WhatsApp Terhubung</span>
+                    <span id="wa-phone-text" class="font-mono text-emerald-400 text-xs truncate">Memuat status...</span>
                 </div>
             </aside>
         </div>
     </div>
 
-    <!-- QR Code Scan Modal -->
+    <!-- QR Code Scan Modal (Double-Bezel Design) -->
     <dialog id="qr_modal" class="modal">
-        <div class="modal-box bg-base-100 border border-base-content/10 max-w-sm text-center">
-            <h3 class="font-bold text-lg text-white">Scan WhatsApp QR Code</h3>
-            <p class="py-2 text-xs text-slate-400">Buka WhatsApp di ponsel &gt; Perangkat Tertaut &gt; Tautkan Perangkat</p>
+        <div class="modal-box bg-slate-950 border border-white/10 max-w-sm text-center p-6 rounded-3xl shadow-2xl space-y-4">
+            <div class="space-y-1">
+                <h3 class="font-bold text-lg text-white">Scan WhatsApp QR Code</h3>
+                <p class="text-xs text-slate-400">Buka WhatsApp di ponsel &gt; Perangkat Tertaut &gt; Tautkan Perangkat</p>
+            </div>
             
-            <div class="my-4 flex flex-col items-center justify-center min-h-[260px] bg-slate-900 rounded-2xl p-4 border border-slate-800">
+            <div class="flex flex-col items-center justify-center min-h-[260px] bg-[#07090e] rounded-2xl p-4 border border-white/10 shadow-inner">
                 <img id="modal-qr-image" src="" alt="WhatsApp QR Code" class="rounded-xl shadow-lg max-w-[220px] hidden" />
-                <div id="modal-qr-placeholder" class="flex flex-col items-center justify-center text-slate-500 gap-2">
-                    <span class="loading loading-spinner loading-lg text-primary"></span>
-                    <span class="text-xs">Menunggu kode QR dari server...</span>
+                <div id="modal-qr-placeholder" class="flex flex-col items-center justify-center text-slate-500 gap-3">
+                    <span class="loading loading-spinner loading-md text-primary"></span>
+                    <span class="text-xs">Menghubungkan ke WhatsApp engine...</span>
                 </div>
             </div>
 
-            <div class="modal-action justify-between">
+            <div class="modal-action justify-between pt-2">
                 <form action="/api/wa/reconnect" method="POST">
-                    <button type="submit" class="btn btn-outline btn-sm">Minta QR Baru</button>
+                    <button type="submit" class="btn btn-outline btn-xs rounded-full border-white/10 hover:border-white/20">Minta QR Baru</button>
                 </form>
                 <form method="dialog">
-                    <button class="btn btn-sm btn-ghost">Tutup</button>
+                    <button class="btn btn-xs btn-ghost rounded-full text-slate-400">Tutup</button>
                 </form>
             </div>
         </div>

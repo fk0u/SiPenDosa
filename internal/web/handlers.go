@@ -831,3 +831,42 @@ func (h *Handlers) HealthzHandler(w http.ResponseWriter, r *http.Request) {
 		"whatsapp_phone":  phone,
 	})
 }
+
+// ==========================================
+// Error & Informational Pages
+// ==========================================
+
+func (h *Handlers) NotFoundHandler(w http.ResponseWriter, r *http.Request) {
+	h.renderer.RenderWithStatus(w, r, "errors/404.html", PageData{
+		Title:      "404 Halaman Tidak Ditemukan — SiPenDosa",
+		ActivePage: "404",
+	}, http.StatusNotFound)
+}
+
+func (h *Handlers) InternalServerErrorHandler(w http.ResponseWriter, r *http.Request) {
+	h.renderer.RenderWithStatus(w, r, "errors/500.html", PageData{
+		Title:      "500 Kesalahan Server — SiPenDosa",
+		ActivePage: "500",
+	}, http.StatusInternalServerError)
+}
+
+func (h *Handlers) TermsHandler(w http.ResponseWriter, r *http.Request) {
+	h.renderer.Render(w, r, "pages/terms.html", PageData{
+		Title:      "Ketentuan Layanan (ToS) — SiPenDosa",
+		ActivePage: "terms",
+	})
+}
+
+func (h *Handlers) PrivacyHandler(w http.ResponseWriter, r *http.Request) {
+	h.renderer.Render(w, r, "pages/privacy.html", PageData{
+		Title:      "Kebijakan Privasi — SiPenDosa",
+		ActivePage: "privacy",
+	})
+}
+
+func (h *Handlers) AboutHandler(w http.ResponseWriter, r *http.Request) {
+	h.renderer.Render(w, r, "pages/about.html", PageData{
+		Title:      "Tentang & Filosofi — SiPenDosa",
+		ActivePage: "about",
+	})
+}

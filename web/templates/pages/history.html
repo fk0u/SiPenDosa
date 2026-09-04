@@ -1,75 +1,102 @@
 {{define "content"}}
 <div class="space-y-6">
 
-    <!-- Header & Filter -->
+    <!-- Header & Filter Section -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h2 class="text-xl font-bold text-white tracking-tight">Riwayat Pengiriman Pesan</h2>
-            <p class="text-xs text-slate-400">Arsip seluruh pesan yang telah diproses, dikirimkan, atau disimulasikan melalui WhatsApp.</p>
+            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-2">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Audit & Dispatch Log
+            </div>
+            <h1 class="text-2xl font-extrabold text-white tracking-tight">Riwayat Pengiriman Pesan</h1>
+            <p class="text-xs text-slate-400 mt-1">Arsip lengkap seluruh pengiriman pengingat WhatsApp, simulasi dry-run, dan status kendala pengiriman.</p>
         </div>
-        <div class="flex items-center gap-2">
-            <a href="/history" class="btn btn-xs {{if eq .Data.SelectedStatus ""}}btn-primary{{else}}btn-ghost{{end}}">Semua</a>
-            <a href="/history?status=sent" class="btn btn-xs {{if eq .Data.SelectedStatus "sent"}}btn-primary{{else}}btn-ghost{{end}}">Terkirim</a>
-            <a href="/history?status=dry_run" class="btn btn-xs {{if eq .Data.SelectedStatus "dry_run"}}btn-primary{{else}}btn-ghost{{end}}">Dry Run</a>
-            <a href="/history?status=failed" class="btn btn-xs {{if eq .Data.SelectedStatus "failed"}}btn-primary{{else}}btn-ghost{{end}}">Gagal</a>
+
+        <!-- Filter Status Pills -->
+        <div class="flex items-center gap-1.5 p-1 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+            <a href="/history" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{if eq .Data.SelectedStatus ""}}bg-indigo-600 text-white shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.05]{{end}}">Semua</a>
+            <a href="/history?status=sent" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{if eq .Data.SelectedStatus "sent"}}bg-emerald-600 text-white shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.05]{{end}}">Terkirim</a>
+            <a href="/history?status=dry_run" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{if eq .Data.SelectedStatus "dry_run"}}bg-amber-600 text-white shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.05]{{end}}">Dry Run</a>
+            <a href="/history?status=failed" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{if eq .Data.SelectedStatus "failed"}}bg-rose-600 text-white shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.05]{{end}}">Gagal</a>
         </div>
     </div>
 
-    <!-- History Table -->
-    <div class="card bg-base-100 border border-base-content/10 shadow-xl overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="table table-sm md:table-md">
-                <thead>
-                    <tr class="text-xs text-slate-400 border-b border-base-content/10 bg-base-200/40">
-                        <th>Waktu Eksekusi</th>
-                        <th>Target Penerima</th>
-                        <th>Isi Pesan</th>
-                        <th>Status</th>
-                        <th>Percobaan</th>
-                        <th class="text-right">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{if .Data.Messages}}
-                    {{range .Data.Messages}}
-                    <tr class="border-b border-base-content/5 hover:bg-base-200/50 transition">
-                        <td class="font-mono text-xs text-slate-400">
-                            <div>{{formatTime .SentAt "02 Jan 2006"}}</div>
-                            <div class="text-[10px] text-slate-500">{{formatTime .SentAt "15:04:05 WITA"}}</div>
-                        </td>
-                        <td>
-                            <div class="font-bold text-white text-xs">{{.RecipientName}}</div>
-                            <div class="font-mono text-[10px] text-indigo-400">{{.RecipientJID}}</div>
-                        </td>
-                        <td class="text-xs text-slate-300 max-w-sm">
-                            <div class="truncate">{{truncate .Message 75}}</div>
-                            {{if .ErrorMessage}}
-                            <div class="text-[10px] text-rose-400 mt-0.5 truncate">⚠️ {{.ErrorMessage}}</div>
-                            {{end}}
-                        </td>
-                        <td>
-                            {{statusBadge .Status}}
-                        </td>
-                        <td class="text-xs font-mono text-slate-400">
-                            {{.RetryCount}}/{{.MaxRetries}}
-                        </td>
-                        <td class="text-right">
-                            <button onclick="viewMessageModal(`{{.RecipientName}}`, `{{.RecipientJID}}`, `{{formatTime .SentAt "02 Jan 15:04"}}`, `{{.Status}}`, `{{.Message}}`, `{{.ErrorMessage}}`)" 
-                                    class="btn btn-ghost btn-xs text-indigo-400">
-                                Detail Pesan
-                            </button>
-                        </td>
-                    </tr>
-                    {{end}}
-                    {{else}}
-                    <tr>
-                        <td colspan="6" class="text-center py-10 text-xs text-slate-500 italic">
-                            Belum ada riwayat pesan yang tercatat untuk filter ini.
-                        </td>
-                    </tr>
-                    {{end}}
-                </tbody>
-            </table>
+    <!-- History Audit Table -->
+    <div class="bezel-outer p-1 rounded-2xl">
+        <div class="bezel-card rounded-xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-white/[0.06] bg-white/[0.02] text-[11px] font-mono uppercase tracking-wider text-slate-400">
+                            <th class="py-3 px-4">Waktu Eksekusi</th>
+                            <th class="py-3 px-4">Target Penerima</th>
+                            <th class="py-3 px-4">Isi Naskah Pesan</th>
+                            <th class="py-3 px-4">Status</th>
+                            <th class="py-3 px-4">Percobaan</th>
+                            <th class="py-3 px-4 text-right">Tindakan</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/[0.04]">
+                        {{if .Data.Messages}}
+                        {{range .Data.Messages}}
+                        <tr class="hover:bg-white/[0.02] transition">
+                            <td class="py-3 px-4 whitespace-nowrap">
+                                <div class="text-xs font-mono font-medium text-slate-300">{{formatTime .SentAt "02 Jan 2006"}}</div>
+                                <div class="text-[10px] font-mono text-slate-500">{{formatTime .SentAt "15:04:05 WITA"}}</div>
+                            </td>
+                            <td class="py-3 px-4 whitespace-nowrap">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs">
+                                        {{slice .RecipientName 0 1}}
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-bold text-white">{{.RecipientName}}</div>
+                                        <div class="text-[10px] font-mono text-slate-400">{{.RecipientJID}}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 max-w-xs sm:max-w-sm">
+                                <div class="text-xs text-slate-300 truncate">{{truncate .Message 70}}</div>
+                                {{if .ErrorMessage}}
+                                <div class="inline-flex items-center gap-1 text-[10px] text-rose-400 mt-1 font-mono">
+                                    <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                    <span class="truncate">{{.ErrorMessage}}</span>
+                                </div>
+                                {{end}}
+                            </td>
+                            <td class="py-3 px-4 whitespace-nowrap">
+                                {{statusBadge .Status}}
+                            </td>
+                            <td class="py-3 px-4 whitespace-nowrap">
+                                <span class="text-xs font-mono text-slate-400 bg-white/[0.03] px-2 py-0.5 rounded border border-white/[0.05]">
+                                    {{.RetryCount}}/{{.MaxRetries}}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-right whitespace-nowrap">
+                                <button onclick="viewMessageModal(`{{.RecipientName}}`, `{{.RecipientJID}}`, `{{formatTime .SentAt "02 Jan 2006 15:04 WITA"}}`, `{{.Status}}`, `{{.Message}}`, `{{.ErrorMessage}}`)" 
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-indigo-500/20 text-slate-300 hover:text-indigo-300 border border-white/[0.08] hover:border-indigo-500/30 text-xs font-medium transition">
+                                    Detail
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                </button>
+                            </td>
+                        </tr>
+                        {{end}}
+                        {{else}}
+                        <tr>
+                            <td colspan="6" class="py-14 text-center">
+                                <div class="max-w-xs mx-auto space-y-2">
+                                    <div class="w-10 h-10 rounded-2xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-center mx-auto text-slate-500">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    </div>
+                                    <div class="text-xs font-semibold text-slate-400">Belum Ada Riwayat</div>
+                                    <div class="text-[11px] text-slate-500">Tidak ada arsip pesan yang sesuai dengan filter yang dipilih saat ini.</div>
+                                </div>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -77,33 +104,45 @@
 
 <!-- Modal Detail Pesan -->
 <dialog id="modal_view_message" class="modal">
-    <div class="modal-box bg-base-100 border border-base-content/10 max-w-lg space-y-4">
-        <h3 class="font-bold text-lg text-white">Detail Pesan Terkirim</h3>
+    <div class="modal-box bg-[#090d16] border border-white/[0.1] rounded-2xl max-w-lg p-6 space-y-4 shadow-2xl">
+        <div class="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+            <div>
+                <h3 class="font-bold text-base text-white tracking-tight">Detail Pesan Terkirim</h3>
+                <p class="text-xs text-slate-400">Rincian pengiriman pesan dan log status WhatsApp.</p>
+            </div>
+            <button type="button" onclick="modal_view_message.close()" class="p-1 rounded-lg hover:bg-white/[0.05] text-slate-400 hover:text-white transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
         
-        <div class="grid grid-cols-2 gap-3 text-xs bg-base-200/50 p-3 rounded-xl border border-base-content/5">
-            <div>
-                <span class="text-slate-400">Penerima:</span>
-                <div id="modal-msg-recipient" class="font-bold text-white"></div>
-                <div id="modal-msg-jid" class="font-mono text-[10px] text-indigo-300"></div>
+        <div class="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+            <div class="space-y-0.5">
+                <span class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Penerima</span>
+                <div id="modal-msg-recipient" class="text-xs font-bold text-white"></div>
+                <div id="modal-msg-jid" class="text-[10px] font-mono text-indigo-400"></div>
             </div>
-            <div>
-                <span class="text-slate-400">Waktu & Status:</span>
-                <div id="modal-msg-time" class="font-mono text-slate-200"></div>
-                <div id="modal-msg-status" class="mt-0.5"></div>
+            <div class="space-y-0.5">
+                <span class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Waktu & Status</span>
+                <div id="modal-msg-time" class="text-xs font-mono text-slate-300"></div>
+                <div id="modal-msg-status" class="pt-0.5"></div>
             </div>
         </div>
 
-        <div id="modal-msg-error-container" class="alert alert-error text-xs p-3 hidden">
-            <span id="modal-msg-error"></span>
+        <div id="modal-msg-error-container" class="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300 hidden flex items-start gap-2">
+            <svg class="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            <span id="modal-msg-error" class="break-all font-mono text-[11px]"></span>
         </div>
 
-        <div>
-            <span class="text-xs font-semibold text-slate-400 block mb-1">Konten Lengkap Pesan:</span>
-            <div id="modal-msg-content" class="p-4 bg-slate-900 rounded-xl border border-slate-800 text-xs font-mono whitespace-pre-wrap text-slate-200 max-h-64 overflow-y-auto leading-relaxed"></div>
+        <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-300">Konten Naskah WhatsApp</span>
+                <button type="button" onclick="copyMessageModalContent()" class="text-[10px] font-mono text-indigo-400 hover:text-indigo-300 transition">Salin Teks</button>
+            </div>
+            <div id="modal-msg-content" class="p-4 bg-[#07090e] rounded-xl border border-white/[0.08] text-xs font-mono whitespace-pre-wrap text-slate-200 max-h-60 overflow-y-auto leading-relaxed"></div>
         </div>
 
-        <div class="modal-action justify-end">
-            <button type="button" onclick="modal_view_message.close()" class="btn btn-sm btn-ghost">Tutup</button>
+        <div class="flex justify-end pt-2 border-t border-white/[0.06]">
+            <button type="button" onclick="modal_view_message.close()" class="px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 text-xs font-medium transition">Tutup</button>
         </div>
     </div>
     <form method="dialog" class="modal-backdrop"><button>close</button></form>
@@ -114,18 +153,35 @@ function viewMessageModal(recipient, jid, timeStr, status, message, error) {
     document.getElementById('modal-msg-recipient').innerText = recipient;
     document.getElementById('modal-msg-jid').innerText = jid;
     document.getElementById('modal-msg-time').innerText = timeStr;
-    document.getElementById('modal-msg-status').innerHTML = '<span class="badge badge-sm badge-neutral font-mono uppercase">' + status + '</span>';
+    
+    let badgeClass = "bg-slate-500/10 text-slate-400 border-slate-500/20";
+    if (status === "sent") badgeClass = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+    else if (status === "dry_run") badgeClass = "bg-amber-500/10 text-amber-400 border-amber-500/20";
+    else if (status === "failed") badgeClass = "bg-rose-500/10 text-rose-400 border-rose-500/20";
+
+    document.getElementById('modal-msg-status').innerHTML = '<span class="px-2 py-0.5 rounded text-[10px] font-mono uppercase border ' + badgeClass + '">' + status + '</span>';
     document.getElementById('modal-msg-content').innerText = message;
 
     const errContainer = document.getElementById('modal-msg-error-container');
     if (error && error.trim() !== '') {
-        document.getElementById('modal-msg-error').innerText = 'Error: ' + error;
+        document.getElementById('modal-msg-error').innerText = error;
         errContainer.classList.remove('hidden');
     } else {
         errContainer.classList.add('hidden');
     }
 
     modal_view_message.showModal();
+}
+
+function copyMessageModalContent() {
+    const text = document.getElementById('modal-msg-content').innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        if (window.showToast) {
+            window.showToast('Teks pesan berhasil disalin', 'success');
+        } else {
+            alert('Teks berhasil disalin!');
+        }
+    });
 }
 </script>
 {{end}}
