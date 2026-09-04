@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"io/fs"
 	"net/http"
+	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -16,8 +19,9 @@ import (
 
 // ViewRenderer manages HTML template parsing and execution
 type ViewRenderer struct {
-	templatesDir string
-	funcMap      template.FuncMap
+	templateFS fs.FS
+	diskDir    string
+	funcMap    template.FuncMap
 }
 
 // PageData contains the standard context passed into HTML templates
@@ -32,10 +36,11 @@ type PageData struct {
 	CurrentYear     int
 }
 
-// NewViewRenderer creates a new view renderer
-func NewViewRenderer(templatesDir string) *ViewRenderer {
+// NewViewRenderer creates a new view renderer supporting embedded fs and optional disk fallback
+func NewViewRenderer(templateFS fs.FS, diskDir string) *ViewRenderer {
 	return &ViewRenderer{
-		templatesDir: templatesDir,
+		templateFS: templateFS,
+		diskDir:    diskDir,
 		funcMap: template.FuncMap{
 			"upper": strings.ToUpper,
 			"lower": strings.ToLower,
@@ -96,12 +101,31 @@ func (v *ViewRenderer) Render(w http.ResponseWriter, r *http.Request, pageTempla
 	}
 	data.CurrentYear = time.Now().Year()
 
-	layoutPath := filepath.Join(v.templatesDir, "layouts", "base.html")
-	pagePath := filepath.Join(v.templatesDir, pageTemplate)
+	var tmpl *template.Template
+	var err error
 
-	tmpl, err := template.New("base.html").Funcs(v.funcMap).ParseFiles(layoutPath, pagePath)
+	if v.diskDir != "" {
+		diskLayout := filepath.Join(v.diskDir, "layouts", "base.html")
+		diskPage := filepath.Join(v.diskDir, pageTemplate)
+		if _, statErr := os.Stat(diskLayout); statErr == nil {
+			if _, statErr := os.Stat(diskPage); statErr == nil {
+				tmpl, err = template.New("base.html").Funcs(v.funcMap).ParseFiles(diskLayout, diskPage)
+			}
+		}
+	}
+
+	if tmpl == nil && v.templateFS != nil {
+		layoutPath := "layouts/base.html"
+		pagePath := filepath.ToSlash(pageTemplate)
+		tmpl, err = template.New("base.html").Funcs(v.funcMap).ParseFS(v.templateFS, layoutPath, pagePath)
+	}
+
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Template parse error: %v", err), http.StatusInternalServerError)
+		return
+	}
+	if tmpl == nil {
+		http.Error(w, "Template not found", http.StatusInternalServerError)
 		return
 	}
 
@@ -118,18 +142,38 @@ func (v *ViewRenderer) Render(w http.ResponseWriter, r *http.Request, pageTempla
 // RenderPlain renders a standalone page without the main dashboard sidebar (e.g. login, register)
 func (v *ViewRenderer) RenderPlain(w http.ResponseWriter, pageTemplate string, data PageData) {
 	data.CurrentYear = time.Now().Year()
-	pagePath := filepath.Join(v.templatesDir, pageTemplate)
+	baseName := path.Base(filepath.ToSlash(pageTemplate))
 
-	tmpl, err := template.New(filepath.Base(pageTemplate)).Funcs(v.funcMap).ParseFiles(pagePath)
+	var tmpl *template.Template
+	var err error
+
+	if v.diskDir != "" {
+		diskFile := filepath.Join(v.diskDir, pageTemplate)
+		if _, statErr := os.Stat(diskFile); statErr == nil {
+			tmpl, err = template.New(baseName).Funcs(v.funcMap).ParseFiles(diskFile)
+		}
+	}
+
+	if tmpl == nil && v.templateFS != nil {
+		pagePath := filepath.ToSlash(pageTemplate)
+		tmpl, err = template.New(baseName).Funcs(v.funcMap).ParseFS(v.templateFS, pagePath)
+	}
+
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Template parse error: %v", err), http.StatusInternalServerError)
 		return
 	}
+	if tmpl == nil {
+		http.Error(w, "Template not found", http.StatusInternalServerError)
+		return
+	}
 
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
-		http.Error(w, fmt.Sprintf("Template render error: %v", err), http.StatusInternalServerError)
-		return
+	if err := tmpl.ExecuteTemplate(&buf, baseName, data); err != nil {
+		if err2 := tmpl.Execute(&buf, data); err2 != nil {
+			http.Error(w, fmt.Sprintf("Template render error: %v", err), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -138,17 +182,37 @@ func (v *ViewRenderer) RenderPlain(w http.ResponseWriter, pageTemplate string, d
 
 // RenderPartial renders an HTML snippet (for HTMX partial responses)
 func (v *ViewRenderer) RenderPartial(w http.ResponseWriter, partialTemplate string, data interface{}) {
-	tmplPath := filepath.Join(v.templatesDir, partialTemplate)
-	tmpl, err := template.New(filepath.Base(partialTemplate)).Funcs(v.funcMap).ParseFiles(tmplPath)
+	baseName := path.Base(filepath.ToSlash(partialTemplate))
+	var tmpl *template.Template
+	var err error
+
+	if v.diskDir != "" {
+		diskFile := filepath.Join(v.diskDir, partialTemplate)
+		if _, statErr := os.Stat(diskFile); statErr == nil {
+			tmpl, err = template.New(baseName).Funcs(v.funcMap).ParseFiles(diskFile)
+		}
+	}
+
+	if tmpl == nil && v.templateFS != nil {
+		pagePath := filepath.ToSlash(partialTemplate)
+		tmpl, err = template.New(baseName).Funcs(v.funcMap).ParseFS(v.templateFS, pagePath)
+	}
+
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Partial parse error: %v", err), http.StatusInternalServerError)
 		return
 	}
+	if tmpl == nil {
+		http.Error(w, "Partial template not found", http.StatusInternalServerError)
+		return
+	}
 
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
-		http.Error(w, fmt.Sprintf("Partial render error: %v", err), http.StatusInternalServerError)
-		return
+	if err := tmpl.ExecuteTemplate(&buf, baseName, data); err != nil {
+		if err2 := tmpl.Execute(&buf, data); err2 != nil {
+			http.Error(w, fmt.Sprintf("Partial render error: %v", err), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")

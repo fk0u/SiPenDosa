@@ -1,7 +1,9 @@
 package web
 
 import (
+	"io/fs"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -10,7 +12,7 @@ import (
 )
 
 // SetupRouter initializes Chi router with middlewares and route handlers
-func SetupRouter(h *Handlers, staticDir string) http.Handler {
+func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler {
 	r := chi.NewRouter()
 
 	// Standard middlewares
@@ -20,10 +22,20 @@ func SetupRouter(h *Handlers, staticDir string) http.Handler {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Compress(5))
 
-	// Static files server
-	workDir, _ := filepath.Abs(staticDir)
-	filesDir := http.Dir(workDir)
-	FileServer(r, "/static", filesDir)
+	// Static files server with disk and embedded fallback
+	var filesDir http.FileSystem
+	if staticDiskDir != "" {
+		if fi, err := os.Stat(staticDiskDir); err == nil && fi.IsDir() {
+			workDir, _ := filepath.Abs(staticDiskDir)
+			filesDir = http.Dir(workDir)
+		}
+	}
+	if filesDir == nil && staticFS != nil {
+		filesDir = http.FS(staticFS)
+	}
+	if filesDir != nil {
+		FileServer(r, "/static", filesDir)
+	}
 
 	// Public routes
 	r.Get("/healthz", h.HealthzHandler)

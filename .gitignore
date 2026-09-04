@@ -28,3 +28,6 @@ backups/
 sipen
 sipen.exe
 *.exe
+cmd/installer/sipen.exe
+cmd/installer/*.syso
+*.syso

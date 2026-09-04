@@ -85,7 +85,28 @@
 
 ---
 
-## 🚀 Panduan Instalasi di Ubuntu VPS
+## 💻 Panduan Instalasi di Komputer / Laptop Windows (Tanpa Perlu Source Code!)
+
+SiPenDosa kini hadir dengan sistem **Standalone Installer**, sehingga pengguna tidak perlu menginstal Go, Git, GCC, ataupun menyalin source code program.
+
+### Opsi 1: Menggunakan Executable Installer (`SiPenDosa-Setup.exe`) — Sangat Mudah!
+1. Unduh atau jalankan file **`SiPenDosa-Setup.exe`** (dapat di-double click langsung).
+2. Installer akan:
+   - Menyiapkan direktori di `%LOCALAPPDATA%\Programs\SiPenDosa` (tanpa memerlukan hak akses Administrator).
+   - Mengekstrak file program mandiri (*self-contained*).
+   - Meng-generate file `.env` produksi dengan `SESSION_SECRET` unik 32 karakter secara otomatis.
+   - Membuat **Desktop Shortcut** (`SiPenDosa.lnk`).
+   - Membuat folder **Start Menu** (`Programs > SiPenDosa`) lengkap dengan shortcut terminal, background runner hening, dan uninstaller.
+   - Mendaftarkan aplikasi ke menu **Windows Settings > Installed Apps** (Add/Remove Programs).
+3. Setelah instalasi selesai, tekan **Y** untuk langsung menjalankan aplikasi dan membuka browser ke `http://localhost:8473`!
+
+### Opsi 2: Menggunakan Skrip Satu Klik (`install.bat` / `install.ps1`)
+Jika Anda mendistribusikan folder rilis:
+- Cukup klik kanan file **`install.bat`** lalu pilih **Run** (atau jalankan `powershell .\install.ps1`).
+
+---
+
+## 🚀 Panduan Instalasi di Ubuntu VPS (Daemon 24/7)
 
 ### Langkah 1: Persiapan Server & Clone Repositori
 
