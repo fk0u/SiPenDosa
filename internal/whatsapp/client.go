@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"sipen/internal/banner"
 	"sipen/internal/realtime"
 
 	"github.com/mdp/qrterminal/v3"
@@ -45,6 +46,7 @@ type Client struct {
 	container  *sqlstore.Container
 	hub        *realtime.Hub
 	dbPath     string
+	port       string
 	state      State
 	currentQR  string
 	phoneJID   string
@@ -56,7 +58,7 @@ type Client struct {
 }
 
 // NewClient initializes the whatsmeow storage container and client wrapper
-func NewClient(dbPath string, hub *realtime.Hub) (*Client, error) {
+func NewClient(dbPath string, hub *realtime.Hub, port string) (*Client, error) {
 	dir := filepath.Dir(dbPath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create session directory: %w", err)
@@ -79,6 +81,7 @@ func NewClient(dbPath string, hub *realtime.Hub) (*Client, error) {
 		container:  container,
 		hub:        hub,
 		dbPath:     dbPath,
+		port:       port,
 		state:      StateDisconnected,
 		ctx:        ctx,
 		cancelFunc: cancel,
@@ -130,9 +133,10 @@ func (c *Client) listenQR(qrChan <-chan whatsmeow.QRChannelItem) {
 	for item := range qrChan {
 		switch item.Event {
 		case "code":
-			slog.Info("WhatsApp QR Code received. Please scan via Terminal or Dashboard.")
+			banner.PrintQRHeader()
 			// Print ASCII QR to terminal
 			qrterminal.GenerateHalfBlock(item.Code, qrterminal.L, os.Stdout)
+			banner.PrintQRFooter(c.port)
 
 			// Generate PNG Data URL for Web Dashboard
 			pngBytes, err := qrcode.Encode(item.Code, qrcode.Medium, 256)
@@ -165,7 +169,6 @@ func (c *Client) listenQR(qrChan <-chan whatsmeow.QRChannelItem) {
 func (c *Client) handleEvent(evt interface{}) {
 	switch evt.(type) {
 	case *events.Connected:
-		slog.Info("WhatsApp client connected successfully")
 		c.mu.Lock()
 		c.phoneJID = c.client.Store.ID.String()
 		c.pushName = c.client.Store.PushName
@@ -173,6 +176,7 @@ func (c *Client) handleEvent(evt interface{}) {
 		c.setState(StateConnected)
 		c.mu.Unlock()
 
+		banner.PrintConnectedBox(c.phoneJID, c.pushName)
 		c.hub.BroadcastToast("success", "WhatsApp berhasil terhubung!")
 
 	case *events.Disconnected:
