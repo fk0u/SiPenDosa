@@ -1,5 +1,5 @@
 [Unit]
-Description=SiPen — Advanced WhatsApp Assistant Bot (Daemon)
+Description=SiPenDosa — Sistem Pengingat Dosen Saatnya (WhatsApp Assistant Daemon)
 After=network.target network-online.target
 Wants=network-online.target
 

@@ -26,5 +26,5 @@ install-service:
 	sudo systemctl daemon-reload
 	sudo systemctl enable $(APP_NAME)
 	sudo systemctl restart $(APP_NAME)
-	@echo "==> SiPen service berhasil dipasang dan dijalankan!"
+	@echo "==> SiPenDosa service berhasil dipasang dan dijalankan!"
 	sudo systemctl status $(APP_NAME)

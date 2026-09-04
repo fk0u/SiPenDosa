@@ -1,4 +1,4 @@
-# Roadmap Proyek: SiPen
+# Roadmap Proyek: SiPenDosa (Sistem Pengingat Dosen Saatnya)
 
 ## Status Saat Ini (v1.0.0-prod)
 - [x] Inisialisasi arsitektur bersih Golang (CGO-free dengan `modernc.org/sqlite`).

@@ -11,32 +11,32 @@ import (
 
 // ANSI color codes
 const (
-	Reset       = "\033[0m"
-	Bold        = "\033[1m"
-	Dim         = "\033[2m"
-	Cyan        = "\033[36m"
-	BrightCyan  = "\033[96m"
-	Magenta     = "\033[35m"
-	BrightPurple= "\033[95m"
-	Green       = "\033[32m"
-	BrightGreen = "\033[92m"
-	Yellow      = "\033[33m"
-	BrightYellow= "\033[93m"
-	Red         = "\033[31m"
-	BrightRed   = "\033[91m"
-	White       = "\033[97m"
-	Gray        = "\033[90m"
+	Reset        = "\033[0m"
+	Bold         = "\033[1m"
+	Dim          = "\033[2m"
+	Cyan         = "\033[36m"
+	BrightCyan   = "\033[96m"
+	Magenta      = "\033[35m"
+	BrightPurple = "\033[95m"
+	Green        = "\033[32m"
+	BrightGreen  = "\033[92m"
+	Yellow       = "\033[33m"
+	BrightYellow = "\033[93m"
+	Red          = "\033[31m"
+	BrightRed    = "\033[91m"
+	White        = "\033[97m"
+	Gray         = "\033[90m"
 )
 
-// PrintBanner prints a futuristic, cyberpunk-style ASCII banner and telemetry box
+// PrintBanner prints a futuristic, cyberpunk-style ASCII banner and telemetry box for SiPenDosa
 func PrintBanner(cfg *config.Config) {
 	logo := []string{
-		`  ███████╗██╗██████╗ ███████╗███╗   ██╗`,
-		`  ██╔════╝██║██╔══██╗██╔════╝████╗  ██║`,
-		`  ███████╗██║██████╔╝█████╗  ██╔██╗ ██║`,
-		`  ╚════██║██║██╔═══╝ ██╔══╝  ██║╚██╗██║`,
-		`  ███████║██║██║     ███████╗██║ ╚████║`,
-		`  ╚══════╝╚═╝╚═╝     ╚══════╝╚═╝  ╚═══╝`,
+		`  ███████╗██╗██████╗ ███████╗███╗   ██╗██████╗  ██████╗ ███████╗ █████╗ `,
+		`  ██╔════╝██║██╔══██╗██╔════╝████╗  ██║██╔══██╗██╔═══██╗██╔════╝██╔══██╗`,
+		`  ███████╗██║██████╔╝█████╗  ██╔██╗ ██║██║  ██║██║   ██║███████╗███████║`,
+		`  ╚════██║██║██╔═══╝ ██╔══╝  ██║╚██╗██║██║  ██║██║   ██║╚════██║██╔══██║`,
+		`  ███████║██║██║     ███████╗██║ ╚████║██████╔╝╚██████╔╝███████║██║  ██║`,
+		`  ╚══════╝╚═╝╚═╝     ╚══════╝╚═╝  ╚═══╝╚═════╝  ╚═════╝ ╚══════╝╚═╝  ╚═╝`,
 	}
 
 	fmt.Println()
@@ -47,18 +47,20 @@ func PrintBanner(cfg *config.Config) {
 		fmt.Printf("%s%s%s%s\n", Bold, c, line, Reset)
 	}
 
-	fmt.Printf("  %s%s⚡ ADVANCED WHATSAPP ASSISTANT BOT %s%s— OVERPOWER EDITION ⚡%s\n", Bold, BrightYellow, BrightPurple, Bold, Reset)
+	fmt.Printf("  %s%s⚡ SIPENDOSA — SISTEM PENGINGAT DOSEN SAATNYA ⚡%s\n", Bold, BrightYellow, Reset)
+	fmt.Printf("  %s%s\"Asisten yang rela 'berdosa' demi mengingatkan dosen agar mahasiswa tidak sungkan\"%s\n", Dim, Gray, Reset)
 	fmt.Println()
 
 	// Telemetry Box
-	boxWidth := 71
+	boxWidth := 74
 	borderH := strings.Repeat("═", boxWidth-2)
 	dividerH := strings.Repeat("─", boxWidth-2)
 
 	fmt.Printf("%s%s╔%s╗%s\n", Bold, Cyan, borderH, Reset)
-	fmt.Printf("%s%s║%s %s%-67s%s %s%s║%s\n", Bold, Cyan, Reset, BrightPurple+Bold, "DAEMON SYSTEM TELEMETRY & ENGINE STATUS", Reset, Bold, Cyan, Reset)
+	fmt.Printf("%s%s║%s %s%-70s%s %s%s║%s\n", Bold, Cyan, Reset, BrightPurple+Bold, "SIPENDOSA DAEMON SYSTEM TELEMETRY & ENGINE STATUS", Reset, Bold, Cyan, Reset)
 	fmt.Printf("%s%s╠%s╣%s\n", Bold, Cyan, borderH, Reset)
 
+	formatRow("App Name", "SiPenDosa (Sistem Pengingat Dosen Saatnya)")
 	formatRow("Engine Version", "v1.0.0-PROD (Build 2026.09-OverPower)")
 	formatRow("Core Environment", fmt.Sprintf("%s (%s/%s)", runtime.Version(), runtime.GOOS, runtime.GOARCH))
 	formatRow("Web Dashboard", fmt.Sprintf("http://localhost:%s", cfg.Port))
@@ -78,7 +80,7 @@ func PrintBanner(cfg *config.Config) {
 
 	// Dashboard quick link callout
 	fmt.Printf("%s%s┌%s┐%s\n", Bold, Green, dividerH, Reset)
-	
+
 	urlText := fmt.Sprintf("http://localhost:%s", cfg.Port)
 	line1 := fmt.Sprintf("  🚀 WEB DASHBOARD SIAP DIAKSES: %s", urlText)
 	pad1 := boxWidth - 2 - len(line1)
@@ -100,7 +102,7 @@ func PrintBanner(cfg *config.Config) {
 
 func formatRow(label, value string) {
 	labelFormatted := fmt.Sprintf("%s%s%-17s%s :", Gray, Bold, label, Reset)
-	valFormatted := fmt.Sprintf("%s%-48s%s", White, value, Reset)
+	valFormatted := fmt.Sprintf("%s%-51s%s", White, value, Reset)
 	fmt.Printf("%s%s║%s  %s %s %s%s║%s\n", Bold, Cyan, Reset, labelFormatted, valFormatted, Bold, Cyan, Reset)
 }
 
@@ -130,16 +132,16 @@ func LogStep(tag, message string) {
 
 // PrintQRHeader prints a stylish container header for terminal QR code
 func PrintQRHeader() {
-	boxWidth := 67
+	boxWidth := 70
 	borderH := strings.Repeat("═", boxWidth-2)
 	fmt.Println()
 	fmt.Printf("%s%s╔%s╗%s\n", Bold, Yellow, borderH, Reset)
-	fmt.Printf("%s%s║%s  %s%s📱 PINDAI WHATSAPP QR CODE UNTUK MENAUTKAN PERANGKAT%s            %s%s║%s\n",
+	fmt.Printf("%s%s║%s  %s%s📱 PINDAI WHATSAPP QR CODE UNTUK MENAUTKAN PERANGKAT SIPENDOSA%s     %s%s║%s\n",
 		Bold, Yellow, Reset, Bold, BrightYellow, Reset, Bold, Yellow, Reset)
 	fmt.Printf("%s%s╠%s╣%s\n", Bold, Yellow, borderH, Reset)
-	fmt.Printf("%s%s║%s  1. Buka WhatsApp di smartphone Anda                           %s%s║%s\n", Bold, Yellow, Reset, Bold, Yellow, Reset)
-	fmt.Printf("%s%s║%s  2. Buka Menu (⋮) atau Pengaturan > Perangkat Tertaut           %s%s║%s\n", Bold, Yellow, Reset, Bold, Yellow, Reset)
-	fmt.Printf("%s%s║%s  3. Pilih 'Tautkan Perangkat' dan arahkan kamera ke QR berikut: %s%s║%s\n", Bold, Yellow, Reset, Bold, Yellow, Reset)
+	fmt.Printf("%s%s║%s  1. Buka WhatsApp di smartphone Anda                              %s%s║%s\n", Bold, Yellow, Reset, Bold, Yellow, Reset)
+	fmt.Printf("%s%s║%s  2. Buka Menu (⋮) atau Pengaturan > Perangkat Tertaut              %s%s║%s\n", Bold, Yellow, Reset, Bold, Yellow, Reset)
+	fmt.Printf("%s%s║%s  3. Pilih 'Tautkan Perangkat' dan arahkan kamera ke QR berikut:    %s%s║%s\n", Bold, Yellow, Reset, Bold, Yellow, Reset)
 	fmt.Printf("%s%s╚%s╝%s\n", Bold, Yellow, borderH, Reset)
 	fmt.Println()
 }
@@ -154,18 +156,18 @@ func PrintQRFooter(port string) {
 
 // PrintConnectedBox prints a celebratory connected box
 func PrintConnectedBox(jid, pushName string) {
-	boxWidth := 67
+	boxWidth := 70
 	borderH := strings.Repeat("═", boxWidth-2)
 	fmt.Println()
 	fmt.Printf("%s%s╔%s╗%s\n", Bold, Green, borderH, Reset)
-	fmt.Printf("%s%s║%s  %s%s✓ WHATSAPP ENGINE BERHASIL TERHUBUNG SECARA ONLINE%s            %s%s║%s\n",
+	fmt.Printf("%s%s║%s  %s%s✓ WHATSAPP ENGINE BERHASIL TERHUBUNG SECARA ONLINE%s               %s%s║%s\n",
 		Bold, Green, Reset, Bold, BrightGreen, Reset, Bold, Green, Reset)
 	fmt.Printf("%s%s╠%s╣%s\n", Bold, Green, borderH, Reset)
-	fmt.Printf("%s%s║%s  • Akun JID    : %s%-47s%s%s%s║%s\n", Bold, Green, Reset, BrightCyan, jid, Reset, Bold, Green, Reset)
+	fmt.Printf("%s%s║%s  • Akun JID    : %s%-50s%s%s%s║%s\n", Bold, Green, Reset, BrightCyan, jid, Reset, Bold, Green, Reset)
 	if pushName != "" {
-		fmt.Printf("%s%s║%s  • Nama Akun   : %s%-47s%s%s%s║%s\n", Bold, Green, Reset, White, pushName, Reset, Bold, Green, Reset)
+		fmt.Printf("%s%s║%s  • Nama Akun   : %s%-50s%s%s%s║%s\n", Bold, Green, Reset, White, pushName, Reset, Bold, Green, Reset)
 	}
-	fmt.Printf("%s%s║%s  • Status Sesi : %sAKTIF (Siaga mengirim pengingat jadwal)%s         %s%s║%s\n", Bold, Green, Reset, BrightGreen, Reset, Bold, Green, Reset)
+	fmt.Printf("%s%s║%s  • Status Sesi : %sAKTIF (SiPenDosa siaga mengirim pengingat jadwal)%s   %s%s║%s\n", Bold, Green, Reset, BrightGreen, Reset, Bold, Green, Reset)
 	fmt.Printf("%s%s╚%s╝%s\n", Bold, Green, borderH, Reset)
 	fmt.Println()
 }

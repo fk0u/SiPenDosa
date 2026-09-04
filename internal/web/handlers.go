@@ -83,7 +83,7 @@ func (h *Handlers) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.renderer.RenderPlain(w, "auth/login.html", PageData{
-		Title: "Masuk — SiPen",
+		Title: "Masuk — SiPenDosa",
 	})
 }
 
@@ -95,7 +95,7 @@ func (h *Handlers) LoginPostHandler(w http.ResponseWriter, r *http.Request) {
 	user, err := h.authSvc.Authenticate(username, password)
 	if err != nil {
 		h.renderer.RenderPlain(w, "auth/login.html", PageData{
-			Title:      "Masuk — SiPen",
+			Title:      "Masuk — SiPenDosa",
 			FlashError: "Username atau kata sandi salah.",
 		})
 		return
@@ -104,7 +104,7 @@ func (h *Handlers) LoginPostHandler(w http.ResponseWriter, r *http.Request) {
 	token, err := h.authSvc.CreateSession(user.ID)
 	if err != nil {
 		h.renderer.RenderPlain(w, "auth/login.html", PageData{
-			Title:      "Masuk — SiPen",
+			Title:      "Masuk — SiPenDosa",
 			FlashError: "Gagal membuat sesi login.",
 		})
 		return
@@ -128,7 +128,7 @@ func (h *Handlers) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.renderer.RenderPlain(w, "auth/register.html", PageData{
-		Title:          "Pendaftaran — SiPen",
+		Title:          "Pendaftaran — SiPenDosa",
 		IsRegistration: isFirstUser,
 	})
 }
@@ -144,7 +144,7 @@ func (h *Handlers) RegisterPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	if username == "" || len(password) < 6 {
 		h.renderer.RenderPlain(w, "auth/register.html", PageData{
-			Title:          "Pendaftaran — SiPen",
+			Title:          "Pendaftaran — SiPenDosa",
 			IsRegistration: isFirstUser,
 			FlashError:     "Username wajib diisi dan kata sandi minimal 6 karakter.",
 		})
@@ -153,7 +153,7 @@ func (h *Handlers) RegisterPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	if password != confirmPassword {
 		h.renderer.RenderPlain(w, "auth/register.html", PageData{
-			Title:          "Pendaftaran — SiPen",
+			Title:          "Pendaftaran — SiPenDosa",
 			IsRegistration: isFirstUser,
 			FlashError:     "Konfirmasi kata sandi tidak cocok.",
 		})
@@ -169,7 +169,7 @@ func (h *Handlers) RegisterPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		h.renderer.RenderPlain(w, "auth/register.html", PageData{
-			Title:          "Pendaftaran — SiPen",
+			Title:          "Pendaftaran — SiPenDosa",
 			IsRegistration: isFirstUser,
 			FlashError:     err.Error(),
 		})

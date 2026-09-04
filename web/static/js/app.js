@@ -1,4 +1,4 @@
-// SiPen — Advanced WhatsApp Assistant Bot Client Script
+// SiPenDosa — Advanced WhatsApp Assistant Bot Client Script
 (function () {
     let ws = null;
     let wsReconnectTimeout = null;
@@ -10,7 +10,7 @@
         ws = new WebSocket(wsUrl);
 
         ws.onopen = function () {
-            console.log('[SiPen WS] Terhubung ke server realtime');
+            console.log('[SiPenDosa WS] Terhubung ke server realtime');
             if (wsReconnectTimeout) {
                 clearTimeout(wsReconnectTimeout);
                 wsReconnectTimeout = null;
@@ -22,17 +22,17 @@
                 const data = JSON.parse(event.data);
                 handleEvent(data);
             } catch (e) {
-                console.error('[SiPen WS] Gagal mem-parse pesan:', e);
+                console.error('[SiPenDosa WS] Gagal mem-parse pesan:', e);
             }
         };
 
         ws.onclose = function () {
-            console.warn('[SiPen WS] Terputus dari server. Mencoba rekoneksi dalam 3 detik...');
+            console.warn('[SiPenDosa WS] Terputus dari server. Mencoba rekoneksi dalam 3 detik...');
             wsReconnectTimeout = setTimeout(initWebSocket, 3000);
         };
 
         ws.onerror = function (err) {
-            console.error('[SiPen WS] Terjadi kesalahan:', err);
+            console.error('[SiPenDosa WS] Terjadi kesalahan:', err);
             ws.close();
         };
     }

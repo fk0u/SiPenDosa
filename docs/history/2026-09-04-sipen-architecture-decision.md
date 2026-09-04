@@ -1,10 +1,10 @@
-# Keputusan Arsitektur: SiPen (OverPower Edition)
+# Keputusan Arsitektur: SiPenDosa (OverPower Edition)
 
 **Tanggal:** 4 September 2026  
 **Status:** Diterima & Diimplementasikan  
 
 ## Konteks
-Aplikasi asisten WhatsApp SiPen membutuhkan keandalan tingkat tinggi untuk beroperasi 24/7 di VPS Linux serta kemudahan kompilasi di lingkungan pengembangan Windows lokal yang tidak memiliki toolchain GCC/CGO bawaan.
+Aplikasi asisten WhatsApp SiPenDosa (Sistem Pengingat Dosen Saatnya) membutuhkan keandalan tingkat tinggi untuk beroperasi 24/7 di VPS Linux serta kemudahan kompilasi di lingkungan pengembangan Windows lokal yang tidak memiliki toolchain GCC/CGO bawaan.
 
 ## Keputusan Teknis
 1. **Pilihan Driver SQLite (Pure-Go / CGO-Free):**

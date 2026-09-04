@@ -198,11 +198,11 @@ Mohon izin mengingatkan jadwal perkuliahan untuk esok hari:
 📍 *Ruang/Lokasi:* {{.Lokasi}}
 {{if .LinkGroup}}🔗 *Tautan Kelas/Grup:* {{.LinkGroup}}{{end}}
 
-Pemberitahuan ini dikirim otomatis oleh Asisten Perkuliahan (SiPen).
+Pemberitahuan ini dikirim otomatis oleh Asisten Perkuliahan (SiPenDosa — Sistem Pengingat Dosen Saatnya).
 Demikian informasi ini disampaikan. Terima kasih atas perhatian dan kerja sama Bapak/Ibu.
 
 Hormat kami,
-{{if .NamaMahasiswa}}Ketua Tingkat: {{.NamaMahasiswa}}{{if .NIM}} ({{.NIM}}){{end}}{{else}}Mahasiswa SiPen Bot{{end}}`
+{{if .NamaMahasiswa}}Ketua Tingkat: {{.NamaMahasiswa}}{{if .NIM}} ({{.NIM}}){{end}}{{else}}Mahasiswa / SiPenDosa{{end}}`
 
 		res, err := s.db.Exec(`INSERT INTO templates (name, content, is_default, created_at, updated_at) VALUES (?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
 			"Pengingat Perkuliahan Formal (H-1)", defaultContent)
