@@ -4,7 +4,7 @@
     <!-- Header & Filter Section -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-2">
+            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold mb-2">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 Audit & Dispatch Log
             </div>
@@ -14,7 +14,7 @@
 
         <!-- Filter Status Pills -->
         <div class="flex items-center gap-1.5 p-1 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-            <a href="/history" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{if eq .Data.SelectedStatus ""}}bg-indigo-600 text-white shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.05]{{end}}">Semua</a>
+            <a href="/history" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{if eq .Data.SelectedStatus ""}}bg-rose-600 text-white shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.05]{{end}}">Semua</a>
             <a href="/history?status=sent" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{if eq .Data.SelectedStatus "sent"}}bg-emerald-600 text-white shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.05]{{end}}">Terkirim</a>
             <a href="/history?status=dry_run" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{if eq .Data.SelectedStatus "dry_run"}}bg-amber-600 text-white shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.05]{{end}}">Dry Run</a>
             <a href="/history?status=failed" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{if eq .Data.SelectedStatus "failed"}}bg-rose-600 text-white shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.05]{{end}}">Gagal</a>
@@ -46,7 +46,7 @@
                             </td>
                             <td class="py-3 px-4 whitespace-nowrap">
                                 <div class="flex items-center gap-2.5">
-                                    <div class="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs">
+                                    <div class="w-7 h-7 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center font-bold text-xs">
                                         {{slice .RecipientName 0 1}}
                                     </div>
                                     <div>
@@ -74,7 +74,7 @@
                             </td>
                             <td class="py-3 px-4 text-right whitespace-nowrap">
                                 <button onclick="viewMessageModal(`{{.RecipientName}}`, `{{.RecipientJID}}`, `{{formatTime .SentAt "02 Jan 2006 15:04 WITA"}}`, `{{.Status}}`, `{{.Message}}`, `{{.ErrorMessage}}`)" 
-                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-indigo-500/20 text-slate-300 hover:text-indigo-300 border border-white/[0.08] hover:border-indigo-500/30 text-xs font-medium transition">
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-medium transition">
                                     Detail
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                                 </button>
@@ -119,7 +119,7 @@
             <div class="space-y-0.5">
                 <span class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Penerima</span>
                 <div id="modal-msg-recipient" class="text-xs font-bold text-white"></div>
-                <div id="modal-msg-jid" class="text-[10px] font-mono text-indigo-400"></div>
+                <div id="modal-msg-jid" class="text-[10px] font-mono text-amber-400"></div>
             </div>
             <div class="space-y-0.5">
                 <span class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Waktu & Status</span>
@@ -136,7 +136,7 @@
         <div class="space-y-1.5">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-semibold text-slate-300">Konten Naskah WhatsApp</span>
-                <button type="button" onclick="copyMessageModalContent()" class="text-[10px] font-mono text-indigo-400 hover:text-indigo-300 transition">Salin Teks</button>
+                <button type="button" onclick="copyMessageModalContent()" class="text-[10px] font-mono text-rose-400 hover:text-rose-300 transition">Salin Teks</button>
             </div>
             <div id="modal-msg-content" class="p-4 bg-[#07090e] rounded-xl border border-white/[0.08] text-xs font-mono whitespace-pre-wrap text-slate-200 max-h-60 overflow-y-auto leading-relaxed"></div>
         </div>

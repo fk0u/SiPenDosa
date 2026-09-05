@@ -15,12 +15,12 @@ $ErrorActionPreference = "Stop"
 function Write-CyberHeader {
     Clear-Host
     Write-Host ""
-    Write-Host "  ███████╗██╗██████╗ ███████╗███╗   ██╗██████╗  ██████╗ ███████╗ █████╗ " -ForegroundColor Cyan
-    Write-Host "  ██╔════╝██║██╔══██╗██╔════╝████╗  ██║██╔══██╗██╔═══██╗██╔════╝██╔══██╗" -ForegroundColor Cyan
-    Write-Host "  ███████╗██║██████╔╝█████╗  ██╔██╗ ██║██║  ██║██║   ██║███████╗███████║" -ForegroundColor Magenta
-    Write-Host "  ╚════██║██║██╔═══╝ ██╔══╝  ██║╚██╗██║██║  ██║██║   ██║╚════██║██╔══██║" -ForegroundColor Magenta
-    Write-Host "  ███████║██║██║     ███████╗██║ ╚████║██████╔╝╚██████╔╝███████║██║  ██║" -ForegroundColor Cyan
-    Write-Host "  ╚══════╝╚═╝╚═╝     ╚══════╝╚═╝  ╚═══╝╚═════╝  ╚═════╝ ╚══════╝╚═╝  ╚═╝" -ForegroundColor Cyan
+    Write-Host "  ███████╗██╗██████╗ ███████╗███╗   ██╗██████╗  ██████╗ ███████╗ █████╗ " -ForegroundColor DarkRed
+    Write-Host "  ██╔════╝██║██╔══██╗██╔════╝████╗  ██║██╔══██╗██╔═══██╗██╔════╝██╔══██╗" -ForegroundColor Red
+    Write-Host "  ███████╗██║██████╔╝█████╗  ██╔██╗ ██║██║  ██║██║   ██║███████╗███████║" -ForegroundColor Yellow
+    Write-Host "  ╚════██║██║██╔═══╝ ██╔══╝  ██║╚██╗██║██║  ██║██║   ██║╚════██║██╔══██║" -ForegroundColor DarkYellow
+    Write-Host "  ███████║██║██║     ███████╗██║ ╚████║██████╔╝╚██████╔╝███████║██║  ██║" -ForegroundColor Red
+    Write-Host "  ╚══════╝╚═╝╚═╝     ╚══════╝╚═╝  ╚═══╝╚═════╝  ╚═════╝ ╚══════╝╚═╝  ╚═╝" -ForegroundColor DarkRed
     Write-Host "  ⚡ SIPENDOSA ONE-CLICK POWERSHELL INSTALLER ⚡" -ForegroundColor Yellow
     Write-Host "  `"Asisten yang rela 'berdosa' demi mengingatkan dosen agar mahasiswa tidak sungkan`"" -ForegroundColor Gray
     Write-Host ""
@@ -30,7 +30,7 @@ function Write-CyberHeader {
 
 if (-not $Silent) {
     Write-CyberHeader
-    Write-Host "[1/6] Menentukan target folder instalasi..." -ForegroundColor Cyan
+    Write-Host "[1/6] Menentukan target folder instalasi..." -ForegroundColor Yellow
     Write-Host "      Default: $TargetDir" -ForegroundColor Green
     $userInput = Read-Host "      Tekan ENTER untuk menggunakan lokasi ini, atau ketik lokasi baru"
     if ($userInput.Trim() -ne "") {
@@ -44,7 +44,7 @@ Get-Process "sipen" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAc
 Start-Sleep -Milliseconds 500
 
 # 2. Buat direktori target
-if (-not $Silent) { Write-Host "[2/6] Menyiapkan direktori aplikasi di $TargetDir..." -ForegroundColor Cyan }
+if (-not $Silent) { Write-Host "[2/6] Menyiapkan direktori aplikasi di $TargetDir..." -ForegroundColor Yellow }
 New-Item -ItemType Directory -Force -Path $TargetDir | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir "data") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir "session") | Out-Null
@@ -57,7 +57,7 @@ if (-not (Test-Path $sourceExe)) {
 }
 
 if (Test-Path $sourceExe) {
-    if (-not $Silent) { Write-Host "[3/6] Menyalin file binary sipen.exe..." -ForegroundColor Cyan }
+    if (-not $Silent) { Write-Host "[3/6] Menyalin file binary sipen.exe..." -ForegroundColor Yellow }
     Copy-Item $sourceExe -Destination (Join-Path $TargetDir "sipen.exe") -Force
 } else {
     Write-Host "[ERROR] Binary sipen.exe tidak ditemukan di folder instalasi!" -ForegroundColor Red
@@ -67,7 +67,7 @@ if (Test-Path $sourceExe) {
 # 4. Generate .env jika belum ada
 $envFile = Join-Path $TargetDir ".env"
 if (-not (Test-Path $envFile)) {
-    if (-not $Silent) { Write-Host "[4/6] Meng-generate file konfigurasi produksi (.env)..." -ForegroundColor Cyan }
+    if (-not $Silent) { Write-Host "[4/6] Meng-generate file konfigurasi produksi (.env)..." -ForegroundColor Yellow }
     $secretBytes = New-Object byte[] 32
     $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
     $rng.GetBytes($secretBytes)
@@ -99,11 +99,11 @@ GLOBAL_DRY_RUN=false
 "@
     Set-Content -Path $envFile -Value $envContent -Encoding UTF8
 } else {
-    if (-not $Silent) { Write-Host "[4/6] Mempertahankan konfigurasi .env yang sudah ada..." -ForegroundColor Cyan }
+    if (-not $Silent) { Write-Host "[4/6] Mempertahankan konfigurasi .env yang sudah ada..." -ForegroundColor Yellow }
 }
 
 # 5. Buat Helper Scripts & Uninstaller
-if (-not $Silent) { Write-Host "[5/6] Membuat skrip pendukung (background runner & uninstaller)..." -ForegroundColor Cyan }
+if (-not $Silent) { Write-Host "[5/6] Membuat skrip pendukung (background runner & uninstaller)..." -ForegroundColor Yellow }
 
 # run-background.vbs
 $vbsContent = @"
@@ -172,7 +172,7 @@ pause
 Set-Content -Path (Join-Path $TargetDir "uninstall.bat") -Value $uninstallBat -Encoding ASCII
 
 # 6. Buat Windows Shortcuts
-if (-not $Silent) { Write-Host "[6/6] Membuat shortcut Desktop & Start Menu..." -ForegroundColor Cyan }
+if (-not $Silent) { Write-Host "[6/6] Membuat shortcut Desktop & Start Menu..." -ForegroundColor Yellow }
 
 $wsh = New-Object -ComObject WScript.Shell
 
@@ -234,7 +234,7 @@ if (-not $Silent) {
     Write-Host "║  ✓ INSTALASI SIPENDOSA BERHASIL DISELESAIKAN DENGAN SEMPURNA!          ║" -ForegroundColor Green
     Write-Host "╠════════════════════════════════════════════════════════════════════════╣" -ForegroundColor Green
     Write-Host "║  • Lokasi Program : $TargetDir" -ForegroundColor White
-    Write-Host "║  • Web Dashboard  : http://localhost:8473" -ForegroundColor Cyan
+    Write-Host "║  • Web Dashboard  : http://localhost:8473" -ForegroundColor Yellow
     Write-Host "║  • Desktop Icon   : Dibuat (SiPenDosa.lnk)" -ForegroundColor White
     Write-Host "║  • Start Menu     : Terdaftar di Start Menu > Programs > SiPenDosa" -ForegroundColor White
     Write-Host "╚════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Green

@@ -85,55 +85,147 @@
 
 ---
 
-## 💻 Panduan Instalasi di Komputer / Laptop Windows (Tanpa Perlu Source Code!)
+## 💻 Panduan Instalasi Multi-Platform (Standalone & Siap Pakai!)
 
-SiPenDosa kini hadir dengan sistem **Standalone Installer**, sehingga pengguna tidak perlu menginstal Go, Git, GCC, ataupun menyalin source code program.
-
-### Opsi 1: Menggunakan Executable Installer (`SiPenDosa-Setup.exe`) — Sangat Mudah!
-1. Unduh atau jalankan file **`SiPenDosa-Setup.exe`** (dapat di-double click langsung).
-2. Installer akan:
-   - Menyiapkan direktori di `%LOCALAPPDATA%\Programs\SiPenDosa` (tanpa memerlukan hak akses Administrator).
-   - Mengekstrak file program mandiri (*self-contained*).
-   - Meng-generate file `.env` produksi dengan `SESSION_SECRET` unik 32 karakter secara otomatis.
-   - Membuat **Desktop Shortcut** (`SiPenDosa.lnk`).
-   - Membuat folder **Start Menu** (`Programs > SiPenDosa`) lengkap dengan shortcut terminal, background runner hening, dan uninstaller.
-   - Mendaftarkan aplikasi ke menu **Windows Settings > Installed Apps** (Add/Remove Programs).
-3. Setelah instalasi selesai, tekan **Y** untuk langsung menjalankan aplikasi dan membuka browser ke `http://localhost:8473`!
-
-### Opsi 2: Menggunakan Skrip Satu Klik (`install.bat` / `install.ps1`)
-Jika Anda mendistribusikan folder rilis:
-- Cukup klik kanan file **`install.bat`** lalu pilih **Run** (atau jalankan `powershell .\install.ps1`).
+SiPenDosa hadir dengan sistem **Standalone Installer** untuk seluruh platform utama. Anda **tidak perlu** menginstal Go, GCC, Git, atau dependency tambahan di komputer maupun server target.
 
 ---
 
-## 🚀 Panduan Instalasi di Ubuntu VPS (Daemon 24/7)
+### 🐧 1. Linux (Ubuntu, Debian, RedHat, CentOS, Fedora, Rocky, AlmaLinux, Arch)
 
-### Langkah 1: Persiapan Server & Clone Repositori
-
+#### Opsi A: Paket Debian / Ubuntu (`.deb`) — Paling Direkomendasikan untuk Ubuntu/Debian
+Paket `.deb` secara otomatis memasang binary di `/opt/sipen`, mengonfigurasi user sistem terisolasi, men-generate token rahasia `.env`, dan mengaktifkan service **Systemd** otomatis:
 ```bash
-# Update paket sistem
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y git make curl
+# Untuk arsitektur x86_64 / amd64:
+sudo dpkg -i sipendosa_1.0.0_amd64.deb
 
-# Buat direktori aplikasi
-sudo mkdir -p /opt/sipen
-sudo chown -R $USER:$USER /opt/sipen
+# Untuk arsitektur ARM64 (Raspberry Pi / AWS Graviton):
+sudo dpkg -i sipendosa_1.0.0_arm64.deb
 
-# Clone repositori
-cd /opt/sipen
-git clone <URL_REPOSITORI_ANDA> .
+# Periksa status service daemon:
+sudo systemctl status sipen
 ```
 
-### Langkah 2: Konfigurasi Environment (`.env`)
+#### Opsi B: Universal Standalone Installer (`install-linux.sh`) — Untuk Semua Distro Linux
+Cocok untuk **RedHat, CentOS, Fedora, Rocky Linux, AlmaLinux, Arch Linux, OpenSUSE**, maupun Debian/Ubuntu:
+1. Ekstrak paket tarball distribusi:
+   ```bash
+   tar -xzf sipendosa_linux_amd64.tar.gz
+   cd sipendosa_linux_amd64  # atau direktori hasil ekstraksi
+   ```
+2. Jalankan installer dengan hak akses `sudo`:
+   ```bash
+   sudo ./install-linux.sh
+   ```
+3. Skrip installer secara otomatis:
+   - Mendeteksi arsitektur sistem (`x86_64` atau `aarch64`).
+   - Membuat user sistem `sipen`.
+   - Mengonfigurasi `/opt/sipen` beserta permission data yang aman.
+   - Meng-generate `SESSION_SECRET` acak 32-karakter di `.env`.
+   - Mendaftarkan dan menyalakan daemon **Systemd** `sipen.service`.
+   - Membuka port firewall (UFW / Firewalld) jika aktif.
+4. Periksa log:
+   ```bash
+   sudo journalctl -u sipen -f
+   ```
 
-Salin file contoh konfigurasi dan sesuaikan nilai rahasia:
+---
 
+### 🪟 2. Windows 10 / 11 / Server (Tanpa Perlu Terminal!)
+
+#### Opsi A: Executable Standalone Installer (`SiPenDosa-Setup.exe`) — Sangat Mudah!
+1. Unduh atau jalankan file **`SiPenDosa-Setup.exe`** (dapat di-double click langsung).
+2. Installer mandiri (*self-contained*) akan:
+   - Menyiapkan direktori di `%LOCALAPPDATA%\Programs\SiPenDosa` (tanpa memerlukan hak akses Administrator).
+   - Mengekstrak engine `sipen.exe`.
+   - Meng-generate file `.env` produksi dengan `SESSION_SECRET` unik 32 karakter secara otomatis.
+   - Membuat **Desktop Shortcut** (`SiPenDosa.lnk`).
+   - Membuat folder **Start Menu** (`Programs > SiPenDosa`) lengkap dengan shortcut terminal, background runner hening (`run-background.vbs`), dan uninstaller.
+   - Mendaftarkan aplikasi ke menu **Windows Settings > Installed Apps** (Add/Remove Programs).
+3. Setelah instalasi selesai, tekan **Y** untuk langsung menjalankan aplikasi dan membuka browser ke `http://localhost:8473`!
+
+#### Opsi B: Menggunakan Skrip Satu Klik (`install.bat` / `install.ps1`)
+Jika Anda mendistribusikan folder rilis:
+- Cukup klik kanan file **`install.bat`** lalu pilih **Run as Administrator** (atau jalankan di PowerShell: `powershell -ExecutionPolicy Bypass -File .\install.ps1`).
+
+---
+
+### 🍎 3. Apple macOS (Apple Silicon M1/M2/M3/M4 & Intel x86_64)
+
+SiPenDosa di macOS hadir dalam bentuk **Native Universal Companion App** (`SiPenDosa.app`) yang menggabungkan:
+- **Go Core**: Backend engine WhatsApp, scheduler, dan SQLite database.
+- **C++17 Socket Bridge**: Low-latency non-blocking status inspector & memory lifecycle checker.
+- **Swift AppKit**: Menu Bar Status Item yang elegan di bar atas macOS.
+
+---
+
+#### Opsi A: Apple Disk Image (`SiPenDosa-1.0.0.dmg`) — Drag & Drop Visual (Paling Disukai Pengguna Mac!)
+1. Buka file **`SiPenDosa-1.0.0.dmg`**.
+2. Jendela Finder akan menampilkan background visual kustom eksklusif.
+3. Cukup **seret (drag)** ikon `SiPenDosa.app` ke ikon folder `Applications`.
+4. Buka `SiPenDosa` dari Launchpad atau folder `/Applications`.
+5. Ikon **⚡ SiPenDosa** akan langsung muncul di Menu Bar kanan atas Anda dengan menu kontrol interaktif:
+   - Status engine & indikator latency/RAM secara realtime.
+   - Tombol **"Buka Web Dashboard"** (langsung membuka browser).
+   - Tombol **"Tautkan WhatsApp (Scan QR)"**.
+   - Kontrol Mulai Ulang / Hentikan Engine.
+   - Pintasan langsung ke file log dan folder `.env`.
+
+---
+
+#### Opsi B: Apple Installer Package (`SiPenDosa-1.0.0-Installer.pkg`) — Installer Wizard Resmi
+Cocok untuk instalasi terpandu standar perusahaan/institusi pendidikan:
+1. Double-click **`SiPenDosa-1.0.0-Installer.pkg`**.
+2. Wizard instalasi akan memandu Anda (layar sambutan filosofi SiPenDosa, pemilihan target disk).
+3. Installer secara otomatis:
+   - Memasang `SiPenDosa.app` ke `/Applications`.
+   - Menyiapkan folder data di `~/.local/share/sipendosa`.
+   - Meng-generate file `.env` dengan token unik 32-karakter.
+   - Mendaftarkan dan mengaktifkan **LaunchAgent daemon** (`~/Library/LaunchAgents/com.sipendosa.daemon.plist`) agar aplikasi otomatis aktif saat Mac dinyalakan.
+
+---
+
+#### Opsi C: Menggunakan Skrip Terminal Standalone (`install-macos.sh`)
+Jika Anda mendistribusikan berkas `.tar.gz`:
 ```bash
-cp .env.example .env
-nano .env
+tar -xzf sipendosa_macos_universal.tar.gz
+cd sipendosa_macos_universal
+./install-macos.sh
 ```
 
-Isi konfigurasi `.env`:
+Perintah kontrol daemon macOS:
+- **Stop**: `launchctl unload ~/Library/LaunchAgents/com.sipendosa.daemon.plist`
+- **Start**: `launchctl load ~/Library/LaunchAgents/com.sipendosa.daemon.plist`
+- **Log**: `tail -f ~/.local/share/sipendosa/sipen.log`
+
+---
+
+### 🛠️ 4. Build Mandiri dari Source Code (Untuk Developer)
+
+Jika Anda ingin mengompilasi dari kode sumber atau memproduksi paket distribusi:
+
+```bash
+# 1. Kompilasi binary native untuk OS Anda saat ini:
+make build
+
+# 2. Kompilasi binary untuk seluruh platform (Linux, Windows, macOS):
+make build-all
+
+# 3. Buat seluruh paket installer & distribusi sekaligus:
+make package-all
+```
+Hasil paket distribusi akan tersedia di folder `dist/`:
+- `dist/SiPenDosa-Setup.exe` (Windows Standalone Setup)
+- `dist/sipendosa_1.0.0_amd64.deb` & `dist/sipendosa_1.0.0_arm64.deb` (Debian/Ubuntu)
+- `dist/sipendosa_linux_amd64.tar.gz` (Linux Universal)
+- `dist/sipendosa_macos_universal.tar.gz` (macOS Standalone)
+
+---
+
+## ⚙️ Ringkasan Konfigurasi Environment (`.env`)
+
+File `.env` akan di-generate otomatis oleh semua installer standalone, namun Anda dapat mengkustomisasinya kapan saja:
+
 ```env
 PORT=8473
 HOST=0.0.0.0
@@ -152,35 +244,6 @@ RATE_LIMIT_MAX_SEC=15
 MAX_RETRIES=3
 
 GLOBAL_DRY_RUN=false
-```
-
-### Langkah 3: Kompilasi Binary Aplikasi
-
-Kompilasi binary statis yang efisien:
-
-```bash
-make build
-# Binary akan tercipta di ./sipen
-```
-
-### Langkah 4: Setup Service Systemd (Daemon 24/7)
-
-Pasang unit service systemd agar aplikasi berjalan otomatis saat VPS menyala dan auto-restart jika terjadi kendala:
-
-```bash
-# Buat user sistem jika diperlukan, atau gunakan www-data
-sudo chown -R www-data:www-data /opt/sipen
-
-# Pasang service menggunakan Makefile
-sudo make install-service
-
-# Periksa status service
-sudo systemctl status sipen
-```
-
-Untuk melihat log jalannya daemon:
-```bash
-sudo journalctl -u sipen -f
 ```
 
 ---

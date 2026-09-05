@@ -28,11 +28,11 @@
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #07090e;
+            background-color: #08090d;
             color: #f1f5f9;
         }
         .bezel-card {
-            background: rgba(15, 23, 42, 0.7);
+            background: rgba(18, 19, 26, 0.75);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -44,11 +44,11 @@
         }
     </style>
 </head>
-<body class="min-h-[100dvh] flex items-center justify-center p-4 selection:bg-indigo-600 selection:text-white relative overflow-hidden">
+<body class="min-h-[100dvh] flex items-center justify-center p-4 selection:bg-rose-600 selection:text-white relative overflow-hidden">
 
-    <!-- Ambient Glow Orbs -->
-    <div class="fixed top-1/4 left-1/3 w-96 h-96 bg-indigo-600/15 rounded-full blur-[140px] pointer-events-none -z-10"></div>
-    <div class="fixed bottom-1/4 right-1/3 w-96 h-96 bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none -z-10"></div>
+    <!-- Ambient Glow Orbs (Ember & Gold) -->
+    <div class="fixed top-1/4 left-1/3 w-96 h-96 bg-rose-600/15 rounded-full blur-[140px] pointer-events-none -z-10"></div>
+    <div class="fixed bottom-1/4 right-1/3 w-96 h-96 bg-amber-500/10 rounded-full blur-[140px] pointer-events-none -z-10"></div>
 
     <div class="w-full max-w-md">
         <div class="bezel-outer p-1.5 rounded-3xl">
@@ -56,7 +56,7 @@
                 
                 <!-- Brand Header -->
                 <div class="text-center space-y-2">
-                    <div class="inline-flex w-14 h-14 rounded-2xl bg-indigo-600 items-center justify-center shadow-lg shadow-indigo-600/30 mb-2 border border-white/20">
+                    <div class="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-tr from-rose-700 via-rose-600 to-amber-500 items-center justify-center shadow-lg shadow-rose-600/30 mb-2 border border-white/20">
                         <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
                     </div>
                     <div class="flex items-center justify-center gap-2">
@@ -76,16 +76,16 @@
                     <div class="space-y-1.5">
                         <label class="text-xs font-semibold text-slate-300">Username</label>
                         <input type="text" name="username" placeholder="Masukkan username admin" required autofocus
-                               class="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-indigo-500/50 text-xs text-white placeholder-slate-500 outline-none transition" />
+                               class="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-rose-500/50 text-xs text-white placeholder-slate-500 outline-none transition" />
                     </div>
 
                     <div class="space-y-1.5">
                         <label class="text-xs font-semibold text-slate-300">Kata Sandi</label>
                         <input type="password" name="password" placeholder="••••••••" required
-                               class="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-indigo-500/50 text-xs text-white placeholder-slate-500 outline-none transition" />
+                               class="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-rose-500/50 text-xs text-white placeholder-slate-500 outline-none transition" />
                     </div>
 
-                    <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition-all active:scale-95 pt-2.5">
+                    <button type="submit" class="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/30 transition-all active:scale-95 pt-2.5">
                         Masuk ke Dashboard
                     </button>
                 </form>

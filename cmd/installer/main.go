@@ -23,15 +23,13 @@ const (
 	DefaultPort    = "8473"
 )
 
-// ANSI color codes
+// ANSI color codes (Bebas Biru & Ungu — Sesuai Brand Persona SiPenDosa)
 const (
 	Reset        = "\033[0m"
 	Bold         = "\033[1m"
 	Dim          = "\033[2m"
-	Cyan         = "\033[36m"
-	BrightCyan   = "\033[96m"
-	Magenta      = "\033[35m"
-	BrightPurple = "\033[95m"
+	Red          = "\033[31m"
+	BrightRed    = "\033[91m"
 	Green        = "\033[32m"
 	BrightGreen  = "\033[92m"
 	Yellow       = "\033[33m"
@@ -71,9 +69,8 @@ func main() {
 		}
 		installDir = filepath.Join(localAppData, "Programs", "SiPenDosa")
 	}
-
 	if !isSilent {
-		fmt.Printf("%s[1/6]%s Menentukan lokasi instalasi...\n", BrightCyan+Bold, Reset)
+		fmt.Printf("%s[1/6]%s Menentukan lokasi instalasi...\n", BrightYellow+Bold, Reset)
 		fmt.Printf("      Lokasi target default : %s%s%s\n", BrightGreen, installDir, Reset)
 		fmt.Printf("      Tekan %sENTER%s untuk menggunakan lokasi ini, atau ketik lokasi baru: ", Bold, Reset)
 
@@ -88,7 +85,7 @@ func main() {
 
 	// 2. Create Target Directories
 	if !isSilent {
-		fmt.Printf("%s[2/6]%s Membuat direktori aplikasi di: %s...\n", BrightCyan+Bold, Reset, installDir)
+		fmt.Printf("%s[2/6]%s Membuat direktori aplikasi di: %s...\n", BrightYellow+Bold, Reset, installDir)
 	}
 	if err := os.MkdirAll(installDir, 0755); err != nil {
 		fmt.Printf("%s[ERROR] Gagal membuat direktori instalasi: %v%s\n", Yellow, err, Reset)
@@ -99,34 +96,24 @@ func main() {
 
 	// 3. Extract Executable
 	if !isSilent {
-		fmt.Printf("%s[3/6]%s Mengekstrak binary %s.exe (%d MB)...\n", BrightCyan+Bold, Reset, AppName, len(embeddedBinary)/(1024*1024))
+		fmt.Printf("%s[3/6]%s Mengekstrak binary %s.exe (%d MB)...\n", BrightYellow+Bold, Reset, AppName, len(embeddedBinary)/(1024*1024))
 	}
 	targetExe := filepath.Join(installDir, "sipen.exe")
-
-	// Ensure no old process is locking the file
-	_ = exec.Command("taskkill", "/f", "/im", "sipen.exe").Run()
-	time.Sleep(500 * time.Millisecond)
-
 	if err := os.WriteFile(targetExe, embeddedBinary, 0755); err != nil {
-		fmt.Printf("%s[ERROR] Gagal mengekstrak binary: %v%s\n", Yellow, err, Reset)
+		fmt.Printf("%s[ERROR] Gagal menulis binary: %v%s\n", Yellow, err, Reset)
 		os.Exit(1)
 	}
 
-	// 4. Create Production .env if not exists
-	envPath := filepath.Join(installDir, ".env")
-	if _, err := os.Stat(envPath); os.IsNotExist(err) {
+	// 4. Generate Production .env Configuration
+	targetEnv := filepath.Join(installDir, ".env")
+	if _, err := os.Stat(targetEnv); os.IsNotExist(err) {
 		if !isSilent {
-			fmt.Printf("%s[4/6]%s Meng-generate file konfigurasi produksi (.env) dengan secret baru...\n", BrightCyan+Bold, Reset)
+			fmt.Printf("%s[4/6]%s Meng-generate file konfigurasi produksi (.env) dengan secret baru...\n", BrightYellow+Bold, Reset)
 		}
 		secretBytes := make([]byte, 32)
 		_, _ = rand.Read(secretBytes)
 		sessionSecret := hex.EncodeToString(secretBytes)
-
-		envContent := fmt.Sprintf(`# ==========================================
-# SiPenDosa — Sistem Pengingat Dosen Saatnya
-# Production Environment Configuration
-# ==========================================
-
+		envContent := fmt.Sprintf(`# SiPenDosa Production Configuration
 PORT=%s
 HOST=0.0.0.0
 APP_ENV=production
@@ -146,22 +133,24 @@ MAX_RETRIES=3
 GLOBAL_DRY_RUN=false
 `, DefaultPort, sessionSecret)
 
-		_ = os.WriteFile(envPath, []byte(envContent), 0644)
+		if err := os.WriteFile(targetEnv, []byte(envContent), 0644); err != nil {
+			fmt.Printf("%s[WARN] Gagal menulis .env otomatis: %v%s\n", Yellow, err, Reset)
+		}
 	} else {
 		if !isSilent {
-			fmt.Printf("%s[4/6]%s Mempertahankan konfigurasi .env yang sudah ada...\n", BrightCyan+Bold, Reset)
+			fmt.Printf("%s[4/6]%s Mempertahankan konfigurasi .env yang sudah ada...\n", BrightYellow+Bold, Reset)
 		}
 	}
 
-	// 5. Generate Helper Scripts & Uninstaller
+	// 5. Create Helper Scripts
 	if !isSilent {
-		fmt.Printf("%s[5/6]%s Membuat skrip launcher dan uninstaller...\n", BrightCyan+Bold, Reset)
+		fmt.Printf("%s[5/6]%s Membuat skrip launcher dan uninstaller...\n", BrightYellow+Bold, Reset)
 	}
 	createHelperScripts(installDir)
 
-	// 6. Create Desktop & Start Menu Shortcuts & Registry entry
+	// 6. Create Windows Shortcuts
 	if !isSilent {
-		fmt.Printf("%s[6/6]%s Membuat shortcut Desktop & Start Menu Windows...\n", BrightCyan+Bold, Reset)
+		fmt.Printf("%s[6/6]%s Membuat shortcut Desktop & Start Menu Windows...\n", BrightYellow+Bold, Reset)
 	}
 	createShortcuts(installDir, targetExe)
 	registerUninstall(installDir)
@@ -193,7 +182,7 @@ func printBanner() {
 	}
 
 	fmt.Println()
-	colors := []string{BrightCyan, Cyan, BrightPurple, Magenta, BrightPurple, BrightCyan}
+	colors := []string{BrightRed, Red, BrightYellow, Yellow, BrightRed, Red}
 	for i, line := range logo {
 		c := colors[i%len(colors)]
 		fmt.Printf("%s%s%s%s\n", Bold, c, line, Reset)
@@ -215,7 +204,7 @@ func printSuccessBox(installDir string) {
 		Bold, Green, Reset, Bold, BrightGreen, Reset, Bold, Green, Reset)
 	fmt.Printf("%s%s╠%s╣%s\n", Bold, Green, borderH, Reset)
 	fmt.Printf("%s%s║%s  • Lokasi Program : %-51s%s║%s\n", Bold, Green, Reset, installDir, Bold, Green, Reset)
-	fmt.Printf("%s%s║%s  • Web Dashboard  : %shttp://localhost:%s%-38s%s%s║%s\n", Bold, Green, Reset, BrightCyan+Bold, DefaultPort, Reset, Bold, Green, Reset)
+	fmt.Printf("%s%s║%s  • Web Dashboard  : %shttp://localhost:%s%-38s%s%s║%s\n", Bold, Green, Reset, BrightYellow+Bold, DefaultPort, Reset, Bold, Green, Reset)
 	fmt.Printf("%s%s║%s  • Desktop Icon   : Dibuat (SiPenDosa.lnk)%-35s%s║%s\n", Bold, Green, Reset, "", Bold, Green, Reset)
 	fmt.Printf("%s%s║%s  • Start Menu     : Terdaftar di Start Menu > Programs > SiPenDosa    %s%s║%s\n", Bold, Green, Reset, Bold, Green, Reset)
 	fmt.Printf("%s%s╚%s╝%s\n", Bold, Green, borderH, Reset)
@@ -388,7 +377,7 @@ Set-ItemProperty -Path $regKey -Name 'DisplayIcon' -Value '%s'
 }
 
 func launchApp(installDir, targetExe string) {
-	fmt.Printf("%sMenjalankan SiPenDosa dan membuka browser...%s\n", BrightCyan, Reset)
+	fmt.Printf("%sMenjalankan SiPenDosa dan membuka browser...%s\n", BrightYellow, Reset)
 
 	// Start SiPenDosa in new window
 	cmd := exec.Command("cmd.exe", "/c", "start", "SiPenDosa Daemon", targetExe)

@@ -9,26 +9,22 @@ import (
 	"sipen/internal/config"
 )
 
-// ANSI color codes
+// ANSI color codes (Bebas Biru & Ungu — Sesuai Brand Persona SiPenDosa)
 const (
 	Reset        = "\033[0m"
 	Bold         = "\033[1m"
 	Dim          = "\033[2m"
-	Cyan         = "\033[36m"
-	BrightCyan   = "\033[96m"
-	Magenta      = "\033[35m"
-	BrightPurple = "\033[95m"
+	Red          = "\033[31m"
+	BrightRed    = "\033[91m"
 	Green        = "\033[32m"
 	BrightGreen  = "\033[92m"
 	Yellow       = "\033[33m"
 	BrightYellow = "\033[93m"
-	Red          = "\033[31m"
-	BrightRed    = "\033[91m"
 	White        = "\033[97m"
 	Gray         = "\033[90m"
 )
 
-// PrintBanner prints a futuristic, cyberpunk-style ASCII banner and telemetry box for SiPenDosa
+// PrintBanner prints an ember & burnished gold ASCII banner and telemetry box for SiPenDosa
 func PrintBanner(cfg *config.Config) {
 	logo := []string{
 		`  ███████╗██╗██████╗ ███████╗███╗   ██╗██████╗  ██████╗ ███████╗ █████╗ `,
@@ -40,8 +36,8 @@ func PrintBanner(cfg *config.Config) {
 	}
 
 	fmt.Println()
-	// Print gradient ASCII
-	colors := []string{BrightCyan, Cyan, BrightPurple, Magenta, BrightPurple, BrightCyan}
+	// Print gradient ember-gold ASCII
+	colors := []string{BrightRed, Red, BrightYellow, Yellow, BrightRed, Red}
 	for i, line := range logo {
 		c := colors[i%len(colors)]
 		fmt.Printf("%s%s%s%s\n", Bold, c, line, Reset)
@@ -51,14 +47,14 @@ func PrintBanner(cfg *config.Config) {
 	fmt.Printf("  %s%s\"Asisten yang rela 'berdosa' demi mengingatkan dosen agar mahasiswa tidak sungkan\"%s\n", Dim, Gray, Reset)
 	fmt.Println()
 
-	// Telemetry Box
+	// Telemetry Box (Crimson Ember Theme)
 	boxWidth := 74
 	borderH := strings.Repeat("═", boxWidth-2)
 	dividerH := strings.Repeat("─", boxWidth-2)
 
-	fmt.Printf("%s%s╔%s╗%s\n", Bold, Cyan, borderH, Reset)
-	fmt.Printf("%s%s║%s %s%-70s%s %s%s║%s\n", Bold, Cyan, Reset, BrightPurple+Bold, "SIPENDOSA DAEMON SYSTEM TELEMETRY & ENGINE STATUS", Reset, Bold, Cyan, Reset)
-	fmt.Printf("%s%s╠%s╣%s\n", Bold, Cyan, borderH, Reset)
+	fmt.Printf("%s%s╔%s╗%s\n", Bold, BrightRed, borderH, Reset)
+	fmt.Printf("%s%s║%s %s%-70s%s %s%s║%s\n", Bold, BrightRed, Reset, BrightYellow+Bold, "SIPENDOSA DAEMON SYSTEM TELEMETRY & ENGINE STATUS", Reset, Bold, BrightRed, Reset)
+	fmt.Printf("%s%s╠%s╣%s\n", Bold, BrightRed, borderH, Reset)
 
 	formatRow("App Name", "SiPenDosa (Sistem Pengingat Dosen Saatnya)")
 	formatRow("Engine Version", "v1.0.0-PROD (Build 2026.09-Release)")
@@ -75,10 +71,10 @@ func PrintBanner(cfg *config.Config) {
 	}
 	formatRow("Global Dry-Run", dryRunStr)
 
-	fmt.Printf("%s%s╚%s╝%s\n", Bold, Cyan, borderH, Reset)
+	fmt.Printf("%s%s╚%s╝%s\n", Bold, BrightRed, borderH, Reset)
 	fmt.Println()
 
-	// Dashboard quick link callout
+	// Dashboard quick link callout (Emerald & Gold)
 	fmt.Printf("%s%s┌%s┐%s\n", Bold, Green, dividerH, Reset)
 
 	urlText := fmt.Sprintf("http://localhost:%s", cfg.Port)
@@ -103,24 +99,24 @@ func PrintBanner(cfg *config.Config) {
 func formatRow(label, value string) {
 	labelFormatted := fmt.Sprintf("%s%s%-17s%s :", Gray, Bold, label, Reset)
 	valFormatted := fmt.Sprintf("%s%-51s%s", White, value, Reset)
-	fmt.Printf("%s%s║%s  %s %s %s%s║%s\n", Bold, Cyan, Reset, labelFormatted, valFormatted, Bold, Cyan, Reset)
+	fmt.Printf("%s%s║%s  %s %s %s%s║%s\n", Bold, BrightRed, Reset, labelFormatted, valFormatted, Bold, BrightRed, Reset)
 }
 
-// LogStep prints a cyber-themed formatted activity step
+// LogStep prints an ember-themed formatted activity step
 func LogStep(tag, message string) {
 	timeStr := time.Now().Format("15:04:05")
 	var tagColor string
 	switch tag {
 	case "SYSTEM", "DAEMON":
-		tagColor = BrightCyan
+		tagColor = BrightRed
 	case "DATABASE", "STORE":
 		tagColor = BrightGreen
 	case "WHATSAPP", "WA":
-		tagColor = BrightPurple
-	case "QUEUE", "ANTI-BAN":
 		tagColor = BrightYellow
+	case "QUEUE", "ANTI-BAN":
+		tagColor = Yellow
 	case "SCHEDULER":
-		tagColor = BrightCyan
+		tagColor = BrightYellow
 	case "ERROR":
 		tagColor = BrightRed
 	default:
@@ -150,7 +146,7 @@ func PrintQRHeader() {
 func PrintQRFooter(port string) {
 	fmt.Println()
 	fmt.Printf("%s%s[💡 TIP]%s Anda juga dapat memindai QR Code melalui browser di: %shttp://localhost:%s%s\n",
-		Bold, BrightCyan, Reset, BrightGreen+Bold, port, Reset)
+		Bold, BrightYellow, Reset, BrightGreen+Bold, port, Reset)
 	fmt.Printf("%s%s         (Buka menu Overview > Klik tombol 'Scan QR Code')%s\n\n", Gray, Reset, Reset)
 }
 
@@ -163,7 +159,7 @@ func PrintConnectedBox(jid, pushName string) {
 	fmt.Printf("%s%s║%s  %s%s✓ WHATSAPP ENGINE BERHASIL TERHUBUNG SECARA ONLINE%s               %s%s║%s\n",
 		Bold, Green, Reset, Bold, BrightGreen, Reset, Bold, Green, Reset)
 	fmt.Printf("%s%s╠%s╣%s\n", Bold, Green, borderH, Reset)
-	fmt.Printf("%s%s║%s  • Akun JID    : %s%-50s%s%s%s║%s\n", Bold, Green, Reset, BrightCyan, jid, Reset, Bold, Green, Reset)
+	fmt.Printf("%s%s║%s  • Akun JID    : %s%-50s%s%s%s║%s\n", Bold, Green, Reset, BrightYellow, jid, Reset, Bold, Green, Reset)
 	if pushName != "" {
 		fmt.Printf("%s%s║%s  • Nama Akun   : %s%-50s%s%s%s║%s\n", Bold, Green, Reset, White, pushName, Reset, Bold, Green, Reset)
 	}

@@ -3,7 +3,7 @@
 
     <!-- Header Section -->
     <div>
-        <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-2">
+        <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold mb-2">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             System Parameters & Governance
         </div>
@@ -21,7 +21,7 @@
                 <div class="bezel-card rounded-xl p-6 space-y-5">
                     <div class="flex items-center justify-between pb-3 border-b border-white/[0.06]">
                         <h2 class="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+                            <span class="w-2 h-2 rounded-full bg-rose-400"></span>
                             Konfigurasi Operasional & Anti-Ban
                         </h2>
                         <span class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Daemon Policy</span>
@@ -49,12 +49,12 @@
                                 <div>
                                     <span class="text-[10px] font-mono text-slate-400 block mb-1">Awal Jam Kirim (HH:MM)</span>
                                     <input type="text" name="send_window_start" value="{{.Data.Settings.SendWindowStart}}" required
-                                           class="w-full px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-indigo-500/50 font-mono text-xs text-white outline-none" />
+                                           class="w-full px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-rose-500/50 font-mono text-xs text-white outline-none" />
                                 </div>
                                 <div>
                                     <span class="text-[10px] font-mono text-slate-400 block mb-1">Batas Akhir Jam Kirim (HH:MM)</span>
                                     <input type="text" name="send_window_end" value="{{.Data.Settings.SendWindowEnd}}" required
-                                           class="w-full px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-indigo-500/50 font-mono text-xs text-white outline-none" />
+                                           class="w-full px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-rose-500/50 font-mono text-xs text-white outline-none" />
                                 </div>
                             </div>
                         </div>
@@ -62,7 +62,7 @@
                         <!-- Timezone Selector -->
                         <div class="space-y-1.5">
                             <label class="text-xs font-semibold text-slate-300">Zona Waktu Sistem (Timezone)</label>
-                            <select name="timezone" class="w-full px-3.5 py-2 rounded-xl bg-[#090d16] border border-white/[0.08] focus:border-indigo-500/50 text-xs text-white outline-none">
+                            <select name="timezone" class="w-full px-3.5 py-2 rounded-xl bg-[#090d16] border border-white/[0.08] focus:border-rose-500/50 text-xs text-white outline-none">
                                 <option value="Asia/Makassar" {{if eq .Data.Settings.Timezone "Asia/Makassar"}}selected{{end}}>Asia/Makassar (WITA, UTC+8)</option>
                                 <option value="Asia/Jakarta" {{if eq .Data.Settings.Timezone "Asia/Jakarta"}}selected{{end}}>Asia/Jakarta (WIB, UTC+7)</option>
                                 <option value="Asia/Jayapura" {{if eq .Data.Settings.Timezone "Asia/Jayapura"}}selected{{end}}>Asia/Jayapura (WIT, UTC+9)</option>
@@ -72,24 +72,24 @@
                         <!-- Anti-Ban Rate Limit & Retry -->
                         <div class="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-3">
                             <div>
-                                <div class="text-xs font-bold text-indigo-400">Jeda Antar Pesan & Perlindungan Anti-Ban</div>
+                                <div class="text-xs font-bold text-rose-400">Jeda Antar Pesan & Perlindungan Anti-Ban</div>
                                 <div class="text-[11px] text-slate-400 mt-0.5">Sistem menyisipkan jeda acak (jitter) di antara setiap pengiriman pesan WhatsApp.</div>
                             </div>
                             <div class="grid grid-cols-3 gap-3 pt-1">
                                 <div>
                                     <label class="text-[10px] font-mono text-slate-400 block mb-1">Min Delay (detik)</label>
                                     <input type="number" name="rate_limit_min_sec" value="{{.Data.Settings.RateLimitMinSec}}" min="3" max="60" required
-                                           class="w-full px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] focus:border-indigo-500/50 font-mono text-xs text-white outline-none" />
+                                           class="w-full px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] focus:border-rose-500/50 font-mono text-xs text-white outline-none" />
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-mono text-slate-400 block mb-1">Max Delay (detik)</label>
                                     <input type="number" name="rate_limit_max_sec" value="{{.Data.Settings.RateLimitMaxSec}}" min="5" max="120" required
-                                           class="w-full px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] focus:border-indigo-500/50 font-mono text-xs text-white outline-none" />
+                                           class="w-full px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] focus:border-rose-500/50 font-mono text-xs text-white outline-none" />
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-mono text-slate-400 block mb-1">Maks. Percobaan</label>
                                     <input type="number" name="max_retries" value="{{.Data.Settings.MaxRetries}}" min="1" max="10" required
-                                           class="w-full px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] focus:border-indigo-500/50 font-mono text-xs text-white outline-none" />
+                                           class="w-full px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] focus:border-rose-500/50 font-mono text-xs text-white outline-none" />
                                 </div>
                             </div>
                         </div>
@@ -102,12 +102,12 @@
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" name="registration_open" {{if .Data.Settings.RegistrationOpen}}checked{{end}} class="sr-only peer">
-                                <div class="w-11 h-6 bg-white/[0.1] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                <div class="w-11 h-6 bg-white/[0.1] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600"></div>
                             </label>
                         </div>
 
                         <div class="flex justify-end pt-2">
-                            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition active:scale-95">
+                            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/30 transition active:scale-95">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                 Simpan Parameter Sistem
                             </button>
@@ -195,7 +195,7 @@
                 <div class="bezel-card rounded-xl p-5 space-y-4">
                     <div class="flex items-center justify-between pb-2 border-b border-white/[0.06]">
                         <h2 class="text-xs font-bold text-white tracking-tight flex items-center gap-2">
-                            <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                            <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                             Akun & Hak Akses Admin
                         </h2>
                         <span class="text-[10px] font-mono text-slate-400">{{len .Data.Users}} Pengguna</span>
@@ -211,7 +211,7 @@
                                 <div>
                                     <div class="flex items-center gap-1.5">
                                         <span class="font-bold text-white">{{.Username}}</span>
-                                        <span class="px-1.5 py-0.2 rounded text-[9px] font-mono uppercase {{if eq .Role "superadmin"}}bg-indigo-500/20 text-indigo-300 border border-indigo-500/30{{else}}bg-white/[0.05] text-slate-400 border border-white/[0.08]{{end}}">
+                                        <span class="px-1.5 py-0.2 rounded text-[9px] font-mono uppercase {{if eq .Role "superadmin"}}bg-rose-500/20 text-rose-300 border border-rose-500/30{{else}}bg-white/[0.05] text-slate-400 border border-white/[0.08]{{end}}">
                                             {{.Role}}
                                         </span>
                                     </div>

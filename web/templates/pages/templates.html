@@ -4,7 +4,7 @@
     <!-- Header Section -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-2">
+            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold mb-2">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                 Template Engine & Live Preview
             </div>
@@ -12,7 +12,7 @@
             <p class="text-xs text-slate-400 mt-1">Rancang format pesan pengingat kuliah dinamis dengan variabel otomatis dan pratinjau real-time.</p>
         </div>
         <div>
-            <button onclick="modal_add_template.showModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition-all active:scale-95">
+            <button onclick="modal_add_template.showModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/30 transition-all active:scale-95">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 Buat Template Baru
             </button>
@@ -22,8 +22,8 @@
     <!-- Template Selector Tabs -->
     <div class="flex flex-wrap items-center gap-2 pb-1 border-b border-white/[0.06]">
         {{range .Data.Templates}}
-        <a href="/templates?id={{.ID}}" class="group inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all {{if and $.Data.Selected (eq $.Data.Selected.ID .ID)}}bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 shadow-sm{{else}}bg-white/[0.02] text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] border border-white/[0.06]{{end}}">
-            <span class="w-1.5 h-1.5 rounded-full {{if and $.Data.Selected (eq $.Data.Selected.ID .ID)}}bg-indigo-400{{else}}bg-slate-600 group-hover:bg-slate-400{{end}}"></span>
+        <a href="/templates?id={{.ID}}" class="group inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all {{if and $.Data.Selected (eq $.Data.Selected.ID .ID)}}bg-rose-600/20 text-rose-300 border border-rose-500/40 shadow-sm{{else}}bg-white/[0.02] text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] border border-white/[0.06]{{end}}">
+            <span class="w-1.5 h-1.5 rounded-full {{if and $.Data.Selected (eq $.Data.Selected.ID .ID)}}bg-rose-400{{else}}bg-slate-600 group-hover:bg-slate-400{{end}}"></span>
             <span>{{.Name}}</span>
             {{if .IsDefault}}
             <span class="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">Default</span>
@@ -59,22 +59,22 @@
                     <div class="space-y-2">
                         <div class="flex items-center justify-between">
                             <span class="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
+                                <svg class="w-3.5 h-3.5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
                                 Sisipkan Variabel Otomatis:
                             </span>
                             <span class="text-[10px] text-slate-500 font-mono">Klik untuk menyematkan ke kursor</span>
                         </div>
                         <div class="flex flex-wrap gap-1.5">
-                            <button type="button" onclick="insertVariable('NamaDosen')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-indigo-500/20 text-slate-300 hover:text-indigo-300 border border-white/[0.08] hover:border-indigo-500/30 text-xs font-mono transition">NamaDosen</button>
-                            <button type="button" onclick="insertVariable('Matkul')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-indigo-500/20 text-slate-300 hover:text-indigo-300 border border-white/[0.08] hover:border-indigo-500/30 text-xs font-mono transition">Matkul</button>
-                            <button type="button" onclick="insertVariable('Hari')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-indigo-500/20 text-slate-300 hover:text-indigo-300 border border-white/[0.08] hover:border-indigo-500/30 text-xs font-mono transition">Hari</button>
-                            <button type="button" onclick="insertVariable('Tanggal')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-indigo-500/20 text-slate-300 hover:text-indigo-300 border border-white/[0.08] hover:border-indigo-500/30 text-xs font-mono transition">Tanggal</button>
-                            <button type="button" onclick="insertVariable('JamMulai')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-indigo-500/20 text-slate-300 hover:text-indigo-300 border border-white/[0.08] hover:border-indigo-500/30 text-xs font-mono transition">JamMulai</button>
-                            <button type="button" onclick="insertVariable('JamSelesai')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-indigo-500/20 text-slate-300 hover:text-indigo-300 border border-white/[0.08] hover:border-indigo-500/30 text-xs font-mono transition">JamSelesai</button>
-                            <button type="button" onclick="insertVariable('Lokasi')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-indigo-500/20 text-slate-300 hover:text-indigo-300 border border-white/[0.08] hover:border-indigo-500/30 text-xs font-mono transition">Lokasi</button>
-                            <button type="button" onclick="insertVariable('LinkGroup')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-indigo-500/20 text-slate-300 hover:text-indigo-300 border border-white/[0.08] hover:border-indigo-500/30 text-xs font-mono transition">LinkGroup</button>
-                            <button type="button" onclick="insertVariable('NamaMahasiswa')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-indigo-500/20 text-slate-300 hover:text-indigo-300 border border-white/[0.08] hover:border-indigo-500/30 text-xs font-mono transition">NamaMahasiswa</button>
-                            <button type="button" onclick="insertVariable('NIM')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-indigo-500/20 text-slate-300 hover:text-indigo-300 border border-white/[0.08] hover:border-indigo-500/30 text-xs font-mono transition">NIM</button>
+                            <button type="button" onclick="insertVariable('NamaDosen')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono transition">NamaDosen</button>
+                            <button type="button" onclick="insertVariable('Matkul')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono transition">Matkul</button>
+                            <button type="button" onclick="insertVariable('Hari')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono transition">Hari</button>
+                            <button type="button" onclick="insertVariable('Tanggal')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono transition">Tanggal</button>
+                            <button type="button" onclick="insertVariable('JamMulai')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono transition">JamMulai</button>
+                            <button type="button" onclick="insertVariable('JamSelesai')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono transition">JamSelesai</button>
+                            <button type="button" onclick="insertVariable('Lokasi')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono transition">Lokasi</button>
+                            <button type="button" onclick="insertVariable('LinkGroup')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono transition">LinkGroup</button>
+                            <button type="button" onclick="insertVariable('NamaMahasiswa')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono transition">NamaMahasiswa</button>
+                            <button type="button" onclick="insertVariable('NIM')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono transition">NIM</button>
                         </div>
                     </div>
 
@@ -83,15 +83,15 @@
                         <div class="space-y-1.5">
                             <label class="text-xs font-semibold text-slate-300">Nama Template</label>
                             <input type="text" name="name" value="{{.Data.Selected.Name}}" required
-                                   class="w-full px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 text-xs text-white placeholder-slate-500 transition outline-none" />
+                                   class="w-full px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/50 text-xs text-white placeholder-slate-500 transition outline-none" />
                         </div>
 
                         <div class="space-y-1.5">
                             <div class="flex items-center justify-between">
                                 <label class="text-xs font-semibold text-slate-300">Konten Pesan (Go Template Syntax)</label>
-                                <span class="text-[10px] font-mono text-indigo-400">Auto-preview enabled</span>
+                                <span class="text-[10px] font-mono text-amber-400">Auto-preview enabled</span>
                             </div>
-                            <div class="relative rounded-xl overflow-hidden border border-white/[0.08] focus-within:border-indigo-500/50 transition">
+                            <div class="relative rounded-xl overflow-hidden border border-white/[0.08] focus-within:border-rose-500/50 transition">
                                 <textarea id="template-editor" name="content" rows="13" required
                                           hx-post="/templates/preview"
                                           hx-trigger="keyup changed delay:250ms"
@@ -102,10 +102,10 @@
 
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
                             <label class="cursor-pointer inline-flex items-center gap-2.5 select-none">
-                                <input type="checkbox" name="is_default" {{if .Data.Selected.IsDefault}}checked{{end}} class="w-4 h-4 rounded bg-white/[0.05] border border-white/[0.1] text-indigo-600 focus:ring-0 focus:ring-offset-0 transition cursor-pointer" />
+                                <input type="checkbox" name="is_default" {{if .Data.Selected.IsDefault}}checked{{end}} class="w-4 h-4 rounded bg-white/[0.05] border border-white/[0.1] text-rose-600 focus:ring-0 focus:ring-offset-0 transition cursor-pointer" />
                                 <span class="text-xs text-slate-300">Jadikan Template Utama (Default)</span>
                             </label>
-                            <button type="submit" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition-all active:scale-95">
+                            <button type="submit" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/30 transition-all active:scale-95">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
                                 Simpan & Catat Versi
                             </button>
@@ -146,7 +146,7 @@
                                 </div>
                                 <div class="flex items-center justify-end gap-1 text-[10px] text-slate-400 font-mono">
                                     <span>07:00</span>
-                                    <svg class="w-3.5 h-3.5 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7m-9 7l4 4L22 7"></path></svg>
+                                    <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7m-9 7l4 4L22 7"></path></svg>
                                 </div>
                             </div>
                         </div>
@@ -170,7 +170,7 @@
                         <div class="p-3 bg-white/[0.02] hover:bg-white/[0.04] rounded-xl border border-white/[0.06] flex items-center justify-between text-xs transition">
                             <div>
                                 <div class="flex items-center gap-2">
-                                    <span class="font-bold text-indigo-400 font-mono">v{{.Version}}</span>
+                                    <span class="font-bold text-amber-400 font-mono">v{{.Version}}</span>
                                     <span class="text-[10px] text-slate-500 font-mono">{{formatTime .CreatedAt "02 Jan 15:04"}}</span>
                                 </div>
                                 <div class="text-[11px] text-slate-400 truncate max-w-[180px] mt-0.5">{{truncate .Content 40}}</div>
@@ -217,25 +217,25 @@
             <div class="space-y-1.5">
                 <label class="text-xs font-semibold text-slate-300">Nama Template</label>
                 <input type="text" name="name" required placeholder="Contoh: Pengingat Santai Mahasiswa (H-1)"
-                       class="w-full px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-indigo-500/50 text-xs text-white placeholder-slate-500 outline-none transition" />
+                       class="w-full px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-rose-500/50 text-xs text-white placeholder-slate-500 outline-none transition" />
             </div>
 
             <div class="space-y-1.5">
                 <label class="text-xs font-semibold text-slate-300">Format Naskah Pesan</label>
                 <textarea id="new-template-content" name="content" rows="8" required
-                          class="w-full p-3.5 rounded-xl bg-[#07090e] border border-white/[0.08] focus:border-indigo-500/50 font-mono text-xs text-slate-200 outline-none resize-y"></textarea>
+                          class="w-full p-3.5 rounded-xl bg-[#07090e] border border-white/[0.08] focus:border-rose-500/50 font-mono text-xs text-slate-200 outline-none resize-y"></textarea>
             </div>
 
             <div class="pt-1">
                 <label class="cursor-pointer inline-flex items-center gap-2.5 select-none">
-                    <input type="checkbox" name="is_default" class="w-4 h-4 rounded bg-white/[0.05] border border-white/[0.1] text-indigo-600 focus:ring-0 focus:ring-offset-0 transition cursor-pointer" />
+                    <input type="checkbox" name="is_default" class="w-4 h-4 rounded bg-white/[0.05] border border-white/[0.1] text-rose-600 focus:ring-0 focus:ring-offset-0 transition cursor-pointer" />
                     <span class="text-xs text-slate-300">Jadikan Sebagai Template Utama</span>
                 </label>
             </div>
 
             <div class="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.06]">
                 <button type="button" onclick="modal_add_template.close()" class="px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 text-xs font-medium transition">Batal</button>
-                <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition">Simpan Template</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/30 transition">Simpan Template</button>
             </div>
         </form>
     </div>

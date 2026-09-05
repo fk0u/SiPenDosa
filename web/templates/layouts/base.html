@@ -20,17 +20,29 @@
                     },
                     colors: {
                         brand: {
-                            50: '#eef2ff',
-                            100: '#e0e7ff',
-                            200: '#c7d2fe',
-                            300: '#a5b4fc',
-                            400: '#818cf8',
-                            500: '#6366f1',
-                            600: '#4f46e5',
-                            700: '#4338ca',
-                            800: '#3730a3',
-                            900: '#312e81',
-                            950: '#0a0d18',
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            200: '#fecdd3',
+                            300: '#fda4af',
+                            400: '#fb7185',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                            700: '#be123c',
+                            800: '#9f1239',
+                            900: '#881337',
+                            950: '#4c0519',
+                        },
+                        accent: {
+                            50: '#fffbeb',
+                            100: '#fef3c7',
+                            200: '#fde68a',
+                            300: '#fcd34d',
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            700: '#b45309',
+                            800: '#92400e',
+                            900: '#78350f',
                         }
                     }
                 }
@@ -47,14 +59,14 @@
     <script src="/static/js/app.js" defer></script>
 
     <style>
-        /* High-End Micro-Styles */
+        /* High-End Micro-Styles (SiPenDosa Obsidian & Ember Theme) */
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #07090e;
+            background-color: #08090d;
             color: #f1f5f9;
         }
         .bezel-card {
-            background: rgba(15, 23, 42, 0.65);
+            background: rgba(18, 19, 26, 0.72);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -70,22 +82,22 @@
             height: 6px;
         }
         ::-webkit-scrollbar-track {
-            background: #07090e;
+            background: #08090d;
         }
         ::-webkit-scrollbar-thumb {
-            background: #1e293b;
+            background: #27272e;
             border-radius: 9999px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #334155;
+            background: #3f3f46;
         }
     </style>
 </head>
-<body class="min-h-[100dvh] flex flex-col antialiased selection:bg-indigo-600 selection:text-white relative overflow-x-hidden">
+<body class="min-h-[100dvh] flex flex-col antialiased selection:bg-rose-600 selection:text-white relative overflow-x-hidden">
 
-    <!-- Fixed Ambient Glow Orbs (Zero Scroll Reflow) -->
-    <div class="fixed top-0 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-[140px] pointer-events-none -z-10"></div>
-    <div class="fixed bottom-10 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none -z-10"></div>
+    <!-- Fixed Ambient Glow Orbs (Ember & Warm Gold) -->
+    <div class="fixed top-0 left-1/4 w-96 h-96 bg-rose-600/10 rounded-full blur-[140px] pointer-events-none -z-10"></div>
+    <div class="fixed bottom-10 right-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-[140px] pointer-events-none -z-10"></div>
 
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast toast-top toast-end z-50 p-4 space-y-2"></div>
@@ -94,10 +106,10 @@
         <input id="main-drawer" type="checkbox" class="drawer-toggle" />
 
         <!-- Drawer Content (Main Application Area) -->
-        <div class="drawer-content flex flex-col bg-[#07090e]">
+        <div class="drawer-content flex flex-col bg-[#08090d]">
             
             <!-- Floating Modern Header Island -->
-            <header class="sticky top-0 z-30 px-4 py-3 bg-[#07090e]/80 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-between transition-all duration-300">
+            <header class="sticky top-0 z-30 px-4 py-3 bg-[#08090d]/85 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-between transition-all duration-300">
                 <div class="flex items-center gap-3">
                     <label for="main-drawer" class="btn btn-square btn-ghost btn-sm lg:hidden drawer-button text-slate-300">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6h16M4 12h16M4 18h16"></path></svg>
@@ -126,21 +138,21 @@
 
                     <!-- Timezone & System Clock Pill -->
                     <div class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/5 text-[11px] font-mono text-slate-400">
-                        <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                         <span>WITA (UTC+8)</span>
                     </div>
 
                     <!-- User Menu Dropdown -->
                     <div class="dropdown dropdown-end">
                         <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-sm avatar placeholder">
-                            <div class="bg-indigo-600/20 text-indigo-300 rounded-full w-8 border border-indigo-500/30 shadow-inner">
+                            <div class="bg-rose-600/20 text-rose-300 rounded-full w-8 border border-rose-500/30 shadow-inner">
                                 <span class="text-xs font-bold uppercase">{{if .User}}{{slice .User.Username 0 1}}{{else}}U{{end}}</span>
                             </div>
                         </div>
                         <ul tabindex="0" class="mt-3 z-[50] p-2 shadow-2xl menu menu-sm dropdown-content bg-slate-900/95 backdrop-blur-2xl rounded-2xl w-56 border border-white/10 space-y-1">
                             <li class="menu-title px-4 py-2 border-b border-white/10 mb-1">
                                 <div class="font-bold text-white text-sm">{{if .User}}{{.User.Username}}{{else}}Administrator{{end}}</div>
-                                <div class="text-[10px] uppercase font-bold tracking-wider text-indigo-400">{{if .User}}{{.User.Role}}{{else}}superadmin{{end}}</div>
+                                <div class="text-[10px] uppercase font-bold tracking-wider text-amber-400">{{if .User}}{{.User.Role}}{{else}}superadmin{{end}}</div>
                             </li>
                             <li><a href="/settings" class="py-2 rounded-lg hover:bg-white/5">Pengaturan Sistem</a></li>
                             <li><a href="/logs" class="py-2 rounded-lg hover:bg-white/5">Log Aktivitas & Audit</a></li>
@@ -163,7 +175,7 @@
             </main>
 
             <!-- Refined High-End Footer -->
-            <footer class="mt-auto px-6 py-8 border-t border-white/[0.06] bg-[#05070c] text-xs text-slate-400">
+            <footer class="mt-auto px-6 py-8 border-t border-white/[0.06] bg-[#050609] text-xs text-slate-400">
                 <div class="max-w-[1400px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
                     <div class="space-y-1 text-center md:text-left">
                         <p><strong class="text-white">SiPenDosa</strong> &copy; {{.CurrentYear}} — Sistem Pengingat Dosen Saatnya.</p>
@@ -185,68 +197,68 @@
         <!-- Sidebar Navigation Drawer -->
         <div class="drawer-side z-40">
             <label for="main-drawer" class="drawer-overlay"></label>
-            <aside class="w-64 bg-[#090d16] text-slate-300 min-h-[100dvh] flex flex-col border-r border-white/[0.08] shadow-2xl">
+            <aside class="w-64 bg-[#0d0e14] text-slate-300 min-h-[100dvh] flex flex-col border-r border-white/[0.08] shadow-2xl">
                 
-                <!-- Brand logo with Gradient Squircle -->
+                <!-- Brand logo with Gradient Squircle (Crimson Ember & Amber Gold) -->
                 <div class="p-6 border-b border-white/[0.08] flex items-center gap-3">
-                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-600/30 ring-1 ring-white/20">
+                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-rose-700 via-rose-600 to-amber-500 flex items-center justify-center shadow-lg shadow-rose-600/30 ring-1 ring-white/20">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
                     </div>
                     <div>
                         <div class="font-extrabold text-white text-lg tracking-tight">SiPenDosa</div>
-                        <div class="text-[10px] font-semibold tracking-wider uppercase text-slate-400">Pengingat Dosen</div>
+                        <div class="text-[10px] font-semibold tracking-wider uppercase text-amber-400/90">Pengingat Dosen</div>
                     </div>
                 </div>
 
                 <!-- Navigation Links with Pill Highlight -->
                 <ul class="menu p-4 flex-1 space-y-1.5 text-sm font-medium">
                     <li>
-                        <a href="/" class="{{if eq .ActivePage "overview"}}bg-indigo-600/15 text-white font-semibold border border-indigo-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
-                            <svg class="w-5 h-5 {{if eq .ActivePage "overview"}}text-indigo-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                        <a href="/" class="{{if eq .ActivePage "overview"}}bg-rose-600/15 text-white font-semibold border border-rose-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
+                            <svg class="w-5 h-5 {{if eq .ActivePage "overview"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                             Overview
                         </a>
                     </li>
                     <li>
-                        <a href="/contacts" class="{{if eq .ActivePage "contacts"}}bg-indigo-600/15 text-white font-semibold border border-indigo-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
-                            <svg class="w-5 h-5 {{if eq .ActivePage "contacts"}}text-indigo-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        <a href="/contacts" class="{{if eq .ActivePage "contacts"}}bg-rose-600/15 text-white font-semibold border border-rose-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
+                            <svg class="w-5 h-5 {{if eq .ActivePage "contacts"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                             Dosen & Kontak
                         </a>
                     </li>
                     <li>
-                        <a href="/schedules" class="{{if eq .ActivePage "schedules"}}bg-indigo-600/15 text-white font-semibold border border-indigo-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
-                            <svg class="w-5 h-5 {{if eq .ActivePage "schedules"}}text-indigo-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <a href="/schedules" class="{{if eq .ActivePage "schedules"}}bg-rose-600/15 text-white font-semibold border border-rose-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
+                            <svg class="w-5 h-5 {{if eq .ActivePage "schedules"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                             Jadwal Kuliah
                         </a>
                     </li>
                     <li>
-                        <a href="/templates" class="{{if eq .ActivePage "templates"}}bg-indigo-600/15 text-white font-semibold border border-indigo-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
-                            <svg class="w-5 h-5 {{if eq .ActivePage "templates"}}text-indigo-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <a href="/templates" class="{{if eq .ActivePage "templates"}}bg-rose-600/15 text-white font-semibold border border-rose-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
+                            <svg class="w-5 h-5 {{if eq .ActivePage "templates"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             Template Pesan
                         </a>
                     </li>
                     <li>
-                        <a href="/history" class="{{if eq .ActivePage "history"}}bg-indigo-600/15 text-white font-semibold border border-indigo-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
-                            <svg class="w-5 h-5 {{if eq .ActivePage "history"}}text-indigo-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <a href="/history" class="{{if eq .ActivePage "history"}}bg-rose-600/15 text-white font-semibold border border-rose-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
+                            <svg class="w-5 h-5 {{if eq .ActivePage "history"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             Riwayat Kirim
                         </a>
                     </li>
                     <li>
-                        <a href="/queue" class="{{if eq .ActivePage "queue"}}bg-indigo-600/15 text-white font-semibold border border-indigo-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
-                            <svg class="w-5 h-5 {{if eq .ActivePage "queue"}}text-indigo-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        <a href="/queue" class="{{if eq .ActivePage "queue"}}bg-rose-600/15 text-white font-semibold border border-rose-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
+                            <svg class="w-5 h-5 {{if eq .ActivePage "queue"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                             Antrian Pesan
                         </a>
                     </li>
 
                     <li class="menu-title pt-6 px-3.5 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Administrasi</li>
                     <li>
-                        <a href="/settings" class="{{if eq .ActivePage "settings"}}bg-indigo-600/15 text-white font-semibold border border-indigo-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
-                            <svg class="w-5 h-5 {{if eq .ActivePage "settings"}}text-indigo-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <a href="/settings" class="{{if eq .ActivePage "settings"}}bg-rose-600/15 text-white font-semibold border border-rose-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
+                            <svg class="w-5 h-5 {{if eq .ActivePage "settings"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                             Pengaturan
                         </a>
                     </li>
                     <li>
-                        <a href="/logs" class="{{if eq .ActivePage "logs"}}bg-indigo-600/15 text-white font-semibold border border-indigo-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
-                            <svg class="w-5 h-5 {{if eq .ActivePage "logs"}}text-indigo-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <a href="/logs" class="{{if eq .ActivePage "logs"}}bg-rose-600/15 text-white font-semibold border border-rose-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
+                            <svg class="w-5 h-5 {{if eq .ActivePage "logs"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             Log Sistem
                         </a>
                     </li>
@@ -269,10 +281,10 @@
                 <p class="text-xs text-slate-400">Buka WhatsApp di ponsel &gt; Perangkat Tertaut &gt; Tautkan Perangkat</p>
             </div>
             
-            <div class="flex flex-col items-center justify-center min-h-[260px] bg-[#07090e] rounded-2xl p-4 border border-white/10 shadow-inner">
+            <div class="flex flex-col items-center justify-center min-h-[260px] bg-[#08090d] rounded-2xl p-4 border border-white/10 shadow-inner">
                 <img id="modal-qr-image" src="" alt="WhatsApp QR Code" class="rounded-xl shadow-lg max-w-[220px] hidden" />
                 <div id="modal-qr-placeholder" class="flex flex-col items-center justify-center text-slate-500 gap-3">
-                    <span class="loading loading-spinner loading-md text-primary"></span>
+                    <span class="loading loading-spinner loading-md text-amber-400"></span>
                     <span class="text-xs">Menghubungkan ke WhatsApp engine...</span>
                 </div>
             </div>

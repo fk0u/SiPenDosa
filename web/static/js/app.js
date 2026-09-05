@@ -85,9 +85,9 @@
             if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-ping';
             if (qrBtn) qrBtn.classList.remove('hidden');
         } else if (state === 'connecting') {
-            statusBadge.classList.add('badge-info');
+            statusBadge.classList.add('badge-warning');
             if (statusText) statusText.innerText = 'Menyambungkan...';
-            if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-sky-400 animate-pulse';
+            if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
             if (qrBtn) qrBtn.classList.add('hidden');
         } else {
             statusBadge.classList.add('badge-error');

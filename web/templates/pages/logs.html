@@ -4,7 +4,7 @@
     <!-- Header & Category Filter -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-2">
+            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold mb-2">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 System Telemetry & Audit Trail
             </div>
@@ -14,12 +14,12 @@
 
         <!-- Filter Category Pills -->
         <div class="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-            <a href="/logs" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{if eq .Data.SelectedCategory ""}}bg-indigo-600 text-white shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.05]{{end}}">Semua</a>
-            <a href="/logs?category=auth" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{if eq .Data.SelectedCategory "auth"}}bg-indigo-600 text-white shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.05]{{end}}">Auth</a>
-            <a href="/logs?category=scheduler" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{if eq .Data.SelectedCategory "scheduler"}}bg-indigo-600 text-white shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.05]{{end}}">Scheduler</a>
-            <a href="/logs?category=queue" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{if eq .Data.SelectedCategory "queue"}}bg-indigo-600 text-white shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.05]{{end}}">Queue/WA</a>
-            <a href="/logs?category=contacts" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{if eq .Data.SelectedCategory "contacts"}}bg-indigo-600 text-white shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.05]{{end}}">Kontak</a>
-            <a href="/logs?category=template" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{if eq .Data.SelectedCategory "template"}}bg-indigo-600 text-white shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.05]{{end}}">Template</a>
+            <a href="/logs" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{if eq .Data.SelectedCategory ""}}bg-rose-600 text-white shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.05]{{end}}">Semua</a>
+            <a href="/logs?category=auth" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{if eq .Data.SelectedCategory "auth"}}bg-rose-600 text-white shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.05]{{end}}">Auth</a>
+            <a href="/logs?category=scheduler" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{if eq .Data.SelectedCategory "scheduler"}}bg-rose-600 text-white shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.05]{{end}}">Scheduler</a>
+            <a href="/logs?category=queue" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{if eq .Data.SelectedCategory "queue"}}bg-rose-600 text-white shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.05]{{end}}">Queue/WA</a>
+            <a href="/logs?category=contacts" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{if eq .Data.SelectedCategory "contacts"}}bg-rose-600 text-white shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.05]{{end}}">Kontak</a>
+            <a href="/logs?category=template" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{if eq .Data.SelectedCategory "template"}}bg-rose-600 text-white shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.05]{{end}}">Template</a>
         </div>
     </div>
 
@@ -45,15 +45,15 @@
                             </td>
                             <td class="py-3 px-4 whitespace-nowrap">
                                 {{if eq .Category "auth"}}
-                                <span class="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-blue-500/10 text-blue-400 border border-blue-500/20">Auth</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-rose-500/10 text-rose-400 border border-rose-500/20">Auth</span>
                                 {{else if eq .Category "scheduler"}}
                                 <span class="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20">Scheduler</span>
                                 {{else if eq .Category "queue"}}
                                 <span class="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Queue</span>
                                 {{else if eq .Category "contacts"}}
-                                <span class="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-purple-500/10 text-purple-400 border border-purple-500/20">Kontak</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20">Kontak</span>
                                 {{else if eq .Category "template"}}
-                                <span class="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">Template</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-rose-500/10 text-rose-400 border border-rose-500/20">Template</span>
                                 {{else}}
                                 <span class="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-white/[0.05] text-slate-400 border border-white/[0.08]">{{.Category}}</span>
                                 {{end}}
