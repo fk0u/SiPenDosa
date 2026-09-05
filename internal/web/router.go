@@ -59,6 +59,7 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 	r.Get("/tos", h.TermsHandler)
 	r.Get("/privacy", h.PrivacyHandler)
 	r.Get("/about", h.AboutHandler)
+	r.Get("/terminal", h.TerminalHandler)
 	r.Get("/404", h.NotFoundHandler)
 	r.Get("/500", h.InternalServerErrorHandler)
 	r.NotFound(h.NotFoundHandler)

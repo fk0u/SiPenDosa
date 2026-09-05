@@ -154,7 +154,7 @@ li {
 </style>
 </head>
 <body>
-<h1>SiPenDosa — OverPower Edition</h1>
+<h1>SiPenDosa — Universal Edition</h1>
 <h3>Sistem Pengingat Dosen Saatnya (macOS Native Universal)</h3>
 
 <p>Selamat datang di penginstal resmi <strong>SiPenDosa</strong> untuk Apple macOS.</p>
@@ -193,7 +193,7 @@ DISTRIBUTION_XML="${TMP_DIR}/Distribution.xml"
 cat <<EOF > "$DISTRIBUTION_XML"
 <?xml version="1.0" encoding="utf-8"?>
 <installer-gui-script minSpecVersion="1">
-    <title>SiPenDosa (OverPower Edition)</title>
+    <title>SiPenDosa Universal Edition</title>
     <welcome file="welcome.html" mime-type="text/html"/>
     <options customize="never" require-scripts="false" hostArchitectures="x86_64,arm64"/>
     <domains enable_anywhere="false" enable_currentUserHome="false" enable_localSystem="true"/>

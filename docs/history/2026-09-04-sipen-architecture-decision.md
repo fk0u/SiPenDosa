@@ -1,4 +1,4 @@
-# Keputusan Arsitektur: SiPenDosa (OverPower Edition)
+# Keputusan Arsitektur: SiPenDosa (Unified High-Performance Edition)
 
 **Tanggal:** 4 September 2026  
 **Status:** Diterima & Diimplementasikan  

@@ -129,7 +129,7 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>NSHumanReadableCopyright</key>
-    <string>© 2026 SiPenDosa Team. OverPower Edition.</string>
+    <string>© 2026 SiPenDosa Open Source Project.</string>
 </dict>
 </plist>
 EOF

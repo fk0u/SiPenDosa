@@ -94,12 +94,25 @@ package-macos: build-darwin app-macos pkg dmg
 	@rm -rf $(DIST_DIR)/tmp_macos
 	@echo "==> Selesai paket macOS (App, PKG, DMG, Tarball) di $(DIST_DIR)/"
 
-# 7. Package All Distributions
-package-all: build-all installer-windows package-deb package-linux package-macos
+# 7. Packaging Android (Native Standalone APK & Termux Script)
+build-android:
+	@echo "==> Mengompilasi binary Android ARM64..."
+	@mkdir -p $(BIN_DIR)
+	CGO_ENABLED=0 GOOS=android GOARCH=arm64 go build -ldflags="-s -w" -o $(BIN_DIR)/$(APP_NAME)_android_arm64 ./cmd/$(APP_NAME)
+	@echo "==> Selesai: $(BIN_DIR)/$(APP_NAME)_android_arm64"
+
+package-apk: build-android
+	@echo "==> Membangun Android Standalone APK..."
+	@go run scripts/apkbuilder/main.go $(BIN_DIR)/$(APP_NAME)_android_arm64 $(DIST_DIR)/SiPenDosa-Android.apk
+	@echo "==> Selesai: $(DIST_DIR)/SiPenDosa-Android.apk"
+
+# 8. Package All Distributions
+package-all: build-all installer-windows package-deb package-linux package-macos package-apk
 	@echo ""
 	@echo "╔════════════════════════════════════════════════════════════════════════╗"
 	@echo "║   ✓ SELURUH PAKET DISTRIBUSI STANDALONE SIPENDOSA BERHASIL DIBUAT!     ║"
 	@echo "╠════════════════════════════════════════════════════════════════════════╣"
+	@echo "║  • Android Standalone APK   : $(DIST_DIR)/SiPenDosa-Android.apk"
 	@echo "║  • Apple Disk Image (.dmg)  : $(DIST_DIR)/SiPenDosa-1.0.0.dmg"
 	@echo "║  • Apple Installer (.pkg)   : $(DIST_DIR)/SiPenDosa-1.0.0-Installer.pkg"
 	@echo "║  • Apple Native (.app)      : $(DIST_DIR)/SiPenDosa.app"

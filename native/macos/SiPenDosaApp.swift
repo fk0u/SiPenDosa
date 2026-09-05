@@ -322,7 +322,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func showAbout() {
         let alert = NSAlert()
-        alert.messageText = "SiPenDosa — OverPower Edition"
+        alert.messageText = "SiPenDosa — Native macOS Edition"
         alert.informativeText = """
         Sistem Pengingat Dosen Saatnya (SiPenDosa)
         Versi 1.0.0 (Universal Apple Architecture)

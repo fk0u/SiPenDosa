@@ -871,6 +871,13 @@ func (h *Handlers) AboutHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *Handlers) TerminalHandler(w http.ResponseWriter, r *http.Request) {
+	h.renderer.Render(w, r, "pages/terminal.html", PageData{
+		Title:      "Terminal Android & Service — SiPenDosa",
+		ActivePage: "terminal",
+	})
+}
+
 // ==========================================
 // SEO, PWA & Discovery Endpoints
 // ==========================================

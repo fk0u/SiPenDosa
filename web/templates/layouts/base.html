@@ -282,6 +282,12 @@
                             Antrian Pesan
                         </a>
                     </li>
+                    <li>
+                        <a href="/terminal" class="{{if eq .ActivePage "terminal"}}bg-amber-500/15 text-amber-300 font-semibold border border-amber-500/30 shadow-sm{{else}}text-amber-400/80 hover:text-amber-300 hover:bg-amber-500/10{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200 font-mono text-xs">
+                            <span class="text-base">🖥️</span>
+                            Terminal Mode (Android/Termux)
+                        </a>
+                    </li>
 
                     <li class="menu-title pt-6 px-3.5 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Administrasi</li>
                     <li>
@@ -375,7 +381,7 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-base text-white">Pusat Bantuan & Dukungan</h3>
-                        <p class="text-[11px] text-slate-400">SiPenDosa — OverPower Academic Assistant</p>
+                        <p class="text-[11px] text-slate-400">SiPenDosa — Autonomous Academic Assistant</p>
                     </div>
                 </div>
                 <form method="dialog">
@@ -412,7 +418,7 @@
                         <button onclick="copyDiagnostics()" class="text-[10px] text-amber-400 hover:text-amber-300 underline cursor-pointer">Salin Data Diagnostik</button>
                     </div>
                     <div class="p-3 rounded-xl bg-black/40 border border-white/5 font-mono text-[10px] space-y-1 text-slate-400" id="diagnostic-box">
-                        <div>APP_NAME : SiPenDosa (OverPower Edition)</div>
+                        <div>APP_NAME : SiPenDosa (Academic Assistant)</div>
                         <div>VERSION  : 1.0.0 (Multi-Platform / Mobile Server)</div>
                         <div>CLIENT   : <span id="diag-url"></span></div>
                         <div>STATUS   : Active & Listening on Port 8473</div>

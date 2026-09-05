@@ -1,11 +1,43 @@
-# SiPenDosa — Advanced WhatsApp Assistant Bot (OverPower Edition)
+<p align="center">
+  <img src="assets/banner.svg" alt="SiPenDosa Animated Banner" width="100%" />
+</p>
 
-> ⚡ **"Sistem Pengingat Dosen Saatnya"**  
-> *"Asisten yang rela 'berdosa' demi mengingatkan dosen, agar mahasiswa tidak perlu merasa sungkan."*
+<p align="center">
+  <a href="https://github.com/fk0u/SiPenDosa/releases"><img src="https://img.shields.io/badge/Release-v1.0.0-e11d48?style=for-the-badge&logo=github&logoColor=white" alt="Release v1.0.0" /></a>
+  <a href="https://golang.org"><img src="https://img.shields.io/badge/Go-1.27.0_Core-be123c?style=for-the-badge&logo=go&logoColor=white" alt="Go 1.27" /></a>
+  <a href="https://isocpp.org"><img src="https://img.shields.io/badge/C%2B%2B-17_Socket_Bridge-9f1239?style=for-the-badge&logo=c%2B%2B&logoColor=white" alt="C++17" /></a>
+  <a href="https://developer.apple.com/swift/"><img src="https://img.shields.io/badge/Swift-6.3_AppKit-f59e0b?style=for-the-badge&logo=swift&logoColor=white" alt="Swift AppKit" /></a>
+  <a href="https://www.android.com"><img src="https://img.shields.io/badge/Android-APK_%26_Termux-10b981?style=for-the-badge&logo=android&logoColor=white" alt="Android" /></a>
+  <a href="https://sqlite.org"><img src="https://img.shields.io/badge/SQLite-WAL_Pure_Go-f59e0b?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite WAL" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-334155?style=for-the-badge" alt="License MIT" /></a>
+</p>
+
+<p align="center">
+  <strong>Sistem Pengingat Dosen Saatnya (SiPenDosa)</strong><br>
+  <em>"Asisten cerdas yang rela 'berdosa' demi mengingatkan dosen, agar mahasiswa tidak perlu merasa sungkan."</em>
+</p>
 
 ---
 
-## 📖 Makna & Filosofi Nama: SiPenDosa
+## 🧭 Daftar Isi
+- [Makna & Filosofi Nama](#-makna--filosofi-nama)
+- [Arsitektur Sistem](#-arsitektur-sistem)
+- [Matriks Paket Rilis Resmi](#-matriks-paket-rilis-resmi-v100)
+- [Fitur Utama](#-fitur-utama)
+- [Panduan Instalasi Multi-Platform](#-panduan-instalasi-multi-platform)
+  - [Apple macOS (DMG & PKG)](#-1-apple-macos-apple-silicon--intel)
+  - [Microsoft Windows (Setup.exe)](#-2-microsoft-windows-10--11)
+  - [Linux (Debian, Ubuntu, RedHat, Arch)](#-3-linux-ubuntu-debian-redhat-arch)
+  - [Mobile (Android Standalone APK & Termux)](#-4-mobile-android-apk--ios-pwa)
+- [Konfigurasi Environment (.env)](#-konfigurasi-environment-env)
+- [Reverse Proxy & SSL Domain](#-reverse-proxy--ssl-domain)
+- [Alur Penggunaan Pertama Kali](#-alur-penggunaan-pertama-kali)
+- [Keamanan & Cadangan Data](#-keamanan--cadangan-data)
+- [Lisensi](#-lisensi)
+
+---
+
+## 📖 Makna & Filosofi Nama
 
 ### 1. Kepanjangan Resmi
 * **SiPenDosa** = **Sistem Pengingat Dosen Saatnya**  
@@ -14,254 +46,207 @@
 
 ### 2. Penjelasan Makna
 
-#### 🏛️ Versi Formal (Dokumentasi / SRS / Proposal)
-> **SiPenDosa** adalah Sistem Pengingat Dosen yang bertugas mengirimkan pesan pengingat jadwal perkuliahan secara otomatis dan terjadwal kepada dosen pengampu mata kuliah. Nama ini diambil dari akronim resmi: **"Sistem Pengingat Dosen Saatnya"**.
+#### 🏛️ Versi Formal (Dokumentasi / SRS / Proposal Kampus)
+> **SiPenDosa** adalah sistem pengingat jadwal perkuliahan otomatis dan terjadwal yang ditujukan kepada dosen pengampu mata kuliah. Nama ini diambil dari akronim resmi: **"Sistem Pengingat Dosen Saatnya"**.
 
-#### ☕ Versi Asli / Karakter (Jiwa & Realita Mahasiswa)
-> Nama **SiPenDosa** lahir dari realita dan kegelisahan mahasiswa:
->
-> *Mengingatkan dosen berkali-kali tentang jadwal kuliah, perkuliahan pengganti, atau kepastian kelas kadang terasa seperti **“berdosa”** — takut dianggap mengganggu waktu istirahat dosen, takut dinilai kurang sopan, atau takut dicap tidak mandiri.*
->
-> *Tapi di sisi lain, mahasiswa juga butuh kepastian agar perkuliahan tetap berjalan tertib.*
->
-> Maka lahirlah **SiPenDosa**:  
-> **Sebuah asisten otomasi cerdas yang rela menanggung beban "dosa" tersebut, bertutur kata santun dan terjadwal, sehingga mahasiswa tidak perlu lagi merasa sungkan!**
+#### ☕ Versi Mahasiswa (Jiwa & Realita Perkuliahan)
+> Mengingatkan dosen berulang kali mengenai jadwal kuliah, ruang pengganti, atau kepastian kelas sering kali memicu dilema:  
+> *Mahasiswa takut dianggap lancang, takut mengganggu jam istirahat dosen, atau dinilai tidak sopan.*  
+> 
+> Namun di sisi lain, kepastian jadwal adalah hak mahasiswa agar kegiatan belajar tetap teratur.  
+> 
+> **Maka SiPenDosa mengambil peran itu:**  
+> Sebuah sistem otomasi beretika tinggi yang bertutur kata sopan, terstruktur, dan terkirim pada jendela waktu yang pantas — sehingga mahasiswa tidak perlu lagi merasa sungkan!
 
 ---
 
-## 🌟 Fitur Utama (OverPower Engine)
+## 🏗️ Arsitektur Sistem
 
-1. **Unofficial WhatsApp Engine Terpercaya (`go.mau.fi/whatsmeow`)**:
-   - Pemindaian QR Code interaktif di Terminal (dengan ASCII art cyberpunk) maupun langsung melalui Web Dashboard via WebSocket secara *real-time*.
-   - Penyimpanan sesi terisolasi di database SQLite terpisah (`session/whatsapp.db`).
-   - Deteksi pemutusan koneksi otomatis dengan *exponential backoff auto-reconnect*.
-   - **Anti-Ban Shield**:
-     - Normalisasi format nomor otomatis (`08...` &rarr; `628...@s.whatsapp.net` & ID grup `@g.us`).
+SiPenDosa dibangun dengan arsitektur **Polyglot Hybrid** yang memadukan keandalan Go, kecepatan C++17, dan keanggunan UI Apple Swift:
+
+```mermaid
+flowchart TB
+    subgraph Clients["Antarmuka Pengguna & Klien"]
+        WebDesktop["Web Browser Desktop / Laptop"]
+        MacApp["Native macOS Menu Bar (Swift AppKit)"]
+        TermDisplay["Terminal Interactive Console (HTML5/WS)"]
+        MobilePWA["Android / iOS PWA Add-to-HomeScreen"]
+    end
+
+    subgraph NativeBridge["C++17 Socket Bridge"]
+        CPPSocket["Low-Latency Unix/TCP Socket Bridge (Port 8474)"]
+        MetricsEngine["Native RAM & Process Lifecycle Inspector"]
+    end
+
+    subgraph GoCore["Go Unified Core Engine (Port 8473)"]
+        HttpServer["HTTP Server & WebSocket Hub"]
+        Scheduler["Smart Scheduler (H-1 / H-0 & Holiday Check)"]
+        RateLimiter["Anti-Ban Jitter Rate Limiter (5-15s)"]
+        QueueWorker["Persistent Message Queue Worker"]
+    end
+
+    subgraph DataStorage["Penyimpanan Terisolasi (Zero-CGO)"]
+        AppDB[("Database Aplikasi (SQLite WAL)\ndata/sipen.db")]
+        WADB[("Sesi WhatsApp Terenkripsi\nsession/whatsapp.db")]
+    end
+
+    subgraph External["Jaringan Luar"]
+        WANetwork["WhatsApp Network (whatsmeow engine)"]
+        DosenTarget["WhatsApp Dosen / Grup Kelas"]
+    end
+
+    WebDesktop -->|HTTP / WebSocket| HttpServer
+    TermDisplay -->|HTTP / WebSocket| HttpServer
+    MobilePWA -->|HTTP / WebSocket| HttpServer
+    MacApp -->|C++ Socket Bridge| CPPSocket
+    CPPSocket <-->|IPC / Socket| HttpServer
+
+    HttpServer <--> AppDB
+    Scheduler -->|Evaluasi Jadwal & Kalender Libur| AppDB
+    Scheduler -->|Enqueue Pesan| QueueWorker
+    QueueWorker --> RateLimiter
+    RateLimiter -->|Human Typing Simulation 1.5-2.5s| WANetwork
+    WANetwork <--> WADB
+    WANetwork -->|Pesan Pengingat Santun Terkirim| DosenTarget
+```
+
+---
+
+## 📦 Matriks Paket Rilis Resmi (`v1.0.0`)
+
+Semua paket rilis telah dikompilasi secara mandiri (*self-contained*), ditandatangani, dan siap langsung dipasang tanpa memerlukan dependensi eksternal:
+
+| Platform | Format Paket | Deskripsi & Kegunaan | Lokasi / Download |
+| :--- | :--- | :--- | :--- |
+| **Android** | `SiPenDosa-Android.apk` | **Standalone APK** dengan Background Service 24/7 & Terminal Termux View | [Download APK](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/SiPenDosa-Android.apk) |
+| **macOS** | `SiPenDosa-1.0.0.dmg` | **Apple Disk Image** Retina Custom Layout Drag-and-Drop ke `/Applications` | [Download DMG](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/SiPenDosa-1.0.0.dmg) |
+| **macOS** | `SiPenDosa-1.0.0-Installer.pkg` | **Apple Installer Package** Wizard resmi dengan LaunchAgent otomatis | [Download PKG](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/SiPenDosa-1.0.0-Installer.pkg) |
+| **Windows** | `SiPenDosa-Setup.exe` | **Windows Standalone Setup** (Desktop & Start Menu Shortcut, Uninstaller) | [Download EXE](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/SiPenDosa-Setup.exe) |
+| **Ubuntu / Debian** | `sipendosa_1.0.0_amd64.deb` | Paket DEB resmi dengan konfigurasi daemon **Systemd** otomatis (x86_64) | [Download DEB (amd64)](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/sipendosa_1.0.0_amd64.deb) |
+| **Debian ARM64** | `sipendosa_1.0.0_arm64.deb` | Paket DEB untuk arsitektur ARM64 (Raspberry Pi, Ampere, AWS Graviton) | [Download DEB (arm64)](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/sipendosa_1.0.0_arm64.deb) |
+| **Linux Universal** | `sipendosa_linux_amd64.tar.gz` | Tarball distribusi standalone untuk RedHat, CentOS, Fedora, Arch, SUSE | [Download Tarball](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/sipendosa_linux_amd64.tar.gz) |
+| **macOS Universal** | `sipendosa_macos_universal.tar.gz` | Tarball distribusi CLI & daemon LaunchAgent universal (ARM64 + x86_64) | [Download Tarball](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/sipendosa_macos_universal.tar.gz) |
+
+---
+
+## 🌟 Fitur Utama
+
+1. **WhatsApp Engine Modern (`go.mau.fi/whatsmeow`)**:
+   - Pemindaian QR Code interaktif di terminal atau Web Dashboard via WebSocket secara *real-time*.
+   - Sesi terenkripsi dan terisolasi di database SQLite terpisah (`session/whatsapp.db`).
+   - Fitur **Anti-Ban Shield**:
+     - Normalisasi otomatis nomor telepon Indonesia (`08...` &rarr; `628...@s.whatsapp.net`).
      - Simulasi kehadiran manusia (*human presence simulation*): Menandai status *Online*, simulasi *Composing / Sedang mengetik...* dengan jeda acak (*jitter* 1.5–2.5 detik) sebelum pengiriman pesan fisik.
-
 2. **Smart Scheduler (H-1 & Timezone Aware)**:
    - Pengingat perkuliahan mode **H-1** (satu hari sebelumnya) atau **H-0** (hari H).
-   - Zona waktu bawaan **Asia/Makassar (WITA, UTC+8)** (dapat disesuaikan ke WIB atau WIT melalui dashboard atau `.env`).
-   - Pengecekan daftar **Hari Libur**: Jika jadwal jatuh pada tanggal libur yang terdaftar, pesan pengingat dilewati secara otomatis tanpa mengganggu dosen.
-   - Pengecekan rentang jam kirim operasional (default `08:00` s.d. `16:00`).
-   - **Hitung Mundur (*Countdown*) Real-time** menuju pengiriman jadwal berikutnya di dashboard.
-   - Fitur **Manual Trigger**: Eksekusi instan jadwal sewaktu-waktu.
-   - **Dry-Run Mode**: Mode simulasi global maupun per-jadwal (pesan dicatat dalam antrian dan riwayat tanpa pengiriman fisik ke WhatsApp).
-
+   - Zona waktu bawaan **Asia/Makassar (WITA, UTC+8)** (dapat disesuaikan ke WIB atau WIT).
+   - Pengecekan daftar **Hari Libur**: Melewati jadwal secara cerdas tanpa mengganggu dosen pada hari libur nasional atau cuti kampus.
+   - Pengecekan rentang jam operasional (default `08:00` s.d. `16:00`).
+   - **Hitung Mundur Real-time** menuju jadwal berikutnya di dashboard.
 3. **Template Engine Dinamis**:
-   - Go Template Engine lengkap dengan fungsi bantuan string, tanggal, dan kapitalisasi.
-   - Variabel bawaan:
-     - `{{.NamaDosen}}`, `{{.NamaMahasiswa}}`, `{{.NIM}}`
-     - `{{.Matkul}}`, `{{.Hari}}`, `{{.Tanggal}}`, `{{.JamMulai}}`, `{{.JamSelesai}}`
-     - `{{.Lokasi}}`, `{{.LinkGroup}}`, `{{.WaktuSekarang}}`, `{{.HariDalamBahasa}}`
-   - Editor dengan tombol sisip variabel cepat dan **Live Preview** interaktif yang langsung ter-render saat mengetik.
-   - **Audit Trail & Versioning**: Setiap modifikasi template tersimpan riwayat versinya untuk kemudahan audit.
-
-4. **Message Queue & Anti-Ban Rate Limiter**:
-   - Antrian pesan terjadwal dengan pemrosesan mandiri di latar belakang (*background worker*).
-   - Rate limiter cerdas dengan *jitter* acak 5–15 detik antar pesan.
-   - Mekanisme *auto-retry* otomatis hingga 3x percobaan dengan jeda bertingkat (*exponential backoff*) jika terjadi gangguan jaringan.
-   - Kemampuan pembatalan (*cancel*) atau paksa kirim segera (*send now*) melalui antarmuka web.
-
-5. **Web Dashboard Modern & Responsif**:
-   - DaisyUI Theme `night` (Dark Mode elegan) + Tailwind CSS + HTMX (interaktivitas tinggi tanpa beban komputasi JS berlebih).
-   - WebSocket real-time untuk status koneksi WhatsApp, QR Code, hitung mundur, dan notifikasi Toast pop-up.
-   - Manajemen Dosen, Kontak, Jadwal Kuliah, Template, Antrian, dan Pengaturan.
-   - Fitur pengunduhan cadangan database SQLite (`.db`) langsung dari menu pengaturan.
-   - Log viewer aktivitas sistem dan audit trail yang rapi.
-
-6. **Zero Hardcoded Data & Zero CGO**:
-   - Tidak ada data pribadi yang di-hardcode di kode program.
-   - Menggunakan driver SQLite pure-Go (`modernc.org/sqlite`), sehingga dapat di-compile statis tanpa membutuhkan GCC (`CGO_ENABLED=0`).
+   - Variabel bawaan: `{{.NamaDosen}}`, `{{.NamaMahasiswa}}`, `{{.NIM}}`, `{{.Matkul}}`, `{{.Hari}}`, `{{.Tanggal}}`, `{{.JamMulai}}`, `{{.JamSelesai}}`, `{{.Lokasi}}`, `{{.LinkGroup}}`, `{{.HariDalamBahasa}}`.
+   - Editor template interaktif dengan **Live Preview** seketika saat mengetik.
+   - **Audit Trail**: Riwayat versi template tersimpan otomatis.
+4. **Message Queue & Auto-Retry Worker**:
+   - Antrian persisten dengan pemrosesan terisolasi di latar belakang.
+   - Jeda acak 5–15 detik antar pesan untuk menghindari deteksi spam WhatsApp.
+   - Mekanisme *auto-retry* 3x dengan *exponential backoff* bila koneksi terputus.
+5. **Terminal Mode Interaktif (`/terminal`)**:
+   - Tampilan konsol shell bertema Termux dengan streaming log WebSocket real-time.
+   - Prompt interaktif (`status`, `ip`, `reconnect`, `clear`, `help`).
+6. **Desain Visual Eksklusif (Scarlet Rose & Burnished Gold)**:
+   - Antarmuka responsif tanpa warna biru/ungu generik — dirancang elegan dengan persona Crimson Scarlet (`#e11d48`) dan Burnished Gold (`#f59e0b`).
+   - 100% responsif di layar ponsel maupun desktop ultra-wide.
 
 ---
 
-## 🛠️ Persyaratan Sistem
+## 💻 Panduan Instalasi Multi-Platform
 
-- **Sistem Operasi**: Linux (Ubuntu 20.04 / 22.04 / 24.04 LTS direkomendasikan) atau Windows / macOS.
-- **Go**: Versi 1.22 atau lebih baru (jika melakukan build dari source).
-- **RAM**: Minimal 512 MB (Sangat ringan).
-- **Port Default**: `8473`.
+### 🍎 1. Apple macOS (Apple Silicon & Intel)
+
+#### Opsi A: Apple Disk Image (`SiPenDosa-1.0.0.dmg`) — Sangat Direkomendasikan!
+1. Unduh [SiPenDosa-1.0.0.dmg](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/SiPenDosa-1.0.0.dmg).
+2. Buka berkas DMG. Jendela Finder akan menampilkan antarmuka kustom SiPenDosa.
+3. **Seret (drag)** ikon `SiPenDosa.app` ke ikon `Applications`.
+4. Buka aplikasi dari folder `Applications` atau Launchpad.
+5. Ikon **⚡ SiPenDosa** akan muncul di Menu Bar kanan atas dengan kontrol instan (Buka Web Dashboard, Scan QR, Status Server, Log).
+
+#### Opsi B: Apple Installer Package (`SiPenDosa-1.0.0-Installer.pkg`)
+1. Unduh dan buka [SiPenDosa-1.0.0-Installer.pkg](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/SiPenDosa-1.0.0-Installer.pkg).
+2. Ikuti panduan wizard instalasi hingga selesai.
+3. Paket ini otomatis mengonfigurasi **LaunchAgent daemon** sehingga server selalu aktif di latar belakang saat Mac dinyalakan.
 
 ---
 
-## 💻 Panduan Instalasi Multi-Platform (Standalone & Siap Pakai!)
+### 🪟 2. Microsoft Windows (10 & 11)
 
-SiPenDosa hadir dengan sistem **Standalone Installer** untuk seluruh platform utama. Anda **tidak perlu** menginstal Go, GCC, Git, atau dependency tambahan di komputer maupun server target.
+#### Opsi A: Standalone Setup Wizard (`SiPenDosa-Setup.exe`)
+1. Unduh [SiPenDosa-Setup.exe](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/SiPenDosa-Setup.exe).
+2. Klik dua kali untuk menjalankan installer (tidak memerlukan izin Administrator).
+3. Installer akan:
+   - Memasang berkas ke `%LOCALAPPDATA%\Programs\SiPenDosa`.
+   - Meng-generate file `.env` produksi dengan token rahasia 32 karakter secara otomatis.
+   - Membuat **Desktop Shortcut** dan folder **Start Menu**.
+   - Mendaftarkan entri di **Windows Settings > Installed Apps** (Add/Remove Programs).
+4. Selesai! Klik shortcut Desktop untuk langsung membuka aplikasi.
 
 ---
 
-### 🐧 1. Linux (Ubuntu, Debian, RedHat, CentOS, Fedora, Rocky, AlmaLinux, Arch)
+### 🐧 3. Linux (Ubuntu, Debian, RedHat, Arch)
 
-#### Opsi A: Paket Debian / Ubuntu (`.deb`) — Paling Direkomendasikan untuk Ubuntu/Debian
-Paket `.deb` secara otomatis memasang binary di `/opt/sipen`, mengonfigurasi user sistem terisolasi, men-generate token rahasia `.env`, dan mengaktifkan service **Systemd** otomatis:
+#### Opsi A: Paket Debian / Ubuntu (`.deb`)
 ```bash
 # Untuk arsitektur x86_64 / amd64:
 sudo dpkg -i sipendosa_1.0.0_amd64.deb
 
-# Untuk arsitektur ARM64 (Raspberry Pi / AWS Graviton):
+# Untuk arsitektur ARM64:
 sudo dpkg -i sipendosa_1.0.0_arm64.deb
 
-# Periksa status service daemon:
+# Cek status daemon:
 sudo systemctl status sipen
 ```
 
-#### Opsi B: Universal Standalone Installer (`install-linux.sh`) — Untuk Semua Distro Linux
-Cocok untuk **RedHat, CentOS, Fedora, Rocky Linux, AlmaLinux, Arch Linux, OpenSUSE**, maupun Debian/Ubuntu:
-1. Ekstrak paket tarball distribusi:
-   ```bash
-   tar -xzf sipendosa_linux_amd64.tar.gz
-   cd sipendosa_linux_amd64  # atau direktori hasil ekstraksi
-   ```
-2. Jalankan installer dengan hak akses `sudo`:
-   ```bash
-   sudo ./install-linux.sh
-   ```
-3. Skrip installer secara otomatis:
-   - Mendeteksi arsitektur sistem (`x86_64` atau `aarch64`).
-   - Membuat user sistem `sipen`.
-   - Mengonfigurasi `/opt/sipen` beserta permission data yang aman.
-   - Meng-generate `SESSION_SECRET` acak 32-karakter di `.env`.
-   - Mendaftarkan dan menyalakan daemon **Systemd** `sipen.service`.
-   - Membuka port firewall (UFW / Firewalld) jika aktif.
-4. Periksa log:
-   ```bash
-   sudo journalctl -u sipen -f
-   ```
-
----
-
-### 🪟 2. Windows 10 / 11 / Server (Tanpa Perlu Terminal!)
-
-#### Opsi A: Executable Standalone Installer (`SiPenDosa-Setup.exe`) — Sangat Mudah!
-1. Unduh atau jalankan file **`SiPenDosa-Setup.exe`** (dapat di-double click langsung).
-2. Installer mandiri (*self-contained*) akan:
-   - Menyiapkan direktori di `%LOCALAPPDATA%\Programs\SiPenDosa` (tanpa memerlukan hak akses Administrator).
-   - Mengekstrak engine `sipen.exe`.
-   - Meng-generate file `.env` produksi dengan `SESSION_SECRET` unik 32 karakter secara otomatis.
-   - Membuat **Desktop Shortcut** (`SiPenDosa.lnk`).
-   - Membuat folder **Start Menu** (`Programs > SiPenDosa`) lengkap dengan shortcut terminal, background runner hening (`run-background.vbs`), dan uninstaller.
-   - Mendaftarkan aplikasi ke menu **Windows Settings > Installed Apps** (Add/Remove Programs).
-3. Setelah instalasi selesai, tekan **Y** untuk langsung menjalankan aplikasi dan membuka browser ke `http://localhost:8473`!
-
-#### Opsi B: Menggunakan Skrip Satu Klik (`install.bat` / `install.ps1`)
-Jika Anda mendistribusikan folder rilis:
-- Cukup klik kanan file **`install.bat`** lalu pilih **Run as Administrator** (atau jalankan di PowerShell: `powershell -ExecutionPolicy Bypass -File .\install.ps1`).
-
----
-
-### 🍎 3. Apple macOS (Apple Silicon M1/M2/M3/M4 & Intel x86_64)
-
-SiPenDosa di macOS hadir dalam bentuk **Native Universal Companion App** (`SiPenDosa.app`) yang menggabungkan:
-- **Go Core**: Backend engine WhatsApp, scheduler, dan SQLite database.
-- **C++17 Socket Bridge**: Low-latency non-blocking status inspector & memory lifecycle checker.
-- **Swift AppKit**: Menu Bar Status Item yang elegan di bar atas macOS.
-
----
-
-#### Opsi A: Apple Disk Image (`SiPenDosa-1.0.0.dmg`) — Drag & Drop Visual (Paling Disukai Pengguna Mac!)
-1. Buka file **`SiPenDosa-1.0.0.dmg`**.
-2. Jendela Finder akan menampilkan background visual kustom eksklusif.
-3. Cukup **seret (drag)** ikon `SiPenDosa.app` ke ikon folder `Applications`.
-4. Buka `SiPenDosa` dari Launchpad atau folder `/Applications`.
-5. Ikon **⚡ SiPenDosa** akan langsung muncul di Menu Bar kanan atas Anda dengan menu kontrol interaktif:
-   - Status engine & indikator latency/RAM secara realtime.
-   - Tombol **"Buka Web Dashboard"** (langsung membuka browser).
-   - Tombol **"Tautkan WhatsApp (Scan QR)"**.
-   - Kontrol Mulai Ulang / Hentikan Engine.
-   - Pintasan langsung ke file log dan folder `.env`.
-
----
-
-#### Opsi B: Apple Installer Package (`SiPenDosa-1.0.0-Installer.pkg`) — Installer Wizard Resmi
-Cocok untuk instalasi terpandu standar perusahaan/institusi pendidikan:
-1. Double-click **`SiPenDosa-1.0.0-Installer.pkg`**.
-2. Wizard instalasi akan memandu Anda (layar sambutan filosofi SiPenDosa, pemilihan target disk).
-3. Installer secara otomatis:
-   - Memasang `SiPenDosa.app` ke `/Applications`.
-   - Menyiapkan folder data di `~/.local/share/sipendosa`.
-   - Meng-generate file `.env` dengan token unik 32-karakter.
-   - Mendaftarkan dan mengaktifkan **LaunchAgent daemon** (`~/Library/LaunchAgents/com.sipendosa.daemon.plist`) agar aplikasi otomatis aktif saat Mac dinyalakan.
-
----
-
-#### Opsi C: Menggunakan Skrip Terminal Standalone (`install-macos.sh`)
-Jika Anda mendistribusikan berkas `.tar.gz`:
+#### Opsi B: Universal Standalone Tarball (`install-linux.sh`)
 ```bash
-tar -xzf sipendosa_macos_universal.tar.gz
-cd sipendosa_macos_universal
-./install-macos.sh
+tar -xzf sipendosa_linux_amd64.tar.gz
+cd sipendosa_linux_amd64
+sudo ./install-linux.sh
 ```
-
-Perintah kontrol daemon macOS:
-- **Stop**: `launchctl unload ~/Library/LaunchAgents/com.sipendosa.daemon.plist`
-- **Start**: `launchctl load ~/Library/LaunchAgents/com.sipendosa.daemon.plist`
-- **Log**: `tail -f ~/.local/share/sipendosa/sipen.log`
+Skrip instalasi ini otomatis mendeteksi distro, membuat user `sipen`, mendaftarkan daemon `sipen.service`, dan membuka port firewall.
 
 ---
 
-### 📱 4. Smartphone Android & iOS (Jadikan Handphone sebagai Server 24/7!)
+### 📱 4. Mobile (Android APK & iOS PWA)
 
-Kini Anda dapat menjadikan **smartphone pribadi** sebagai server pengingat WhatsApp mandiri tanpa perlu menyewa VPS! Server yang berjalan di handphone dapat diakses dari browser HP itu sendiri (`http://localhost:8473`) maupun dari laptop/tablet yang terhubung di jaringan Wi-Fi lokal yang sama (`http://IP_HANDPHONE:8473`).
+#### 🤖 Opsi A: Standalone Android APK (`SiPenDosa-Android.apk`)
+1. Unduh [SiPenDosa-Android.apk](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/SiPenDosa-Android.apk) ke HP Android Anda lalu pasang (izinkan instalasi APK dari browser jika diminta).
+2. Buka aplikasi. Secara otomatis:
+   - **Foreground Service & Wakelock** akan aktif di latar belakang agar server tidak dimatikan oleh sistem Android.
+   - Layar menampilkan **Terminal Display Konsol** interaktif dengan log daemon langsung.
+3. Buka browser di laptop yang satu jaringan Wi-Fi, akses: `http://<IP_HANDPHONE>:8473` untuk mengelola jadwal dari laptop!
 
-#### 🤖 Opsi A: Android Server Mandiri via Termux (Sangat Direkomendasikan)
-1. Buka aplikasi **Termux** di smartphone Android Anda.
-2. Jalankan skrip installer satu klik:
+#### 💻 Opsi B: Android via Termux murni
+1. Buka Termux di Android.
+2. Jalankan skrip installer:
    ```bash
    ./install-android-termux.sh
    ```
-3. Skrip secara otomatis:
-   - Mendeteksi arsitektur CPU ponsel Anda (`arm64-v8a`).
-   - Menyiapkan folder penyimpanan `~/.sipendosa/`.
-   - Mengaktifkan **Android Wakelock** (`termux-wake-lock`) agar server **tidak mati** saat layar HP padam.
-   - Menampilkan alamat IP Wi-Fi lokal untuk diakses dari laptop.
-4. Perintah kontrol di Termux:
-   - **Nyalakan Server**: `sipen-start`
-   - **Matikan Server**: `sipen-stop`
+3. Gunakan perintah `sipen-start` untuk menjalankan server, dan `sipen-stop` untuk mematikan.
 
-#### 🍏 Opsi B: iOS (iPhone / iPad) — PWA Fullscreen "Add to Home Screen"
-1. Buka browser Safari di iPhone Anda, lalu akses alamat dashboard SiPenDosa (misal `http://192.168.1.10:8473`).
-2. Tekan tombol **Share** (ikon kotak dengan panah ke atas di bar bawah Safari).
-3. Gulir ke bawah dan pilih **"Add to Home Screen" (Tambahkan ke Layar Utama)**.
-4. Ikon resmi SiPenDosa akan muncul di Home Screen iPhone Anda dan dapat dibuka secara fullscreen tanpa address bar browser seperti aplikasi native!
-5. Proyek native iOS Xcode juga tersedia di `mobile/ios/` (SwiftUI + WKWebView container).
+#### 🍏 Opsi C: iOS (iPhone / iPad) PWA
+1. Buka Safari di iPhone, akses dashboard SiPenDosa (misal `http://192.168.1.10:8473`).
+2. Tekan tombol **Share** di Safari &rarr; pilih **"Add to Home Screen"**.
+3. Aplikasi SiPenDosa siap digunakan fullscreen dari layar utama iPhone Anda.
 
 ---
 
-### 🛠️ 5. Build Mandiri dari Source Code (Untuk Developer)
-
-Jika Anda ingin mengompilasi dari kode sumber atau memproduksi paket distribusi:
-
-```bash
-# 1. Kompilasi binary native untuk OS Anda saat ini:
-make build
-
-# 2. Kompilasi binary untuk seluruh platform (Linux, Windows, macOS):
-make build-all
-
-# 3. Buat seluruh paket installer & distribusi sekaligus:
-make package-all
-```
-Hasil paket distribusi akan tersedia di folder `dist/`:
-- `dist/SiPenDosa-1.0.0.dmg` (Apple Drag-and-Drop Disk Image)
-- `dist/SiPenDosa-1.0.0-Installer.pkg` (Apple Installer Wizard Package)
-- `dist/SiPenDosa.app` (Apple Universal Companion App)
-- `dist/SiPenDosa-Setup.exe` (Windows Standalone Setup)
-- `dist/sipendosa_1.0.0_amd64.deb` & `dist/sipendosa_1.0.0_arm64.deb` (Debian/Ubuntu)
-- `dist/sipendosa_linux_amd64.tar.gz` (Linux Universal)
-- `dist/sipendosa_macos_universal.tar.gz` (macOS Standalone)
-
----
-
-## ⚙️ Ringkasan Konfigurasi Environment (`.env`)
-
-File `.env` akan di-generate otomatis oleh semua installer standalone, namun Anda dapat mengkustomisasinya kapan saja:
+## ⚙️ Konfigurasi Environment (`.env`)
 
 ```env
 PORT=8473
 HOST=0.0.0.0
 APP_ENV=production
-SESSION_SECRET=ganti-dengan-string-acak-rahasia-minimal-32-karakter
+SESSION_SECRET=ganti-dengan-string-acak-minimal-32-karakter
 
 DB_PATH=data/sipen.db
 WA_SESSION_PATH=session/whatsapp.db
@@ -279,23 +264,18 @@ GLOBAL_DRY_RUN=false
 
 ---
 
-## 🌐 Konfigurasi Reverse Proxy & SSL (Domain)
+## 🌐 Reverse Proxy & SSL Domain
 
-Agar dashboard dapat diakses menggunakan domain aman (HTTPS) dan WebSocket berjalan lancar, Anda dapat menggunakan **Nginx** atau **Caddy**.
-
-### Opsi A: Menggunakan Nginx + Certbot
-
-Buat file konfigurasi `/etc/nginx/sites-available/sipendosa`:
-
+### Menggunakan Nginx:
 ```nginx
 server {
-    server_name sipendosa.domainanda.com;
+    server_name sipendosa.kampus.ac.id;
 
     location / {
         proxy_pass http://127.0.0.1:8473;
         proxy_http_version 1.1;
         
-        # Dukungan WebSocket
+        # WebSocket Support
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
         
@@ -307,51 +287,33 @@ server {
 }
 ```
 
-Aktifkan dan pasang SSL gratis via Let's Encrypt:
-```bash
-sudo ln -s /etc/nginx/sites-available/sipendosa /etc/nginx/sites-enabled/
-sudo nginx -t && sudo systemctl reload nginx
-sudo certbot --nginx -d sipendosa.domainanda.com
-```
-
-### Opsi B: Menggunakan Caddy (Otomatis SSL)
-
-Cukup tambahkan blok berikut ke `/etc/caddy/Caddyfile`:
-
+### Menggunakan Caddy:
 ```caddy
-sipendosa.domainanda.com {
+sipendosa.kampus.ac.id {
     reverse_proxy localhost:8473
 }
 ```
 
-Lalu reload:
-```bash
-sudo systemctl reload caddy
-```
+---
+
+## 🚀 Alur Penggunaan Pertama Kali
+
+1. **Buka Dashboard**: Akses `http://localhost:8473` atau alamat IP server Anda.
+2. **Registrasi SuperAdmin**: Buat akun administrator pada kunjungan pertama. Pendaftaran otomatis ditutup setelah akun pertama terbuat.
+3. **Pindai QR WhatsApp**: Klik **"Scan QR Code"** di bar atas atau buka aplikasi WhatsApp di ponsel &rarr; **Perangkat Tertaut** &rarr; Pindai QR.
+4. **Isi Data Dosen & Jadwal**: Masukkan kontak dosen dan waktu perkuliahan.
+5. **Uji Jadwal (Dry-Run)**: Gunakan fitur simulasi untuk memastikan format pesan sudah sesuai sebelum dikirimkan secara langsung.
 
 ---
 
-## 📱 Alur Penggunaan Pertama Kali
+## 🔒 Keamanan & Cadangan Data
 
-1. **Buka Dashboard**: Akses `http://IP_VPS:8473` atau `https://sipendosa.domainanda.com`.
-2. **Inisialisasi Akun Pertama (SuperAdmin)**:
-   - Sistem secara otomatis mengarahkan Anda ke halaman pendaftaran SuperAdmin.
-   - Buat username dan kata sandi Anda.
-   - Setelah selesai, pendaftaran akan otomatis dikunci demi keamanan.
-3. **Tautkan WhatsApp**:
-   - Di terminal (saat pertama dijalankan) atau klik tombol **"Scan QR Code"** di navbar dashboard.
-   - Buka WhatsApp di smartphone Anda &gt; **Perangkat Tertaut** &gt; **Tautkan Perangkat** &gt; Scan QR.
-   - Status di navbar akan langsung berubah menjadi hijau (*Terhubung*).
-4. **Input Data**:
-   - Masukkan daftar dosen dan kontak di menu **Dosen & Kontak**.
-   - Buat jadwal perkuliahan di menu **Jadwal Kuliah**.
-   - Sesuaikan format pesan di menu **Template Pesan**.
-5. **Uji Coba**:
-   - Gunakan fitur **Picu Jadwal** dengan mencentang *Dry-Run* atau tombol **Uji Kirim Cepat** di Dashboard Overview.
+- **Backup Basis Data**: Unduh cadangan database `.db` secara instan dari menu **Pengaturan > Unduh Cadangan Database**.
+- **Sesi WhatsApp**: Berkas sesi disimpan di `session/whatsapp.db`. Selama berkas ini dipertahankan, koneksi WhatsApp tidak perlu dipindai ulang saat aplikasi dimuat ulang.
+- **Isolasi Zero-CGO**: Seluruh modul SQLite berjalan via pure Go (`modernc.org/sqlite`), menjamin tidak adanya memory leak dari pustaka C eksternal di runtime server.
 
 ---
 
-## 🔒 Pemeliharaan & Cadangan Data
+## 📄 Lisensi
 
-- **Backup Database**: Unduh database langsung dari menu **Pengaturan &gt; Unduh Cadangan Database (.db)**, atau salin file `/opt/sipen/data/sipen.db`.
-- **Sesi WhatsApp**: Terletak di `/opt/sipen/session/whatsapp.db`. Selama file ini ada, koneksi WhatsApp Anda akan tetap aktif meskipun server di-restart.
+Proyek ini dirilis di bawah lisensi **[MIT License](LICENSE)**. Bebas digunakan, dikembangkan, dan dimanfaatkan untuk mempermudah kegiatan perkuliahan di seluruh kampus Indonesia.

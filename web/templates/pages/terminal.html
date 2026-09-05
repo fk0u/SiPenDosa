@@ -1,0 +1,248 @@
+{{define "content"}}
+<div class="max-w-6xl mx-auto space-y-4">
+
+    <!-- Terminal Window Container (Termux / Linux Shell Experience) -->
+    <div class="rounded-3xl p-1 bg-gradient-to-b from-white/10 via-white/5 to-transparent shadow-2xl border border-white/10">
+        <div class="bg-[#07080c] rounded-[calc(1.5rem-2px)] overflow-hidden flex flex-col min-h-[75vh]">
+            
+            <!-- Terminal Titlebar (Window Controls & Server Telemetry) -->
+            <div class="bg-[#0f1118] px-4 py-3 border-b border-white/[0.08] flex flex-wrap items-center justify-between gap-3">
+                <!-- Mac/Linux Terminal Window Buttons -->
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-full bg-rose-600/90 inline-block"></span>
+                        <span class="w-3 h-3 rounded-full bg-amber-500/90 inline-block"></span>
+                        <span class="w-3 h-3 rounded-full bg-emerald-500/90 inline-block"></span>
+                    </div>
+                    <span class="text-xs font-mono font-bold text-slate-300 flex items-center gap-2">
+                        <span>📱</span>
+                        <span class="hidden sm:inline">sipen@android:~</span>
+                        <span class="text-slate-500">|</span>
+                        <span class="text-amber-400">SiPenDosa Service Terminal</span>
+                    </span>
+                </div>
+
+                <!-- Service Telemetry Pill -->
+                <div class="flex items-center gap-2">
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-400">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        SERVICE: ACTIVE
+                    </div>
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-mono text-slate-400">
+                        PORT: 8473
+                    </div>
+                </div>
+
+                <!-- Quick Action Buttons -->
+                <div class="flex items-center gap-1.5">
+                    <a href="/" class="btn btn-xs rounded-lg bg-rose-600 hover:bg-rose-500 text-white border-none font-mono text-[11px] shadow-sm">
+                        🌐 Buka Web UI
+                    </a>
+                    <button onclick="copyLanUrl()" class="btn btn-xs rounded-lg bg-white/5 hover:bg-white/10 text-amber-300 border border-white/10 font-mono text-[11px]">
+                        📋 Salin IP LAN
+                    </button>
+                    <button onclick="clearTerminal()" class="btn btn-xs rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/10 font-mono text-[11px]">
+                        Bersihkan
+                    </button>
+                </div>
+            </div>
+
+            <!-- Terminal Screen (Monospace Canvas) -->
+            <div id="terminal-screen" class="p-4 md:p-6 font-mono text-xs md:text-[13px] leading-relaxed text-slate-300 overflow-y-auto flex-1 space-y-2 select-text">
+                <!-- ASCII Art Banner (Scarlet & Gold) -->
+                <pre class="text-[10px] md:text-xs leading-none text-rose-500 font-bold overflow-x-auto select-none">
+  ███████╗██╗██████╗ ███████╗███╗   ██╗██████╗  ██████╗ ███████╗ █████╗ 
+  ██╔════╝██║██╔══██╗██╔════╝████╗  ██║██╔══██╗██╔═══██╗██╔════╝██╔══██╗
+  ███████╗██║██████╔╝█████╗  ██╔██╗ ██║██║  ██║██║   ██║███████╗███████║
+  ╚════██║██║██╔═══╝ ██╔══╝  ██║╚██╗██║██║  ██║██║   ██║╚════██║██╔══██║
+  ███████║██║██║     ███████╗██║ ╚████║██████╔╝╚██████╔╝███████║██║  ██║
+  ╚══════╝╚═╝╚═╝     ╚══════╝╚═╝  ╚═══╝╚═════╝  ╚═════╝ ╚══════╝╚═╝  ╚═╝</pre>
+                
+                <div class="text-amber-400 font-bold text-xs">
+                    ⚡ SIPENDOSA ANDROID SERVICE DAEMON (TERMUX-READY)
+                </div>
+                <div class="text-slate-400 text-xs italic">
+                    "Asisten yang rela 'berdosa' demi mengingatkan dosen agar mahasiswa tidak sungkan"
+                </div>
+
+                <div class="text-slate-400 text-xs border-y border-white/[0.08] py-2.5 my-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>• Platform Engine   : <span class="text-white font-bold">Android ARM64 / Linux Service</span></div>
+                    <div>• Backend Server    : <span class="text-white font-bold">http://0.0.0.0:8473 (Listening)</span></div>
+                    <div>• Wakelock State    : <span class="text-emerald-400 font-bold">ACQUIRED (24/7 Running)</span></div>
+                    <div>• WhatsApp Status   : <span id="term-wa-status" class="text-amber-400 font-bold">Memeriksa...</span></div>
+                </div>
+
+                <div class="text-slate-400 text-[11px]">
+                    Ketik <span class="text-amber-300 font-bold">help</span> untuk melihat daftar perintah, atau klik tombol <span class="text-rose-400 font-bold">Buka Web UI</span> di pojok kanan atas.
+                </div>
+
+                <!-- Live Log Container -->
+                <div id="terminal-logs" class="space-y-1 pt-2">
+                    <div class="text-emerald-400">[SYSTEM   ] Daemon server berhasil diinisialisasi dan melayani di port 8473.</div>
+                    <div class="text-slate-400">[DATABASE ] Membuka penyimpanan SQLite WAL di data/sipen.db...</div>
+                    <div class="text-slate-400">[SCHEDULER] Scheduler zona waktu Asia/Makassar (WITA) aktif.</div>
+                    <div class="text-amber-400">[WHATSAPP ] Menginisialisasi engine koneksi multi-device...</div>
+                </div>
+
+                <!-- Command Output History -->
+                <div id="command-history" class="space-y-2 pt-2"></div>
+
+                <!-- Active Command Prompt -->
+                <div class="flex items-center gap-2 pt-3 text-slate-200">
+                    <span class="text-rose-500 font-bold select-none">sipen@android:~$</span>
+                    <input type="text" id="terminal-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="flex-1 bg-transparent border-none outline-none font-mono text-xs md:text-sm text-amber-300 caret-amber-400 p-0 focus:ring-0" placeholder="Ketik perintah di sini (contoh: status, ip, help)..." />
+                </div>
+            </div>
+
+            <!-- Terminal Footer Helper -->
+            <div class="bg-[#0a0b10] px-4 py-2 border-t border-white/[0.06] flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                <div>Tip: Buka dari browser laptop dengan mengetikkan IP LAN handphone ini.</div>
+                <div class="flex items-center gap-3">
+                    <span>Ctrl+L: Clear</span>
+                    <span>Enter: Eksekusi</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const termScreen = document.getElementById('terminal-screen');
+    const termLogs = document.getElementById('terminal-logs');
+    const cmdHistory = document.getElementById('command-history');
+    const termInput = document.getElementById('terminal-input');
+    const termWaStatus = document.getElementById('term-wa-status');
+
+    function appendTerminalLog(msg, type = 'info') {
+        const line = document.createElement('div');
+        const now = new Date().toLocaleTimeString('id-ID');
+        if (type === 'error') {
+            line.className = 'text-rose-400';
+        } else if (type === 'success') {
+            line.className = 'text-emerald-400';
+        } else if (type === 'warn') {
+            line.className = 'text-amber-400';
+        } else {
+            line.className = 'text-slate-300';
+        }
+        line.innerText = `[${now}] ${msg}`;
+        termLogs.appendChild(line);
+        termScreen.scrollTop = termScreen.scrollHeight;
+    }
+
+    function clearTerminal() {
+        termLogs.innerHTML = '';
+        cmdHistory.innerHTML = '';
+        appendTerminalLog('Terminal dibersihkan.', 'info');
+    }
+
+    function copyLanUrl() {
+        const hostUrl = window.location.origin;
+        navigator.clipboard.writeText(hostUrl).then(() => {
+            alert('✓ Alamat server (' + hostUrl + ') berhasil disalin! Buka di browser laptop Anda.');
+        }).catch(() => {
+            prompt('Alamat server:', hostUrl);
+        });
+    }
+
+    // Terminal Command Interpreter
+    termInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            const rawCmd = termInput.value.trim();
+            termInput.value = '';
+            if (!rawCmd) return;
+
+            // Render Prompt Line in history
+            const pLine = document.createElement('div');
+            pLine.innerHTML = `<span class="text-rose-500 font-bold select-none">sipen@android:~$</span> <span class="text-white">${rawCmd}</span>`;
+            cmdHistory.appendChild(pLine);
+
+            const parts = rawCmd.toLowerCase().split(' ');
+            const cmd = parts[0];
+
+            const out = document.createElement('div');
+            out.className = 'pl-4 text-xs space-y-1 border-l border-white/10 my-1';
+
+            switch(cmd) {
+                case 'help':
+                    out.innerHTML = `
+                        <div class="text-amber-300 font-bold">Daftar Perintah SiPenDosa Terminal:</div>
+                        <div><strong class="text-white">status</strong>     : Periksa kondisi server, memori, dan WhatsApp</div>
+                        <div><strong class="text-white">ip</strong>         : Tampilkan alamat IP server & cara akses dari laptop</div>
+                        <div><strong class="text-white">dashboard</strong>  : Buka Web Dashboard lengkap di browser</div>
+                        <div><strong class="text-white">clear</strong>      : Bersihkan log dan layar konsol</div>
+                        <div><strong class="text-white">reconnect</strong>  : Paksa koneksi ulang ke WhatsApp</div>
+                        <div><strong class="text-white">about</strong>      : Informasi versi & filosofi SiPenDosa</div>
+                    `;
+                    break;
+                case 'status':
+                    fetch('/healthz')
+                        .then(r => r.json())
+                        .then(d => {
+                            out.innerHTML = `
+                                <div class="text-emerald-400 font-bold">✓ Server Status: OK (Listening on :8473)</div>
+                                <div>• WhatsApp State : <span class="text-white font-bold">${d.whatsapp_status || 'unknown'}</span></div>
+                                <div>• Akun Terhubung : <span class="text-white font-mono">${d.whatsapp_phone || 'Belum ada perangkat'}</span></div>
+                                <div>• Server Time    : <span class="text-slate-400">${new Date().toLocaleString('id-ID')}</span></div>
+                            `;
+                            termScreen.scrollTop = termScreen.scrollHeight;
+                        })
+                        .catch(err => {
+                            out.innerHTML = `<div class="text-rose-400">Gagal menghubungi status server: ${err}</div>`;
+                        });
+                    break;
+                case 'ip':
+                    out.innerHTML = `
+                        <div class="text-amber-300 font-bold">Alamat Akses SiPenDosa:</div>
+                        <div>• Akses dari HP ini : <a href="${window.location.origin}" class="text-rose-400 underline font-mono">${window.location.origin}</a></div>
+                        <div>• Akses dr Laptop   : Hubungkan laptop ke Wi-Fi yang sama, lalu buka URL di atas.</div>
+                    `;
+                    break;
+                case 'dashboard':
+                    window.location.href = '/';
+                    return;
+                case 'clear':
+                    clearTerminal();
+                    return;
+                case 'reconnect':
+                    out.innerHTML = `<div class="text-amber-400">Mengirim sinyal rekoneksi ke WhatsApp engine...</div>`;
+                    fetch('/api/wa/reconnect', { method: 'POST' }).then(() => {
+                        appendTerminalLog('Perintah rekoneksi telah dikirim.', 'warn');
+                    });
+                    break;
+                case 'about':
+                    out.innerHTML = `
+                        <div class="text-rose-400 font-bold">SiPenDosa Unified Edition v1.0.0</div>
+                        <div class="text-slate-400">"Asisten yang rela 'berdosa' demi mengingatkan dosen agar mahasiswa tidak perlu merasa sungkan."</div>
+                        <div>Arsitektur: Go Core + C++17 Socket Bridge + Swift AppKit + Android Termux/APK</div>
+                    `;
+                    break;
+                default:
+                    out.innerHTML = `<div class="text-rose-400">Perintah tidak dikenali: '${cmd}'. Ketik '<span class="text-amber-400 font-bold">help</span>' untuk bantuan.</div>`;
+            }
+
+            cmdHistory.appendChild(out);
+            termScreen.scrollTop = termScreen.scrollHeight;
+        }
+    });
+
+    // Auto Focus input on click
+    termScreen.addEventListener('click', () => {
+        termInput.focus();
+    });
+
+    // Periksa status berkala
+    function updateLiveTelemetry() {
+        fetch('/healthz')
+            .then(r => r.json())
+            .then(d => {
+                if (termWaStatus) {
+                    termWaStatus.innerText = d.whatsapp_status === 'connected' ? 'TERHUBUNG (Online)' : (d.whatsapp_status === 'need_qr' ? 'PERLU SCAN QR' : 'MENGHUBUNGKAN');
+                    termWaStatus.className = d.whatsapp_status === 'connected' ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold';
+                }
+            }).catch(() => {});
+    }
+    setInterval(updateLiveTelemetry, 5000);
+    updateLiveTelemetry();
+</script>
+{{end}}
