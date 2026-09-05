@@ -3,8 +3,42 @@
 <html lang="id" data-theme="night" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{{.Title}} — SiPenDosa</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="SiPenDosa — Asisten WhatsApp cerdas yang rela 'berdosa' demi mengingatkan jadwal perkuliahan dosen secara sopan dan tepat waktu agar mahasiswa tidak sungkan.">
+    <meta name="keywords" content="SiPenDosa, Pengingat Dosen, Asisten WhatsApp, Jadwal Kuliah, Bot WA, Notifikasi Kuliah">
+    <meta name="author" content="SiPenDosa Team">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="/">
+    <meta property="og:title" content="{{.Title}} — SiPenDosa">
+    <meta property="og:description" content="Asisten otomasi yang rela menanggung beban 'berdosa' demi mengingatkan dosen dengan sopan dan terjadwal, agar mahasiswa tidak perlu merasa sungkan!">
+    <meta property="og:image" content="/static/img/og-preview.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="SiPenDosa">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{.Title}} — SiPenDosa">
+    <meta name="twitter:description" content="Asisten yang rela 'berdosa' demi mengingatkan dosen agar mahasiswa tidak perlu sungkan.">
+    <meta name="twitter:image" content="/static/img/og-preview.png">
+
+    <!-- PWA & Mobile Web App Capabilities -->
+    <meta name="theme-color" content="#090a0f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SiPenDosa">
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Favicons & Apple Touch Icons -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="64x64" href="/static/img/favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png">
 
     <!-- Tailwind CSS & DaisyUI (CDN) -->
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
@@ -300,6 +334,124 @@
         </div>
         <form method="dialog" class="modal-backdrop"><button>close</button></form>
     </dialog>
+
+    <!-- Mobile Bottom Navigation Bar (Thumb-Friendly for Handphone Users) -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#090a0f]/90 backdrop-blur-xl border-t border-white/[0.08] px-3 py-2 flex items-center justify-around shadow-2xl safe-area-inset-bottom">
+        <a href="/" class="flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all {{if eq .ActivePage "overview"}}text-rose-500 font-semibold{{else}}text-slate-400 hover:text-slate-200{{end}}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+            <span class="text-[10px] tracking-tight">Home</span>
+        </a>
+        <a href="/contacts" class="flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all {{if eq .ActivePage "contacts"}}text-rose-500 font-semibold{{else}}text-slate-400 hover:text-slate-200{{end}}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            <span class="text-[10px] tracking-tight">Kontak</span>
+        </a>
+        <a href="/schedules" class="flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all {{if eq .ActivePage "schedules"}}text-rose-500 font-semibold{{else}}text-slate-400 hover:text-slate-200{{end}}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            <span class="text-[10px] tracking-tight">Jadwal</span>
+        </a>
+        <a href="/queue" class="flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all {{if eq .ActivePage "queue"}}text-rose-500 font-semibold{{else}}text-slate-400 hover:text-slate-200{{end}}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+            <span class="text-[10px] tracking-tight">Antrian</span>
+        </a>
+        <label for="main-drawer" class="flex flex-col items-center gap-1 py-1 px-2 rounded-xl cursor-pointer text-slate-400 hover:text-slate-200 transition-all">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            <span class="text-[10px] tracking-tight">Menu</span>
+        </label>
+    </nav>
+
+    <!-- Floating Quick Help Button -->
+    <button onclick="document.getElementById('help_modal').showModal()" class="fixed bottom-16 lg:bottom-6 right-4 lg:right-6 z-30 flex items-center gap-2 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white text-xs font-semibold py-2.5 px-4 rounded-full shadow-xl shadow-rose-950/40 hover:shadow-rose-900/60 hover:scale-105 active:scale-95 transition-all duration-200 border border-white/20 backdrop-blur-md" title="Pusat Bantuan & Kontak Dukungan">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <span class="hidden sm:inline">Pusat Bantuan</span>
+    </button>
+
+    <!-- Help & Support Diagnostic Modal -->
+    <dialog id="help_modal" class="modal">
+        <div class="modal-box bg-[#0c0d14] border border-white/10 max-w-md p-6 rounded-3xl shadow-2xl space-y-5">
+            <div class="flex items-center justify-between pb-3 border-b border-white/10">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-500 to-amber-500 flex items-center justify-center text-white shadow-md">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base text-white">Pusat Bantuan & Dukungan</h3>
+                        <p class="text-[11px] text-slate-400">SiPenDosa — OverPower Academic Assistant</p>
+                    </div>
+                </div>
+                <form method="dialog">
+                    <button class="btn btn-sm btn-circle btn-ghost text-slate-400 hover:text-white">✕</button>
+                </form>
+            </div>
+
+            <div class="space-y-4 text-xs text-slate-300">
+                <!-- Kontak Pengembang / Helpdesk -->
+                <div class="space-y-2">
+                    <span class="text-[10px] uppercase font-bold tracking-wider text-amber-400">Hubungi Langsung</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <a href="https://wa.me/?text=Halo%20Admin%20SiPenDosa,%20saya%20butuh%20bantuan%20terkait%20jadwal%20dan%20pengingat." target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-950/30 hover:bg-emerald-900/40 border border-emerald-500/30 text-emerald-300 hover:text-white transition-all">
+                            <span class="text-base">📱</span>
+                            <div class="flex flex-col">
+                                <span class="font-semibold text-[11px]">Chat WhatsApp</span>
+                                <span class="text-[9px] text-emerald-400/70">Respon Cepat</span>
+                            </div>
+                        </a>
+                        <a href="https://t.me/" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 p-2.5 rounded-xl bg-rose-950/30 hover:bg-rose-900/40 border border-rose-500/30 text-rose-300 hover:text-white transition-all">
+                            <span class="text-base">💬</span>
+                            <div class="flex flex-col">
+                                <span class="font-semibold text-[11px]">Grup Telegram</span>
+                                <span class="text-[9px] text-rose-400/70">Diskusi & Update</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Ringkasan Diagnostik Sistem -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Diagnostik Sistem</span>
+                        <button onclick="copyDiagnostics()" class="text-[10px] text-amber-400 hover:text-amber-300 underline cursor-pointer">Salin Data Diagnostik</button>
+                    </div>
+                    <div class="p-3 rounded-xl bg-black/40 border border-white/5 font-mono text-[10px] space-y-1 text-slate-400" id="diagnostic-box">
+                        <div>APP_NAME : SiPenDosa (OverPower Edition)</div>
+                        <div>VERSION  : 1.0.0 (Multi-Platform / Mobile Server)</div>
+                        <div>CLIENT   : <span id="diag-url"></span></div>
+                        <div>STATUS   : Active & Listening on Port 8473</div>
+                    </div>
+                </div>
+
+                <!-- Tautan Tambahan -->
+                <div class="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400">
+                    <a href="/about" class="hover:text-rose-400 transition-colors">Tentang & Filosofi</a>
+                    <span>•</span>
+                    <a href="/terms" class="hover:text-rose-400 transition-colors">Ketentuan Layanan</a>
+                    <span>•</span>
+                    <a href="/privacy" class="hover:text-rose-400 transition-colors">Kebijakan Privasi</a>
+                </div>
+            </div>
+
+            <div class="modal-action pt-1">
+                <form method="dialog" class="w-full">
+                    <button class="btn btn-sm btn-outline w-full rounded-full border-white/10 text-slate-300 hover:bg-white/5">Tutup</button>
+                </form>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
+
+    <script>
+        function copyDiagnostics() {
+            const diagText = document.getElementById('diagnostic-box').innerText;
+            navigator.clipboard.writeText(diagText).then(() => {
+                alert('✓ Data diagnostik berhasil disalin ke clipboard!');
+            }).catch(() => {
+                prompt('Salin data diagnostik berikut:', diagText);
+            });
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const diagUrl = document.getElementById('diag-url');
+            if (diagUrl) diagUrl.innerText = window.location.origin;
+        });
+    </script>
 
 </body>
 </html>

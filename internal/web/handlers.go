@@ -870,3 +870,77 @@ func (h *Handlers) AboutHandler(w http.ResponseWriter, r *http.Request) {
 		ActivePage: "about",
 	})
 }
+
+// ==========================================
+// SEO, PWA & Discovery Endpoints
+// ==========================================
+
+func (h *Handlers) RobotsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	host := r.Host
+	scheme := "http"
+	if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
+		scheme = "https"
+	}
+	content := fmt.Sprintf("User-agent: *\nAllow: /\nAllow: /login\nAllow: /register\nAllow: /terms\nAllow: /privacy\nAllow: /about\nDisallow: /contacts/\nDisallow: /schedules/\nDisallow: /templates/\nDisallow: /queue/\nDisallow: /history/\nDisallow: /settings/\nDisallow: /logs/\n\nSitemap: %s://%s/sitemap.xml\n", scheme, host)
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(content))
+}
+
+func (h *Handlers) SitemapHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	host := r.Host
+	scheme := "http"
+	if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
+		scheme = "https"
+	}
+	now := time.Now().Format("2006-01-02")
+	xmlContent := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>%s://%s/</loc>
+    <lastmod>%s</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>%s://%s/login</loc>
+    <lastmod>%s</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>%s://%s/about</loc>
+    <lastmod>%s</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>%s://%s/terms</loc>
+    <lastmod>%s</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>%s://%s/privacy</loc>
+    <lastmod>%s</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+</urlset>`, scheme, host, now, scheme, host, now, scheme, host, now, scheme, host, now, scheme, host, now)
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(xmlContent))
+}
+
+func (h *Handlers) ManifestHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/manifest+json; charset=utf-8")
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	http.ServeFile(w, r, "web/static/manifest.json")
+}
+
+func (h *Handlers) FaviconHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "public, max-age=604800")
+	http.ServeFile(w, r, "web/static/favicon.ico")
+}

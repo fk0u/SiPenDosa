@@ -48,6 +48,12 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 	r.Get("/logout", h.LogoutHandler)
 	r.Post("/logout", h.LogoutHandler)
 
+	// SEO, Discovery & PWA routes
+	r.Get("/robots.txt", h.RobotsHandler)
+	r.Get("/sitemap.xml", h.SitemapHandler)
+	r.Get("/manifest.json", h.ManifestHandler)
+	r.Get("/favicon.ico", h.FaviconHandler)
+
 	// Informational & Error routes
 	r.Get("/terms", h.TermsHandler)
 	r.Get("/tos", h.TermsHandler)

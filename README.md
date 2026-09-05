@@ -200,7 +200,35 @@ Perintah kontrol daemon macOS:
 
 ---
 
-### 🛠️ 4. Build Mandiri dari Source Code (Untuk Developer)
+### 📱 4. Smartphone Android & iOS (Jadikan Handphone sebagai Server 24/7!)
+
+Kini Anda dapat menjadikan **smartphone pribadi** sebagai server pengingat WhatsApp mandiri tanpa perlu menyewa VPS! Server yang berjalan di handphone dapat diakses dari browser HP itu sendiri (`http://localhost:8473`) maupun dari laptop/tablet yang terhubung di jaringan Wi-Fi lokal yang sama (`http://IP_HANDPHONE:8473`).
+
+#### 🤖 Opsi A: Android Server Mandiri via Termux (Sangat Direkomendasikan)
+1. Buka aplikasi **Termux** di smartphone Android Anda.
+2. Jalankan skrip installer satu klik:
+   ```bash
+   ./install-android-termux.sh
+   ```
+3. Skrip secara otomatis:
+   - Mendeteksi arsitektur CPU ponsel Anda (`arm64-v8a`).
+   - Menyiapkan folder penyimpanan `~/.sipendosa/`.
+   - Mengaktifkan **Android Wakelock** (`termux-wake-lock`) agar server **tidak mati** saat layar HP padam.
+   - Menampilkan alamat IP Wi-Fi lokal untuk diakses dari laptop.
+4. Perintah kontrol di Termux:
+   - **Nyalakan Server**: `sipen-start`
+   - **Matikan Server**: `sipen-stop`
+
+#### 🍏 Opsi B: iOS (iPhone / iPad) — PWA Fullscreen "Add to Home Screen"
+1. Buka browser Safari di iPhone Anda, lalu akses alamat dashboard SiPenDosa (misal `http://192.168.1.10:8473`).
+2. Tekan tombol **Share** (ikon kotak dengan panah ke atas di bar bawah Safari).
+3. Gulir ke bawah dan pilih **"Add to Home Screen" (Tambahkan ke Layar Utama)**.
+4. Ikon resmi SiPenDosa akan muncul di Home Screen iPhone Anda dan dapat dibuka secara fullscreen tanpa address bar browser seperti aplikasi native!
+5. Proyek native iOS Xcode juga tersedia di `mobile/ios/` (SwiftUI + WKWebView container).
+
+---
+
+### 🛠️ 5. Build Mandiri dari Source Code (Untuk Developer)
 
 Jika Anda ingin mengompilasi dari kode sumber atau memproduksi paket distribusi:
 
@@ -215,6 +243,9 @@ make build-all
 make package-all
 ```
 Hasil paket distribusi akan tersedia di folder `dist/`:
+- `dist/SiPenDosa-1.0.0.dmg` (Apple Drag-and-Drop Disk Image)
+- `dist/SiPenDosa-1.0.0-Installer.pkg` (Apple Installer Wizard Package)
+- `dist/SiPenDosa.app` (Apple Universal Companion App)
 - `dist/SiPenDosa-Setup.exe` (Windows Standalone Setup)
 - `dist/sipendosa_1.0.0_amd64.deb` & `dist/sipendosa_1.0.0_arm64.deb` (Debian/Ubuntu)
 - `dist/sipendosa_linux_amd64.tar.gz` (Linux Universal)
