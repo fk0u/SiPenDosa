@@ -54,7 +54,10 @@ Selamat datang di rilis perdana **SiPenDosa (Sistem Pengingat Dosen Saatnya)**!
 
 | Berkas Distribusi | Arsitektur / Platform | Kegunaan |
 | :--- | :--- | :--- |
-| **SiPenDosa-Android.apk** | Android 8.0+ (Universal ARM/x86) | Standalone APK dengan Auto Background Service & Terminal View |
+| **SiPenDosa-Android.apk** | Android 8.0+ (Universal) | Standalone APK dengan Auto Background Service & Terminal View |
+| **install-android-termux.sh** | Android (Termux) | Skrip instalasi otomatis Android Termux 24/7 |
+| **sipen_linux_arm64** | Linux / Android Termux (ARM64) | Standalone raw binary engine |
+| **sipen_linux_amd64** | Linux (x86_64) | Standalone raw binary engine |
 | **SiPenDosa-1.0.0.dmg** | macOS (Apple Silicon M1-M4 + Intel) | Apple Disk Image Drag & Drop visual ke Applications |
 | **SiPenDosa-1.0.0-Installer.pkg** | macOS (Apple Silicon + Intel) | Apple Installer Package Wizard + auto LaunchAgent daemon |
 | **SiPenDosa-Setup.exe** | Windows 10 & 11 (64-bit) | Windows Setup Wizard mandiri (Desktop & Start Menu shortcut) |
@@ -62,6 +65,15 @@ Selamat datang di rilis perdana **SiPenDosa (Sistem Pengingat Dosen Saatnya)**!
 | **sipendosa_1.0.0_arm64.deb** | Debian / Ubuntu ARM64 | Paket DEB untuk Raspberry Pi & Cloud ARM |
 | **sipendosa_linux_amd64.tar.gz** | RedHat / CentOS / Fedora / Arch | Universal standalone tarball bundle |
 | **sipendosa_macos_universal.tar.gz** | macOS Universal CLI | Standalone tarball bundle dengan install-macos.sh |
+
+---
+
+### 📱 Cara Instalasi Cepat Android (Termux):
+Cukup buka Termux dan jalankan satu baris perintah berikut:
+` + "```bash" + `
+curl -fsSL https://raw.githubusercontent.com/fk0u/SiPenDosa/master/install-android-termux.sh | bash
+` + "```" + `
+Gunakan perintah ` + "`sipen-start`" + ` untuk menjalankan server, ` + "`sipen-bg`" + ` untuk mode latar belakang, dan ` + "`sipen-stop`" + ` untuk menghentikan.
 
 ---
 
@@ -121,6 +133,9 @@ Selamat datang di rilis perdana **SiPenDosa (Sistem Pengingat Dosen Saatnya)**!
 	// File-file yang akan diunggah
 	assetsToUpload := []string{
 		"dist/SiPenDosa-Android.apk",
+		"install-android-termux.sh",
+		"dist/bin/sipen_linux_arm64",
+		"dist/bin/sipen_linux_amd64",
 		"dist/SiPenDosa-1.0.0.dmg",
 		"dist/SiPenDosa-1.0.0-Installer.pkg",
 		"dist/SiPenDosa-Setup.exe",

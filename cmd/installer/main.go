@@ -203,9 +203,9 @@ func printSuccessBox(installDir string) {
 	fmt.Printf("%s%s║%s  %s%s✓ INSTALASI SIPENDOSA BERHASIL DISELESAIKAN DENGAN SEMPURNA!%s      %s%s║%s\n",
 		Bold, Green, Reset, Bold, BrightGreen, Reset, Bold, Green, Reset)
 	fmt.Printf("%s%s╠%s╣%s\n", Bold, Green, borderH, Reset)
-	fmt.Printf("%s%s║%s  • Lokasi Program : %-51s%s║%s\n", Bold, Green, Reset, installDir, Bold, Green, Reset)
-	fmt.Printf("%s%s║%s  • Web Dashboard  : %shttp://localhost:%s%-38s%s%s║%s\n", Bold, Green, Reset, BrightYellow+Bold, DefaultPort, Reset, Bold, Green, Reset)
-	fmt.Printf("%s%s║%s  • Desktop Icon   : Dibuat (SiPenDosa.lnk)%-35s%s║%s\n", Bold, Green, Reset, "", Bold, Green, Reset)
+	fmt.Printf("%s%s║%s  • Lokasi Program : %-51s%s%s║%s\n", Bold, Green, Reset, installDir, Bold, Green, Reset)
+	fmt.Printf("%s%s║%s  • Web Dashboard  : %shttp://localhost:%s%-38s%s%s║%s\n", Bold, Green, Reset, BrightYellow+Bold, DefaultPort, "", Bold, Green, Reset)
+	fmt.Printf("%s%s║%s  • Desktop Icon   : Dibuat (SiPenDosa.lnk)%-35s%s%s║%s\n", Bold, Green, Reset, "", Bold, Green, Reset)
 	fmt.Printf("%s%s║%s  • Start Menu     : Terdaftar di Start Menu > Programs > SiPenDosa    %s%s║%s\n", Bold, Green, Reset, Bold, Green, Reset)
 	fmt.Printf("%s%s╚%s╝%s\n", Bold, Green, borderH, Reset)
 }

@@ -226,12 +226,20 @@ Skrip instalasi ini otomatis mendeteksi distro, membuat user `sipen`, mendaftark
 3. Buka browser di laptop yang satu jaringan Wi-Fi, akses: `http://<IP_HANDPHONE>:8473` untuk mengelola jadwal dari laptop!
 
 #### 💻 Opsi B: Android via Termux murni
-1. Buka Termux di Android.
-2. Jalankan skrip installer:
+1. Buka Termux di smartphone Android Anda.
+2. Jalankan skrip installer (bisa langsung melalui `curl` atau dari folder repositori):
    ```bash
+   # Cara 1: Instalasi instan via curl
+   curl -fsSL https://raw.githubusercontent.com/fk0u/SiPenDosa/master/install-android-termux.sh | bash
+   
+   # Cara 2: Dari repositori lokal
    ./install-android-termux.sh
    ```
-3. Gunakan perintah `sipen-start` untuk menjalankan server, dan `sipen-stop` untuk mematikan.
+3. Kelola server menggunakan perintah terminal praktis:
+   - `sipen-start` : Menyalakan server interaktif dengan Auto-Wakelock (layar mati tetap aktif).
+   - `sipen-bg`    : Menjalankan server di latar belakang (*silent daemon*).
+   - `sipen-stop`  : Menghentikan server dan melepaskan Wakelock baterai.
+   - `sipen`       : Eksekusi langsung engine SiPenDosa.
 
 #### 🍏 Opsi C: iOS (iPhone / iPad) PWA
 1. Buka Safari di iPhone, akses dashboard SiPenDosa (misal `http://192.168.1.10:8473`).
