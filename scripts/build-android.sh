@@ -63,28 +63,20 @@ mkdir -p mobile/android/app/src/main/res/drawable
 echo "==> Mengompilasi binary core SiPenDosa untuk 4 arsitektur Android..."
 
 # 2a. ARM64 (arm64-v8a)
-if [ ! -f "${BIN_DIR}/sipen_android_arm64" ]; then
-    echo "    • Mengompilasi ARM64 (arm64-v8a)..."
-    CGO_ENABLED=0 GOOS=android GOARCH=arm64 go build -ldflags="-s -w" -o "${BIN_DIR}/sipen_android_arm64" ./cmd/sipen
-fi
+echo "    • Mengompilasi ARM64 (arm64-v8a)..."
+CGO_ENABLED=0 GOOS=android GOARCH=arm64 go build -ldflags="-s -w" -o "${BIN_DIR}/sipen_android_arm64" ./cmd/sipen
 
 # 2b. ARMv7 32-bit (armeabi-v7a)
-if [ ! -f "${BIN_DIR}/sipen_android_arm7" ]; then
-    echo "    • Mengompilasi ARMv7 32-bit (armeabi-v7a)..."
-    CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -ldflags="-s -w" -o "${BIN_DIR}/sipen_android_arm7" ./cmd/sipen
-fi
+echo "    • Mengompilasi ARMv7 32-bit (armeabi-v7a)..."
+CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -ldflags="-s -w" -o "${BIN_DIR}/sipen_android_arm7" ./cmd/sipen
 
 # 2c. x86_64 64-bit (Intel/AMD)
-if [ ! -f "${BIN_DIR}/sipen_android_x86_64" ]; then
-    echo "    • Mengompilasi x86_64 (Intel 64-bit / Emulators)..."
-    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o "${BIN_DIR}/sipen_android_x86_64" ./cmd/sipen
-fi
+echo "    • Mengompilasi x86_64 (Intel 64-bit / Emulators)..."
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o "${BIN_DIR}/sipen_android_x86_64" ./cmd/sipen
 
 # 2d. x86 32-bit (Intel 32-bit)
-if [ ! -f "${BIN_DIR}/sipen_android_x86" ]; then
-    echo "    • Mengompilasi x86 (Intel 32-bit)..."
-    CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -ldflags="-s -w" -o "${BIN_DIR}/sipen_android_x86" ./cmd/sipen
-fi
+echo "    • Mengompilasi x86 (Intel 32-bit)..."
+CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -ldflags="-s -w" -o "${BIN_DIR}/sipen_android_x86" ./cmd/sipen
 
 # 3. Salin ikon aplikasi
 if [ -f "web/static/img/icon-192.png" ]; then

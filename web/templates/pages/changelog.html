@@ -1,0 +1,188 @@
+{{define "content"}}
+<div class="space-y-8 max-w-4xl mx-auto py-2">
+
+    <!-- Header Section -->
+    <div class="space-y-2">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-mono font-bold">
+            <span>📋 OFFICIAL RELEASE HISTORY & CHANGELOG</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-black text-white tracking-tight">Catatan Rilis & Pembaruan Sistem</h1>
+        <p class="text-xs md:text-sm text-slate-400">Dokumentasi lengkap setiap rilis, pembaruan fitur, pengerasan keamanan, dan optimasi performa SiPenDosa.</p>
+    </div>
+
+    <!-- Timeline Wrapper -->
+    <div class="space-y-6">
+
+        <!-- RELEASE v1.1.1 (CURRENT) -->
+        <div class="bezel-outer p-1 rounded-3xl relative overflow-hidden ring-1 ring-rose-500/30">
+            <div class="bezel-card rounded-[1.4rem] p-6 md:p-8 space-y-5 bg-[#0a0c12]">
+                
+                <!-- Release Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-600 via-rose-500 to-amber-500 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-rose-600/30">
+                            1.1.1
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h2 class="text-lg font-bold text-white tracking-tight">SiPenDosa v1.1.1</h2>
+                                <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono font-bold uppercase">Versi Terpasang</span>
+                            </div>
+                            <span class="text-xs text-slate-400">Rilis Resmi: 07 September 2026</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="openUpdateModal()" class="btn btn-xs rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-bold border-none gap-1 shadow-md">
+                            <span>⚡ Cek Update OTA</span>
+                        </button>
+                        <a href="https://github.com/fk0u/SiPenDosa/releases/tag/v1.1.1" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-ghost text-slate-400 hover:text-white rounded-xl">
+                            GitHub ↗
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Release Items Bento -->
+                <div class="space-y-4 text-xs">
+                    
+                    <!-- Feature 1: Automatic Update -->
+                    <div class="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
+                        <div class="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider">
+                            <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                            ⚡ 1-Klik Automatic Update & OTA Engine
+                        </div>
+                        <p class="text-slate-300 leading-relaxed text-xs">
+                            Kini aplikasi secara otomatis mendeteksi ketersediaan rilis terbaru di GitHub dan memungkinkan pemasangan langsung dalam 1 klik tanpa unduh manual di browser:
+                        </p>
+                        <ul class="list-disc list-inside space-y-1 text-slate-400 pl-1">
+                            <li><strong class="text-slate-200">Android Package Installer Direct Hook</strong>: Mengunduh biner APK langsung ke penyimpanan aplikasi dan membuka layar pembaruan native Android via <code>ApkFileProvider</code>.</li>
+                            <li><strong class="text-slate-200">Self-Update Desktop & Server</strong>: Mendukung hot replacement binary untuk distribusi Linux, macOS CLI, Windows, dan skrip Termux.</li>
+                            <li><strong class="text-slate-200">Indikator Pembaruan Real-Time</strong>: Pulsing header badge dan kartu pembaruan sistem di halaman pengaturan.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Feature 2: Native Mobile UI -->
+                    <div class="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
+                        <div class="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
+                            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                            📱 Pengalaman Antarmuka Mobile App 100% Native
+                        </div>
+                        <p class="text-slate-300 leading-relaxed text-xs">
+                            Peningkatan total pada sisi aplikasi Android agar terasa sepenuhnya seperti aplikasi mobile modern:
+                        </p>
+                        <ul class="list-disc list-inside space-y-1 text-slate-400 pl-1">
+                            <li><strong class="text-slate-200">Pembersihan Developer Top Bar</strong>: Menghapus tombol debug kasar yang memenuhi layar; digantikan dengan tampilan layar penuh yang bersih dan elegan.</li>
+                            <li><strong class="text-slate-200">Native Splash Loader</strong>: Tampilan pembuka yang mulus dengan ikon SiPenDosa yang berpendar dan transisi fade-in saat server siap.</li>
+                            <li><strong class="text-slate-200">Immersive Status & Navigation Bar</strong>: Penyelarasan warna status bar dan bilah navigasi Android ke nuansa Obsidian (#08090d).</li>
+                            <li><strong class="text-slate-200">Thumb-Friendly Bottom Bar</strong>: Navigasi bawah 5 tab dengan haptic touch feedback dan padding aman (safe-area-inset).</li>
+                        </ul>
+                    </div>
+
+                    <!-- Feature 3: Bug Fixes -->
+                    <div class="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
+                        <div class="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            🛠️ Perbaikan Bug & Optimasi Template
+                        </div>
+                        <ul class="list-disc list-inside space-y-1 text-slate-400 pl-1">
+                            <li>Memperbaiki error refleksi template Go: <code>can't evaluate field ActiveSchedules in type interface {}</code> pada halaman dashboard.</li>
+                            <li>Penambahan fallback bertingkat pada seluruh elemen statistik antarmuka.</li>
+                            <li>Peningkatan kestabilan D8 Dalvik compiler untuk Android SDK 33+.</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- RELEASE v1.1.0 -->
+        <div class="bezel-outer p-1 rounded-3xl opacity-90">
+            <div class="bezel-card rounded-[1.4rem] p-6 md:p-8 space-y-5 bg-[#090b10]">
+                
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.06]">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-white/[0.06] border border-white/10 flex items-center justify-center text-slate-300 font-black text-sm">
+                            1.1.0
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h2 class="text-lg font-bold text-white tracking-tight">SiPenDosa v1.1.0</h2>
+                                <span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-[10px] font-mono">Arsip Rilis</span>
+                            </div>
+                            <span class="text-xs text-slate-500">Rilis Resmi: 07 September 2026</span>
+                        </div>
+                    </div>
+
+                    <a href="https://github.com/fk0u/SiPenDosa/releases/tag/v1.1.0" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-ghost text-slate-400 hover:text-white rounded-xl">
+                        Lihat Tag Rilis ↗
+                    </a>
+                </div>
+
+                <div class="space-y-4 text-xs">
+                    <div class="p-4 rounded-2xl bg-white/[0.015] border border-white/[0.04] space-y-2">
+                        <div class="text-rose-400 font-bold text-xs uppercase tracking-wider">
+                            🔢 WhatsApp Pairing Code (Tautkan Nomor HP)
+                        </div>
+                        <p class="text-slate-400 leading-relaxed text-xs">
+                            Solusi login WhatsApp tanpa perlu memindai QR code via kamera: cukup masukkan nomor WhatsApp Anda dan terima 8 karakter kode pairing langsung di aplikasi.
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-white/[0.015] border border-white/[0.04] space-y-2">
+                        <div class="text-amber-400 font-bold text-xs uppercase tracking-wider">
+                            🛡️ Pengerasan Keamanan OWASP Top 10
+                        </div>
+                        <p class="text-slate-400 leading-relaxed text-xs">
+                            Validasi CSRF Origin Header pada seluruh mutasi data, perlindungan BFLA pada rute administratif, rate limiter login 10 req/menit, dan pembatasan body payload proteksi DoS.
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-white/[0.015] border border-white/[0.04] space-y-2">
+                        <div class="text-slate-300 font-bold text-xs uppercase tracking-wider">
+                            📱 Ekosistem Termux & Web Terminal
+                        </div>
+                        <p class="text-slate-400 leading-relaxed text-xs">
+                            Penyediaan CLI tool <code>sipen pair &lt;nomor&gt;</code> dan antarmuka konsol shell mandiri pada rute <code>/terminal</code>.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- RELEASE v1.0.0 -->
+        <div class="bezel-outer p-1 rounded-3xl opacity-80">
+            <div class="bezel-card rounded-[1.4rem] p-6 md:p-8 space-y-5 bg-[#08090d]">
+                
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.06]">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-white/[0.04] border border-white/5 flex items-center justify-center text-slate-400 font-black text-sm">
+                            1.0.0
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h2 class="text-lg font-bold text-white tracking-tight">SiPenDosa v1.0.0</h2>
+                                <span class="px-2 py-0.5 rounded-full bg-slate-800/80 text-slate-500 text-[10px] font-mono">Fondasi Awal</span>
+                            </div>
+                            <span class="text-xs text-slate-500">Rilis Perdana: September 2026</span>
+                        </div>
+                    </div>
+
+                    <a href="https://github.com/fk0u/SiPenDosa/releases/tag/v1.0.0" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-ghost text-slate-500 hover:text-white rounded-xl">
+                        Lihat Tag Rilis ↗
+                    </a>
+                </div>
+
+                <div class="space-y-2 text-xs text-slate-400">
+                    <p>• Peluncuran resmi arsitektur multi-platform: Android APK/AAB, macOS DMG/PKG, Windows Setup EXE, Linux DEB & Tarball.</p>
+                    <p>• Mesin penjadwalan cerdas pengingat perkuliahan dosen dengan rentang jam etika kampus (Window Policy).</p>
+                    <p>• Antrian pesan anti-ban dengan jeda acak (*jitter*) dan integrasi kalender hari libur.</p>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{{end}}

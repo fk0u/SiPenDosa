@@ -194,6 +194,7 @@
                                 <div class="text-[10px] uppercase font-bold tracking-wider text-amber-400">{{if .User}}{{.User.Role}}{{else}}superadmin{{end}}</div>
                             </li>
                             <li><a href="/settings" class="py-2 rounded-lg hover:bg-white/5">Pengaturan Sistem</a></li>
+                            <li><a href="/changelog" class="py-2 rounded-lg hover:bg-white/5 flex items-center justify-between"><span>Catatan Rilis (Changelog)</span><span class="badge badge-xs badge-success font-mono font-bold">v1.1.1</span></a></li>
                             <li><a href="/logs" class="py-2 rounded-lg hover:bg-white/5">Log Aktivitas & Audit</a></li>
                             <li><a href="/about" class="py-2 rounded-lg hover:bg-white/5">Tentang & Filosofi</a></li>
                             <li class="border-t border-white/10 pt-1 mt-1">
@@ -221,7 +222,7 @@
             </div>
 
             <!-- Main Page Content Body -->
-            <main class="flex-1 p-4 md:p-8 max-w-[1400px] w-full mx-auto space-y-8">
+            <main class="flex-1 p-4 md:p-8 pb-28 lg:pb-8 max-w-[1400px] w-full mx-auto space-y-8">
                 {{block "content" .}}{{end}}
             </main>
 
@@ -234,6 +235,8 @@
                     </div>
                     <div class="flex flex-wrap items-center justify-center gap-5 text-slate-400 font-medium">
                         <a href="/about" class="hover:text-white transition-colors duration-200">Filosofi</a>
+                        <span class="text-slate-700">•</span>
+                        <a href="/changelog" class="hover:text-white transition-colors duration-200 text-rose-400 font-semibold">Catatan Rilis (v1.1.1)</a>
                         <span class="text-slate-700">•</span>
                         <a href="/terms" class="hover:text-white transition-colors duration-200">Ketentuan Layanan</a>
                         <span class="text-slate-700">•</span>
@@ -317,6 +320,15 @@
                         <a href="/logs" class="{{if eq .ActivePage "logs"}}bg-rose-600/15 text-white font-semibold border border-rose-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
                             <svg class="w-5 h-5 {{if eq .ActivePage "logs"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             Log Sistem
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/changelog" class="{{if eq .ActivePage "changelog"}}bg-rose-600/15 text-white font-semibold border border-rose-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center justify-between py-3 px-3.5 rounded-xl transition-all duration-200">
+                            <div class="flex items-center gap-3.5">
+                                <svg class="w-5 h-5 {{if eq .ActivePage "changelog"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
+                                <span>Catatan Rilis</span>
+                            </div>
+                            <span class="badge badge-xs badge-success font-mono">v1.1.1</span>
                         </a>
                     </li>
                 </ul>
@@ -438,34 +450,38 @@
         <form method="dialog" class="modal-backdrop"><button>close</button></form>
     </dialog>
 
-    <!-- Mobile Bottom Navigation Bar (Thumb-Friendly for Handphone Users) -->
-    <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#090a0f]/90 backdrop-blur-xl border-t border-white/[0.08] px-3 py-2 flex items-center justify-around shadow-2xl safe-area-inset-bottom">
-        <a href="/" class="flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all {{if eq .ActivePage "overview"}}text-rose-500 font-semibold{{else}}text-slate-400 hover:text-slate-200{{end}}">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-            <span class="text-[10px] tracking-tight">Home</span>
+    <!-- Mobile Bottom Navigation Bar (Authentic Native Mobile App Feel) -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#08090d]/95 backdrop-blur-2xl border-t border-white/[0.08] px-2 py-1.5 flex items-center justify-around shadow-2xl safe-area-inset-bottom">
+        <a href="/" class="flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-all duration-200 active:scale-90 {{if eq .ActivePage "overview"}}bg-rose-600/15 text-rose-400 font-bold border border-rose-500/30 shadow-md shadow-rose-950/40{{else}}text-slate-400 hover:text-slate-200{{end}}">
+            <svg class="w-5 h-5 {{if eq .ActivePage "overview"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+            <span class="text-[10px] tracking-tight mt-0.5">Home</span>
+            {{if eq .ActivePage "overview"}}<span class="w-1 h-1 rounded-full bg-rose-400 mt-0.5"></span>{{end}}
         </a>
-        <a href="/contacts" class="flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all {{if eq .ActivePage "contacts"}}text-rose-500 font-semibold{{else}}text-slate-400 hover:text-slate-200{{end}}">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-            <span class="text-[10px] tracking-tight">Kontak</span>
+        <a href="/contacts" class="flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-all duration-200 active:scale-90 {{if eq .ActivePage "contacts"}}bg-rose-600/15 text-rose-400 font-bold border border-rose-500/30 shadow-md shadow-rose-950/40{{else}}text-slate-400 hover:text-slate-200{{end}}">
+            <svg class="w-5 h-5 {{if eq .ActivePage "contacts"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            <span class="text-[10px] tracking-tight mt-0.5">Kontak</span>
+            {{if eq .ActivePage "contacts"}}<span class="w-1 h-1 rounded-full bg-rose-400 mt-0.5"></span>{{end}}
         </a>
-        <a href="/schedules" class="flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all {{if eq .ActivePage "schedules"}}text-rose-500 font-semibold{{else}}text-slate-400 hover:text-slate-200{{end}}">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-            <span class="text-[10px] tracking-tight">Jadwal</span>
+        <a href="/schedules" class="flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-all duration-200 active:scale-90 {{if eq .ActivePage "schedules"}}bg-rose-600/15 text-rose-400 font-bold border border-rose-500/30 shadow-md shadow-rose-950/40{{else}}text-slate-400 hover:text-slate-200{{end}}">
+            <svg class="w-5 h-5 {{if eq .ActivePage "schedules"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            <span class="text-[10px] tracking-tight mt-0.5">Jadwal</span>
+            {{if eq .ActivePage "schedules"}}<span class="w-1 h-1 rounded-full bg-rose-400 mt-0.5"></span>{{end}}
         </a>
-        <a href="/queue" class="flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all {{if eq .ActivePage "queue"}}text-rose-500 font-semibold{{else}}text-slate-400 hover:text-slate-200{{end}}">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-            <span class="text-[10px] tracking-tight">Antrian</span>
+        <a href="/queue" class="flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-all duration-200 active:scale-90 {{if eq .ActivePage "queue"}}bg-rose-600/15 text-rose-400 font-bold border border-rose-500/30 shadow-md shadow-rose-950/40{{else}}text-slate-400 hover:text-slate-200{{end}}">
+            <svg class="w-5 h-5 {{if eq .ActivePage "queue"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+            <span class="text-[10px] tracking-tight mt-0.5">Antrian</span>
+            {{if eq .ActivePage "queue"}}<span class="w-1 h-1 rounded-full bg-rose-400 mt-0.5"></span>{{end}}
         </a>
-        <label for="main-drawer" class="flex flex-col items-center gap-1 py-1 px-2 rounded-xl cursor-pointer text-slate-400 hover:text-slate-200 transition-all">
+        <label for="main-drawer" class="flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl cursor-pointer text-slate-400 hover:text-slate-200 active:scale-90 transition-all duration-200">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-            <span class="text-[10px] tracking-tight">Menu</span>
+            <span class="text-[10px] tracking-tight mt-0.5">Menu</span>
         </label>
     </nav>
 
-    <!-- Floating Quick Help Button -->
-    <button onclick="document.getElementById('help_modal').showModal()" class="fixed bottom-16 lg:bottom-6 right-4 lg:right-6 z-30 flex items-center gap-2 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white text-xs font-semibold py-2.5 px-4 rounded-full shadow-xl shadow-rose-950/40 hover:shadow-rose-900/60 hover:scale-105 active:scale-95 transition-all duration-200 border border-white/20 backdrop-blur-md" title="Pusat Bantuan & Kontak Dukungan">
+    <!-- Floating Quick Help Button (Offset from bottom nav on mobile) -->
+    <button onclick="document.getElementById('help_modal').showModal()" class="fixed bottom-20 lg:bottom-6 right-4 lg:right-6 z-30 flex items-center gap-2 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white text-xs font-semibold py-2 px-3.5 rounded-full shadow-xl shadow-rose-950/40 hover:shadow-rose-900/60 hover:scale-105 active:scale-95 transition-all duration-200 border border-white/20 backdrop-blur-md" title="Pusat Bantuan & Kontak Dukungan">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        <span class="hidden sm:inline">Pusat Bantuan</span>
+        <span class="hidden sm:inline">Bantuan</span>
     </button>
 
     <!-- Help & Support Diagnostic Modal -->
@@ -599,9 +615,14 @@
                 </button>
 
                 <div class="flex items-center justify-between gap-2">
-                    <a id="link-github-release" href="https://github.com/fk0u/SiPenDosa/releases" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-ghost text-slate-400 hover:text-white font-medium">
-                        Lihat di GitHub
-                    </a>
+                    <div class="flex items-center gap-1">
+                        <a id="link-github-release" href="https://github.com/fk0u/SiPenDosa/releases" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-ghost text-slate-400 hover:text-white font-medium">
+                            GitHub ↗
+                        </a>
+                        <a href="/changelog" class="btn btn-xs btn-ghost text-rose-400 hover:text-white font-medium">
+                            Riwayat Changelog 📋
+                        </a>
+                    </div>
                     <form method="dialog">
                         <button onclick="dismissUpdateModalSession()" class="btn btn-xs btn-ghost text-slate-400 hover:text-white">
                             Nanti Saja

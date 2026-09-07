@@ -105,6 +105,8 @@ func TestAllTemplatesRender(t *testing.T) {
 		"pages/terms.html",
 		"pages/privacy.html",
 		"pages/about.html",
+		"pages/changelog.html",
+		"pages/terminal.html",
 		"errors/404.html",
 		"errors/500.html",
 	}

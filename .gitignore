@@ -13,6 +13,7 @@ coverage/
 .cache/
 graphify-out/
 graphify-obsidian/
+.graphify/
 
 # SiPen Application Data & Runtime
 data/

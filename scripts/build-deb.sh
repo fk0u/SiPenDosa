@@ -8,7 +8,7 @@ set -e
 
 APP_NAME="sipen"
 PACKAGE_NAME="sipendosa"
-VERSION="1.1.0"
+VERSION="1.1.1"
 ARCH="${1:-amd64}" # amd64 atau arm64
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

@@ -940,6 +940,13 @@ func (h *Handlers) AboutHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *Handlers) ChangelogHandler(w http.ResponseWriter, r *http.Request) {
+	h.renderer.Render(w, r, "pages/changelog.html", PageData{
+		Title:      "Catatan Rilis & Changelog — SiPenDosa",
+		ActivePage: "changelog",
+	})
+}
+
 func (h *Handlers) TerminalHandler(w http.ResponseWriter, r *http.Request) {
 	h.renderer.Render(w, r, "pages/terminal.html", PageData{
 		Title:      "Terminal Android & Service — SiPenDosa",

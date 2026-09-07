@@ -9,7 +9,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="${SCRIPT_DIR}/dist"
 APP_PATH="${DIST_DIR}/SiPenDosa.app"
-DMG_FINAL="${DIST_DIR}/SiPenDosa-1.1.0.dmg"
+DMG_FINAL="${DIST_DIR}/SiPenDosa-1.1.1.dmg"
 DMG_TMP="${DIST_DIR}/.tmp_sipen.dmg"
 STAGING_DIR="${DIST_DIR}/.dmg_staging"
 ASSETS_DIR="${SCRIPT_DIR}/assets/macos"

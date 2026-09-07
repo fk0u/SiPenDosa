@@ -211,7 +211,7 @@ func runPairCli(cfg *config.Config, phone string) {
 	fmt.Println("3. Di bawah pemindai kamera, ketuk: 'Tautkan dengan nomor telepon saja'.")
 	fmt.Printf("4. Masukkan 8 karakter kode di atas: %s\n", result.Code)
 	fmt.Println("5. Selesai! WhatsApp akan otomatis tersambung ke SiPenDosa.")
-	fmt.Println("==================================================================\n")
+	fmt.Println("==================================================================")
 }
 
 func printCliHelp() {
