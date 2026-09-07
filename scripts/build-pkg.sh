@@ -9,7 +9,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="${SCRIPT_DIR}/dist"
 APP_PATH="${DIST_DIR}/SiPenDosa.app"
-PKG_OUTPUT="${DIST_DIR}/SiPenDosa-1.0.0-Installer.pkg"
+PKG_OUTPUT="${DIST_DIR}/SiPenDosa-1.1.0-Installer.pkg"
 TMP_DIR="${DIST_DIR}/.pkg_build_tmp"
 SCRIPTS_DIR="${TMP_DIR}/scripts"
 RESOURCES_DIR="${TMP_DIR}/resources"
@@ -185,7 +185,7 @@ pkgbuild \
     --install-location "/Applications" \
     --scripts "$SCRIPTS_DIR" \
     --identifier "com.sipendosa.app.pkg" \
-    --version "1.0.0" \
+    --version "1.1.0" \
     "$COMPONENT_PKG"
 
 # 5. Buat Distribution.xml
@@ -206,7 +206,7 @@ cat <<EOF > "$DISTRIBUTION_XML"
     <choice id="com.sipendosa.app.pkg" visible="false">
         <pkg-ref id="com.sipendosa.app.pkg"/>
     </choice>
-    <pkg-ref id="com.sipendosa.app.pkg" version="1.0.0" onConclusion="none">SiPenDosaComponent.pkg</pkg-ref>
+    <pkg-ref id="com.sipendosa.app.pkg" version="1.1.0" onConclusion="none">SiPenDosaComponent.pkg</pkg-ref>
 </installer-gui-script>
 EOF
 

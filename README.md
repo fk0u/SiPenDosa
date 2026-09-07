@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/fk0u/SiPenDosa/releases"><img src="https://img.shields.io/badge/Release-v1.0.0-e11d48?style=for-the-badge&logo=github&logoColor=white" alt="Release v1.0.0" /></a>
+  <a href="https://github.com/fk0u/SiPenDosa/releases"><img src="https://img.shields.io/badge/Release-v1.1.0-e11d48?style=for-the-badge&logo=github&logoColor=white" alt="Release v1.1.0" /></a>
   <a href="https://golang.org"><img src="https://img.shields.io/badge/Go-1.27.0_Core-be123c?style=for-the-badge&logo=go&logoColor=white" alt="Go 1.27" /></a>
   <a href="https://isocpp.org"><img src="https://img.shields.io/badge/C%2B%2B-17_Socket_Bridge-9f1239?style=for-the-badge&logo=c%2B%2B&logoColor=white" alt="C++17" /></a>
   <a href="https://developer.apple.com/swift/"><img src="https://img.shields.io/badge/Swift-6.3_AppKit-f59e0b?style=for-the-badge&logo=swift&logoColor=white" alt="Swift AppKit" /></a>
@@ -112,20 +112,22 @@ flowchart TB
 
 ---
 
-## 📦 Matriks Paket Rilis Resmi (`v1.0.0`)
+## 📦 Matriks Paket Rilis Resmi (`v1.1.0`)
+- [Matriks Paket Rilis Resmi](#-matriks-paket-rilis-resmi-v110)
 
 Semua paket rilis telah dikompilasi secara mandiri (*self-contained*), ditandatangani, dan siap langsung dipasang tanpa memerlukan dependensi eksternal:
 
 | Platform | Format Paket | Deskripsi & Kegunaan | Lokasi / Download |
 | :--- | :--- | :--- | :--- |
-| **Android** | `SiPenDosa-Android.apk` | **Standalone APK** dengan Background Service 24/7 & Terminal Termux View | [Download APK](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/SiPenDosa-Android.apk) |
-| **macOS** | `SiPenDosa-1.0.0.dmg` | **Apple Disk Image** Retina Custom Layout Drag-and-Drop ke `/Applications` | [Download DMG](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/SiPenDosa-1.0.0.dmg) |
-| **macOS** | `SiPenDosa-1.0.0-Installer.pkg` | **Apple Installer Package** Wizard resmi dengan LaunchAgent otomatis | [Download PKG](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/SiPenDosa-1.0.0-Installer.pkg) |
-| **Windows** | `SiPenDosa-Setup.exe` | **Windows Standalone Setup** (Desktop & Start Menu Shortcut, Uninstaller) | [Download EXE](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/SiPenDosa-Setup.exe) |
-| **Ubuntu / Debian** | `sipendosa_1.0.0_amd64.deb` | Paket DEB resmi dengan konfigurasi daemon **Systemd** otomatis (x86_64) | [Download DEB (amd64)](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/sipendosa_1.0.0_amd64.deb) |
-| **Debian ARM64** | `sipendosa_1.0.0_arm64.deb` | Paket DEB untuk arsitektur ARM64 (Raspberry Pi, Ampere, AWS Graviton) | [Download DEB (arm64)](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/sipendosa_1.0.0_arm64.deb) |
-| **Linux Universal** | `sipendosa_linux_amd64.tar.gz` | Tarball distribusi standalone untuk RedHat, CentOS, Fedora, Arch, SUSE | [Download Tarball](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/sipendosa_linux_amd64.tar.gz) |
-| **macOS Universal** | `sipendosa_macos_universal.tar.gz` | Tarball distribusi CLI & daemon LaunchAgent universal (ARM64 + x86_64) | [Download Tarball](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/sipendosa_macos_universal.tar.gz) |
+| **Android** | `SiPenDosa-Android.apk` | **Standalone APK** Universal (API 21+) Background Service 24/7 & Terminal View | [Download APK](https://github.com/fk0u/SiPenDosa/releases/download/v1.1.0/SiPenDosa-Android.apk) |
+| **Android (Store)** | `SiPenDosa-Android.aab` | **Google App Bundle** Universal Multi-Arch terkompresi | [Download AAB](https://github.com/fk0u/SiPenDosa/releases/download/v1.1.0/SiPenDosa-Android.aab) |
+| **macOS** | `SiPenDosa-1.1.0.dmg` | **Apple Disk Image** Retina Custom Layout Drag-and-Drop ke `/Applications` | [Download DMG](https://github.com/fk0u/SiPenDosa/releases/download/v1.1.0/SiPenDosa-1.1.0.dmg) |
+| **macOS** | `SiPenDosa-1.1.0-Installer.pkg` | **Apple Installer Package** Wizard resmi dengan LaunchAgent otomatis | [Download PKG](https://github.com/fk0u/SiPenDosa/releases/download/v1.1.0/SiPenDosa-1.1.0-Installer.pkg) |
+| **Windows** | `SiPenDosa-Setup.exe` | **Windows Standalone Setup** (Desktop & Start Menu Shortcut, Uninstaller) | [Download EXE](https://github.com/fk0u/SiPenDosa/releases/download/v1.1.0/SiPenDosa-Setup.exe) |
+| **Ubuntu / Debian** | `sipendosa_1.1.0_amd64.deb` | Paket DEB resmi dengan konfigurasi daemon **Systemd** otomatis (x86_64) | [Download DEB (amd64)](https://github.com/fk0u/SiPenDosa/releases/download/v1.1.0/sipendosa_1.1.0_amd64.deb) |
+| **Debian ARM64** | `sipendosa_1.1.0_arm64.deb` | Paket DEB untuk arsitektur ARM64 (Raspberry Pi, Ampere, AWS Graviton) | [Download DEB (arm64)](https://github.com/fk0u/SiPenDosa/releases/download/v1.1.0/sipendosa_1.1.0_arm64.deb) |
+| **Linux Universal** | `sipendosa_linux_amd64.tar.gz` | Tarball distribusi standalone untuk RedHat, CentOS, Fedora, Arch, SUSE | [Download Tarball](https://github.com/fk0u/SiPenDosa/releases/download/v1.1.0/sipendosa_linux_amd64.tar.gz) |
+| **macOS Universal** | `sipendosa_macos_universal.tar.gz` | Tarball distribusi CLI & daemon LaunchAgent universal (ARM64 + x86_64) | [Download Tarball](https://github.com/fk0u/SiPenDosa/releases/download/v1.1.0/sipendosa_macos_universal.tar.gz) |
 
 ---
 
@@ -164,15 +166,15 @@ Semua paket rilis telah dikompilasi secara mandiri (*self-contained*), ditandata
 
 ### 🍎 1. Apple macOS (Apple Silicon & Intel)
 
-#### Opsi A: Apple Disk Image (`SiPenDosa-1.0.0.dmg`) — Sangat Direkomendasikan!
-1. Unduh [SiPenDosa-1.0.0.dmg](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/SiPenDosa-1.0.0.dmg).
+#### Opsi A: Apple Disk Image (`SiPenDosa-1.1.0.dmg`) — Sangat Direkomendasikan!
+1. Unduh [SiPenDosa-1.1.0.dmg](https://github.com/fk0u/SiPenDosa/releases/download/v1.1.0/SiPenDosa-1.1.0.dmg).
 2. Buka berkas DMG. Jendela Finder akan menampilkan antarmuka kustom SiPenDosa.
 3. **Seret (drag)** ikon `SiPenDosa.app` ke ikon `Applications`.
 4. Buka aplikasi dari folder `Applications` atau Launchpad.
 5. Ikon **⚡ SiPenDosa** akan muncul di Menu Bar kanan atas dengan kontrol instan (Buka Web Dashboard, Scan QR, Status Server, Log).
 
-#### Opsi B: Apple Installer Package (`SiPenDosa-1.0.0-Installer.pkg`)
-1. Unduh dan buka [SiPenDosa-1.0.0-Installer.pkg](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/SiPenDosa-1.0.0-Installer.pkg).
+#### Opsi B: Apple Installer Package (`SiPenDosa-1.1.0-Installer.pkg`)
+1. Unduh dan buka [SiPenDosa-1.1.0-Installer.pkg](https://github.com/fk0u/SiPenDosa/releases/download/v1.1.0/SiPenDosa-1.1.0-Installer.pkg).
 2. Ikuti panduan wizard instalasi hingga selesai.
 3. Paket ini otomatis mengonfigurasi **LaunchAgent daemon** sehingga server selalu aktif di latar belakang saat Mac dinyalakan.
 
@@ -181,7 +183,7 @@ Semua paket rilis telah dikompilasi secara mandiri (*self-contained*), ditandata
 ### 🪟 2. Microsoft Windows (10 & 11)
 
 #### Opsi A: Standalone Setup Wizard (`SiPenDosa-Setup.exe`)
-1. Unduh [SiPenDosa-Setup.exe](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/SiPenDosa-Setup.exe).
+1. Unduh [SiPenDosa-Setup.exe](https://github.com/fk0u/SiPenDosa/releases/download/v1.1.0/SiPenDosa-Setup.exe).
 2. Klik dua kali untuk menjalankan installer (tidak memerlukan izin Administrator).
 3. Installer akan:
    - Memasang berkas ke `%LOCALAPPDATA%\Programs\SiPenDosa`.
@@ -197,10 +199,10 @@ Semua paket rilis telah dikompilasi secara mandiri (*self-contained*), ditandata
 #### Opsi A: Paket Debian / Ubuntu (`.deb`)
 ```bash
 # Untuk arsitektur x86_64 / amd64:
-sudo dpkg -i sipendosa_1.0.0_amd64.deb
+sudo dpkg -i sipendosa_1.1.0_amd64.deb
 
 # Untuk arsitektur ARM64:
-sudo dpkg -i sipendosa_1.0.0_arm64.deb
+sudo dpkg -i sipendosa_1.1.0_arm64.deb
 
 # Cek status daemon:
 sudo systemctl status sipen
@@ -219,7 +221,7 @@ Skrip instalasi ini otomatis mendeteksi distro, membuat user `sipen`, mendaftark
 ### 📱 4. Mobile (Android APK & iOS PWA)
 
 #### 🤖 Opsi A: Standalone Android APK (`SiPenDosa-Android.apk`)
-1. Unduh [SiPenDosa-Android.apk](https://github.com/fk0u/SiPenDosa/releases/download/v1.0.0/SiPenDosa-Android.apk) ke HP Android Anda lalu pasang (izinkan instalasi APK dari browser jika diminta).
+1. Unduh [SiPenDosa-Android.apk](https://github.com/fk0u/SiPenDosa/releases/download/v1.1.0/SiPenDosa-Android.apk) ke HP Android Anda lalu pasang (izinkan instalasi APK dari browser jika diminta).
 2. Buka aplikasi. Secara otomatis:
    - **Foreground Service & Wakelock** akan aktif di latar belakang agar server tidak dimatikan oleh sistem Android.
    - Layar menampilkan **Terminal Display Konsol** interaktif dengan log daemon langsung.

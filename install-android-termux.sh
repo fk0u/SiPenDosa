@@ -110,12 +110,12 @@ fi
 # C. Jika belum terpasang, coba unduh paket rilis resmi dari GitHub
 if [ "$INSTALLED" -eq 0 ]; then
     echo -e "      Mengunduh paket rilis resmi SiPenDosa untuk ${BIN_ARCH} dari GitHub..."
-    RELEASE_TAG="v1.0.0"
+    RELEASE_TAG="v1.1.0"
     TMP_DL="/tmp/sipen_dl_$$"
     mkdir -p "$TMP_DL"
 
     RAW_BIN_URL="https://github.com/fk0u/SiPenDosa/releases/download/${RELEASE_TAG}/sipen_linux_${BIN_ARCH}"
-    DEB_URL="https://github.com/fk0u/SiPenDosa/releases/download/${RELEASE_TAG}/sipendosa_1.0.0_${BIN_ARCH}.deb"
+    DEB_URL="https://github.com/fk0u/SiPenDosa/releases/download/${RELEASE_TAG}/sipendosa_1.1.0_${BIN_ARCH}.deb"
 
     # 1. Coba download standalone binary langsung
     if curl -fsSL -o "$TMP_DL/sipen_bin" "$RAW_BIN_URL" 2>/dev/null && [ -s "$TMP_DL/sipen_bin" ]; then
