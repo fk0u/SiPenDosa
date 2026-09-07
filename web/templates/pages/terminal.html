@@ -167,13 +167,47 @@
                 case 'help':
                     out.innerHTML = `
                         <div class="text-amber-300 font-bold">Daftar Perintah SiPenDosa Terminal:</div>
-                        <div><strong class="text-white">status</strong>     : Periksa kondisi server, memori, dan WhatsApp</div>
-                        <div><strong class="text-white">ip</strong>         : Tampilkan alamat IP server & cara akses dari laptop</div>
-                        <div><strong class="text-white">dashboard</strong>  : Buka Web Dashboard lengkap di browser</div>
-                        <div><strong class="text-white">clear</strong>      : Bersihkan log dan layar konsol</div>
-                        <div><strong class="text-white">reconnect</strong>  : Paksa koneksi ulang ke WhatsApp</div>
-                        <div><strong class="text-white">about</strong>      : Informasi versi & filosofi SiPenDosa</div>
+                        <div><strong class="text-white">status</strong>        : Periksa kondisi server, memori, dan WhatsApp</div>
+                        <div><strong class="text-white">pair &lt;nomor&gt;</strong>  : Minta kode pairing WhatsApp via nomor HP</div>
+                        <div><strong class="text-white">ip</strong>            : Tampilkan alamat IP server & cara akses dari laptop</div>
+                        <div><strong class="text-white">dashboard</strong>     : Buka Web Dashboard lengkap di browser</div>
+                        <div><strong class="text-white">clear</strong>         : Bersihkan log dan layar konsol</div>
+                        <div><strong class="text-white">reconnect</strong>     : Paksa koneksi ulang ke WhatsApp</div>
+                        <div><strong class="text-white">about</strong>         : Informasi versi & filosofi SiPenDosa</div>
                     `;
+                    break;
+                case 'pair':
+                    const phoneArg = parts[1];
+                    if (!phoneArg) {
+                        out.innerHTML = `<div class="text-rose-400 font-bold">Penggunaan: pair &lt;nomor_whatsapp&gt;</div><div>Contoh: <span class="text-amber-300 font-bold">pair 08123456789</span></div>`;
+                        break;
+                    }
+                    out.innerHTML = `<div class="text-amber-400">Menghubungi engine WhatsApp untuk nomor ${phoneArg}...</div>`;
+                    fetch('/api/wa/pair-phone', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone: phoneArg })
+                    })
+                        .then(r => r.json())
+                        .then(d => {
+                            if (d.success && d.code) {
+                                out.innerHTML = `
+                                    <div class="text-emerald-400 font-bold text-sm">✓ KODE PAIRING WHATSAPP: [ ${d.code} ]</div>
+                                    <div class="text-slate-300 py-1">Langkah login di aplikasi WhatsApp:</div>
+                                    <div class="text-slate-400">1. Buka WhatsApp &gt; Ketuk Titik Tiga (⋮) &gt; Perangkat tertaut</div>
+                                    <div class="text-slate-400">2. Ketuk "Tautkan Perangkat"</div>
+                                    <div class="text-slate-400">3. Di bawah layar kamera, ketuk <span class="text-amber-300">"Tautkan dengan nomor telepon saja"</span></div>
+                                    <div class="text-slate-400">4. Masukkan kode 8 karakter: <strong class="text-white font-mono tracking-widest text-base">${d.code}</strong></div>
+                                `;
+                            } else {
+                                out.innerHTML = `<div class="text-rose-400">Gagal mendapatkan kode pairing: ${d.error || 'Terjadi kesalahan'}</div>`;
+                            }
+                            termScreen.scrollTop = termScreen.scrollHeight;
+                        })
+                        .catch(err => {
+                            out.innerHTML = `<div class="text-rose-400">Kesalahan jaringan: ${err}</div>`;
+                            termScreen.scrollTop = termScreen.scrollHeight;
+                        });
                     break;
                 case 'status':
                     fetch('/healthz')

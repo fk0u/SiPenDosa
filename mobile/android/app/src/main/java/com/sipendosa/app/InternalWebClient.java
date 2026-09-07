@@ -11,7 +11,7 @@ public class InternalWebClient extends WebViewClient {
 
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
-        if (url.startsWith(SERVER_URL)) {
+        if (url.startsWith(SERVER_URL) || url.startsWith("http://localhost:8473")) {
             view.loadUrl(url);
             return true;
         }

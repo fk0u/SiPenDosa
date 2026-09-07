@@ -765,10 +765,26 @@ func (h *Handlers) LogsHandler(w http.ResponseWriter, r *http.Request) {
 // ==========================================
 
 func (h *Handlers) WhatsAppQRHandler(w http.ResponseWriter, r *http.Request) {
-	_, _, _, qr := h.waClient.Status()
+	state, phone, pushName, qr := h.waClient.Status()
+	// Jika QR kosong dan belum terkoneksi, otomatis pemicu rekoneksi untuk mengambil QR baru
+	if qr == "" && state != whatsapp.StateConnected {
+		_ = h.waClient.Reconnect()
+		for i := 0; i < 20; i++ {
+			time.Sleep(100 * time.Millisecond)
+			state, phone, pushName, qr = h.waClient.Status()
+			if qr != "" || state == whatsapp.StateConnected {
+				break
+			}
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]string{
-		"qr": qr,
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"qr":           qr,
+		"state":        string(state),
+		"phone":        phone,
+		"push_name":    pushName,
+		"pairing_code": h.waClient.GetPairingCode(),
 	})
 }
 
@@ -786,6 +802,53 @@ func (h *Handlers) WhatsAppDisconnectHandler(w http.ResponseWriter, r *http.Requ
 	h.waClient.Disconnect()
 	h.hub.BroadcastToast("info", "WhatsApp telah diputus koneksinya.")
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (h *Handlers) WhatsAppPairPhoneHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	phone := strings.TrimSpace(r.FormValue("phone"))
+	if phone == "" {
+		var body struct {
+			Phone string `json:"phone"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		phone = strings.TrimSpace(body.Phone)
+	}
+
+	if phone == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Nomor WhatsApp wajib diisi (contoh: 08123456789 atau 628...)",
+		})
+		return
+	}
+
+	code, err := h.waClient.PairPhone(r.Context(), phone)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	h.hub.BroadcastToast("success", fmt.Sprintf("Kode pairing WhatsApp: %s (masukkan di WhatsApp > Tautkan Perangkat)", code))
+	h.store.AddActivityLog("whatsapp", "Request Pairing Code", fmt.Sprintf("Phone: %s, Code: %s", phone, code))
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"code":    code,
+		"message": "Kode pairing berhasil dibuat. Masukkan di WhatsApp > Perangkat Tertaut > Tautkan dengan nomor telepon.",
+	})
 }
 
 func (h *Handlers) WhatsAppTestSendHandler(w http.ResponseWriter, r *http.Request) {

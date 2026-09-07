@@ -173,13 +173,13 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
         while (attempts < 60 && !isServerReady) {
             attempts++;
             try {
-                URL url = new URL(SERVER_URL + "/api/health");
+                URL url = new URL(SERVER_URL + "/healthz");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setConnectTimeout(1000);
                 conn.setReadTimeout(1000);
                 conn.setRequestMethod("GET");
                 int code = conn.getResponseCode();
-                if (code == 200 || code == 302 || code == 401) {
+                if (code >= 200 && code < 500) {
                     isServerReady = true;
                     break;
                 }

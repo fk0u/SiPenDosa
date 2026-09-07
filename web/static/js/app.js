@@ -45,6 +45,11 @@
             case 'wa_qr':
                 updateWhatsAppQR(event.payload);
                 break;
+            case 'wa_pairing_code':
+                if (event.payload && event.payload.code) {
+                    renderPairingCode(event.payload.code);
+                }
+                break;
             case 'countdown':
                 updateCountdown(event.payload);
                 break;
@@ -162,6 +167,142 @@
             toast.classList.add('opacity-0', '-translate-y-2');
             setTimeout(() => toast.remove(), 300);
         }, 4000);
+    };
+
+    window.openWhatsAppModal = function () {
+        const modal = document.getElementById('qr_modal');
+        if (!modal) return;
+        modal.showModal();
+        loadWhatsAppQR(false);
+    };
+
+    window.switchWaTab = function (tab) {
+        const btnQr = document.getElementById('tab-btn-qr');
+        const btnPhone = document.getElementById('tab-btn-phone');
+        const contentQr = document.getElementById('tab-content-qr');
+        const contentPhone = document.getElementById('tab-content-phone');
+
+        if (!btnQr || !btnPhone || !contentQr || !contentPhone) return;
+
+        if (tab === 'phone') {
+            btnPhone.className = 'py-2 px-3 rounded-xl transition-all duration-200 bg-rose-600 text-white shadow-md';
+            btnQr.className = 'py-2 px-3 rounded-xl transition-all duration-200 text-slate-400 hover:text-white';
+            contentPhone.classList.remove('hidden');
+            contentQr.classList.add('hidden');
+            const phoneInput = document.getElementById('wa-pairing-phone');
+            if (phoneInput) setTimeout(() => phoneInput.focus(), 100);
+        } else {
+            btnQr.className = 'py-2 px-3 rounded-xl transition-all duration-200 bg-rose-600 text-white shadow-md';
+            btnPhone.className = 'py-2 px-3 rounded-xl transition-all duration-200 text-slate-400 hover:text-white';
+            contentQr.classList.remove('hidden');
+            contentPhone.classList.add('hidden');
+            loadWhatsAppQR(false);
+        }
+    };
+
+    window.loadWhatsAppQR = function (forceReconnect = false) {
+        const qrImg = document.getElementById('modal-qr-image');
+        const qrPlaceholder = document.getElementById('modal-qr-placeholder');
+        const loadingText = document.getElementById('modal-qr-loading-text');
+
+        if (loadingText) loadingText.innerText = forceReconnect ? 'Menghubungi server untuk QR baru...' : 'Mengambil QR Code WhatsApp...';
+        if (qrImg) qrImg.classList.add('hidden');
+        if (qrPlaceholder) qrPlaceholder.classList.remove('hidden');
+
+        const url = forceReconnect ? '/api/wa/reconnect' : '/api/wa/qr';
+        const method = forceReconnect ? 'POST' : 'GET';
+
+        fetch(url, { method: method })
+            .then(res => res.json())
+            .then(data => {
+                if (data.qr) {
+                    updateWhatsAppQR(data.qr);
+                } else if (data.state === 'connected') {
+                    if (qrPlaceholder) {
+                        qrPlaceholder.innerHTML = `
+                            <span class="text-3xl">✓</span>
+                            <span class="text-emerald-400 font-bold text-sm">WhatsApp Sudah Terhubung!</span>
+                            <span class="text-xs text-slate-400 font-mono">${data.phone || ''}</span>
+                        `;
+                    }
+                }
+                if (data.pairing_code) {
+                    renderPairingCode(data.pairing_code);
+                }
+            })
+            .catch(err => {
+                console.error('[SiPenDosa QR] Gagal memuat QR:', err);
+                if (loadingText) loadingText.innerText = 'Gagal memuat QR. Periksa koneksi internet/server.';
+            });
+    };
+
+    window.submitWhatsAppPairing = function () {
+        const phoneInput = document.getElementById('wa-pairing-phone');
+        const btnText = document.getElementById('pairing-btn-text');
+        const btnSpinner = document.getElementById('pairing-btn-spinner');
+        const btn = document.getElementById('btn-submit-pairing');
+
+        const phone = phoneInput ? phoneInput.value.trim() : '';
+        if (!phone) {
+            alert('Silakan masukkan nomor WhatsApp Anda terlebih dahulu.');
+            if (phoneInput) phoneInput.focus();
+            return;
+        }
+
+        if (btn) btn.disabled = true;
+        if (btnText) btnText.innerText = 'Menghubungi WhatsApp Engine...';
+        if (btnSpinner) btnSpinner.classList.remove('hidden');
+
+        fetch('/api/wa/pair-phone', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ phone: phone })
+        })
+            .then(r => r.json())
+            .then(res => {
+                if (btn) btn.disabled = false;
+                if (btnSpinner) btnSpinner.classList.add('hidden');
+                if (btnText) btnText.innerText = 'Dapatkan Kode Pairing (8 Digit)';
+
+                if (res.success && res.code) {
+                    renderPairingCode(res.code);
+                    showToast('success', 'Kode pairing WhatsApp berhasil dibuat!');
+                } else {
+                    alert('Gagal mendapatkan kode pairing: ' + (res.error || 'Terjadi kesalahan'));
+                }
+            })
+            .catch(err => {
+                if (btn) btn.disabled = false;
+                if (btnSpinner) btnSpinner.classList.add('hidden');
+                if (btnText) btnText.innerText = 'Dapatkan Kode Pairing (8 Digit)';
+                alert('Gagal mengirim permintaan: ' + err);
+            });
+    };
+
+    function renderPairingCode(code) {
+        const resultContainer = document.getElementById('wa-pairing-result');
+        const display = document.getElementById('wa-pairing-code-display');
+        if (resultContainer) resultContainer.classList.remove('hidden');
+        if (display) {
+            if (code.length === 8 && !code.includes('-')) {
+                display.innerText = code.slice(0, 4) + ' - ' + code.slice(4);
+            } else {
+                display.innerText = code;
+            }
+        }
+    }
+
+    window.copyPairingCode = function () {
+        const display = document.getElementById('wa-pairing-code-display');
+        if (!display) return;
+        const rawCode = display.innerText.replace(/\s+/g, '').replace('-', '');
+        navigator.clipboard.writeText(rawCode).then(() => {
+            showToast('success', '✓ Kode pairing (' + rawCode + ') disalin ke clipboard!');
+        }).catch(() => {
+            prompt('Salin kode pairing:', rawCode);
+        });
     };
 
     // Initialize on DOM load

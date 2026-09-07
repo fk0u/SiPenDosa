@@ -2,10 +2,14 @@ package web
 
 import (
 	"io/fs"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
+
+	"sipen/internal/auth"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -22,6 +26,11 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Compress(5))
 
+	// OWASP Security Middlewares
+	r.Use(SecurityHeadersMiddleware)
+	r.Use(MaxBodyBytesMiddleware(2 << 20)) // Max 2MB payload protection
+	r.Use(CSRFOriginMiddleware)
+
 	// Static files server with disk and embedded fallback
 	var filesDir http.FileSystem
 	if staticDiskDir != "" {
@@ -37,14 +46,31 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 		FileServer(r, "/static", filesDir)
 	}
 
+	// Rate limiter for authentication endpoints (prevent brute-force / credential stuffing)
+	authRateLimiter := NewRateLimiter(10, time.Minute)
+
 	// Public routes
 	r.Get("/healthz", h.HealthzHandler)
+	r.Get("/api/health", h.HealthzHandler) // Alias for Android MainActivity health check
 	r.Get("/ws", h.hub.HandleWS)
 
+	// Internal loopback API for local CLI / Termux commands
+	r.Post("/api/internal/pair-phone", func(w http.ResponseWriter, r *http.Request) {
+		host, _, _ := net.SplitHostPort(r.RemoteAddr)
+		if host == "" {
+			host = r.RemoteAddr
+		}
+		if host != "127.0.0.1" && host != "::1" && host != "localhost" {
+			http.Error(w, "Forbidden: loopback only", http.StatusForbidden)
+			return
+		}
+		h.WhatsAppPairPhoneHandler(w, r)
+	})
+
 	r.Get("/login", h.LoginHandler)
-	r.Post("/login", h.LoginPostHandler)
+	r.With(authRateLimiter.Middleware).Post("/login", h.LoginPostHandler)
 	r.Get("/register", h.RegisterHandler)
-	r.Post("/register", h.RegisterPostHandler)
+	r.With(authRateLimiter.Middleware).Post("/register", h.RegisterPostHandler)
 	r.Get("/logout", h.LogoutHandler)
 	r.Post("/logout", h.LogoutHandler)
 
@@ -116,9 +142,14 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 			set.Post("/update", h.UpdateSettingsHandler)
 			set.Post("/holidays/create", h.CreateHolidayHandler)
 			set.Post("/holidays/{id}/delete", h.DeleteHolidayHandler)
-			set.Post("/registration/toggle", h.ToggleRegistrationHandler)
-			set.Get("/backup/download", h.BackupDownloadHandler)
-			set.Post("/users/{id}/delete", h.DeleteUserHandler)
+
+			// SuperAdmin-restricted sensitive endpoints (OWASP BFLA remediation)
+			set.Group(func(super chi.Router) {
+				super.Use(auth.RequireSuperAdmin)
+				super.Post("/registration/toggle", h.ToggleRegistrationHandler)
+				super.Get("/backup/download", h.BackupDownloadHandler)
+				super.Post("/users/{id}/delete", h.DeleteUserHandler)
+			})
 		})
 
 		// Logs
@@ -127,6 +158,7 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 		// WhatsApp Actions API
 		protected.Route("/api/wa", func(war chi.Router) {
 			war.Get("/qr", h.WhatsAppQRHandler)
+			war.Post("/pair-phone", h.WhatsAppPairPhoneHandler)
 			war.Post("/reconnect", h.WhatsAppReconnectHandler)
 			war.Post("/disconnect", h.WhatsAppDisconnectHandler)
 			war.Post("/test-send", h.WhatsAppTestSendHandler)

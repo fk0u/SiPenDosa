@@ -263,6 +263,14 @@ cd "$INSTALL_DIR"
 exec "$INSTALL_DIR/$APP_NAME" "\$@"
 EOF
     chmod +x "$PREFIX_DIR/bin/sipen"
+
+    # Shortcut perintah pairing langsung 'sipen-pair'
+    cat <<EOF > "$PREFIX_DIR/bin/sipen-pair"
+#!$TERMUX_BASH
+cd "$INSTALL_DIR"
+exec "$INSTALL_DIR/$APP_NAME" pair "\$@"
+EOF
+    chmod +x "$PREFIX_DIR/bin/sipen-pair"
 fi
 
 # Ambil IP Wi-Fi
@@ -280,6 +288,7 @@ echo -e "║"
 echo -e "║  Perintah Penggunaan di Termux:"
 echo -e "║  - Jalankan Foreground : ${BRED}sipen-start${NC} (atau $INSTALL_DIR/start.sh)"
 echo -e "║  - Jalankan Background : ${BYELLOW}sipen-bg${NC}    (atau $INSTALL_DIR/start-bg.sh)"
+echo -e "║  - Tautkan Nomor HP    : ${BYELLOW}sipen pair 0812xxxx${NC} (Login tanpa QR/kamera)"
 echo -e "║  - Matikan Server      : ${YELLOW}sipen-stop${NC}  (atau $INSTALL_DIR/stop.sh)"
 echo -e "║  - Perintah Langsung   : ${GREEN}sipen${NC}"
 echo -e "${GREEN}╚════════════════════════════════════════════════════════════════════════╝${NC}"

@@ -47,14 +47,15 @@ type Client struct {
 	hub        *realtime.Hub
 	dbPath     string
 	port       string
-	state      State
-	currentQR  string
-	phoneJID   string
-	pushName   string
-	mu         sync.RWMutex
-	cancelFunc context.CancelFunc
-	ctx        context.Context
-	stopChan   chan struct{}
+	state       State
+	currentQR   string
+	pairingCode string
+	phoneJID    string
+	pushName    string
+	mu          sync.RWMutex
+	cancelFunc  context.CancelFunc
+	ctx         context.Context
+	stopChan    chan struct{}
 }
 
 // NewClient initializes the whatsmeow storage container and client wrapper
@@ -334,6 +335,64 @@ func (c *Client) Status() (State, string, string, string) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.state, c.phoneJID, c.pushName, c.currentQR
+}
+
+// PairPhone requests an 8-digit WhatsApp pairing code for the given phone number.
+func (c *Client) PairPhone(ctx context.Context, phone string) (string, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.client == nil {
+		return "", errors.New("whatsapp client belum diinisialisasi")
+	}
+
+	if c.client.IsConnected() && c.client.Store.ID != nil {
+		return "", errors.New("whatsapp sudah terhubung dengan sesi aktif")
+	}
+
+	// Normalisasi nomor HP: hilangkan +, -, spasi, dll.
+	re := regexp.MustCompile(`[^\d]`)
+	cleaned := re.ReplaceAllString(phone, "")
+	if strings.HasPrefix(cleaned, "08") {
+		cleaned = "628" + cleaned[2:]
+	} else if strings.HasPrefix(cleaned, "8") {
+		cleaned = "62" + cleaned
+	}
+
+	if len(cleaned) < 9 {
+		return "", fmt.Errorf("nomor telepon terlalu pendek: %s", phone)
+	}
+
+	if !c.client.IsConnected() {
+		if err := c.client.Connect(); err != nil {
+			return "", fmt.Errorf("gagal terhubung ke server WhatsApp: %w", err)
+		}
+		time.Sleep(1 * time.Second)
+	}
+
+	code, err := c.client.PairPhone(ctx, cleaned, true, whatsmeow.PairClientChrome, "Chrome (Linux)")
+	if err != nil {
+		return "", fmt.Errorf("gagal meminta kode pairing: %w", err)
+	}
+
+	c.pairingCode = code
+	c.currentQR = ""
+	c.setState(StateNeedQR)
+
+	c.hub.Broadcast("wa_pairing_code", map[string]string{
+		"code":  code,
+		"phone": cleaned,
+	})
+
+	slog.Info("WhatsApp pairing code generated", "phone", cleaned, "code", code)
+	return code, nil
+}
+
+// GetPairingCode returns the active pairing code if any
+func (c *Client) GetPairingCode() string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.pairingCode
 }
 
 // FormatJID normalizes raw phone numbers or group links into WhatsApp JID
