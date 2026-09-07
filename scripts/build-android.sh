@@ -121,13 +121,14 @@ mkdir -p "${TMP_BUILD}/apk_staging/lib/armeabi-v7a"
 mkdir -p "${TMP_BUILD}/apk_staging/lib/x86_64"
 mkdir -p "${TMP_BUILD}/apk_staging/lib/x86"
 
-"${JAVA_BIN}/javac" --release 8 \
+"${JAVA_BIN}/javac" --release 8 -g:lines,source \
     -cp "${ANDROID_JAR}" \
     -d "${TMP_BUILD}/classes" \
     mobile/android/app/src/main/java/com/sipendosa/app/*.java
 
 echo "==> Mengonversi bytecode ke Dalvik Executable (classes.dex) dengan D8..."
 "${BUILD_TOOLS_DIR}/d8" \
+    --min-api 21 \
     --lib "${ANDROID_JAR}" \
     --output "${TMP_BUILD}/dex" \
     "${TMP_BUILD}/classes/com/sipendosa/app"/*.class

@@ -54,6 +54,11 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 	r.Get("/api/health", h.HealthzHandler) // Alias for Android MainActivity health check
 	r.Get("/ws", h.hub.HandleWS)
 
+	// System Version & Automatic Update API
+	r.Get("/api/system/version", h.SystemVersionHandler)
+	r.Get("/api/system/update/check", h.CheckUpdateHandler)
+	r.Get("/api/system/update/apk", h.DownloadApkHandler)
+
 	// Internal loopback API for local CLI / Termux commands
 	r.Post("/api/internal/pair-phone", func(w http.ResponseWriter, r *http.Request) {
 		host, _, _ := net.SplitHostPort(r.RemoteAddr)
@@ -154,6 +159,9 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 
 		// Logs
 		protected.Get("/logs", h.LogsHandler)
+
+		// System Update Apply (Protected)
+		protected.Post("/api/system/update/apply", h.ApplyUpdateHandler)
 
 		// WhatsApp Actions API
 		protected.Route("/api/wa", func(war chi.Router) {

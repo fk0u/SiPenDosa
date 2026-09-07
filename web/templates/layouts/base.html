@@ -176,6 +176,11 @@
                         <span>WITA (UTC+8)</span>
                     </div>
 
+                    <!-- System Update Available Indicator (Hidden until update detected) -->
+                    <button id="header-update-badge" onclick="openUpdateModal()" class="btn btn-xs rounded-full bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-bold gap-1.5 shadow-lg shadow-rose-950/40 hidden animate-pulse transition-all">
+                        <span>🚀 Update <span id="header-update-version"></span></span>
+                    </button>
+
                     <!-- User Menu Dropdown -->
                     <div class="dropdown dropdown-end">
                         <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-sm avatar placeholder">
@@ -202,6 +207,18 @@
                     </div>
                 </div>
             </header>
+
+            <!-- Top Update Alert Bar (Dismissable) -->
+            <div id="top-update-bar" class="hidden bg-gradient-to-r from-rose-950/80 via-black to-amber-950/80 border-b border-rose-500/30 px-4 py-2.5 text-xs text-slate-200 flex items-center justify-between shadow-lg">
+                <div class="flex items-center gap-2">
+                    <span class="text-base animate-bounce">🚀</span>
+                    <span>Versi baru <strong>SiPenDosa <span id="bar-update-version"></span></strong> telah dirilis! Nikmati fitur terbaru dan perbaikan sistem.</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="openUpdateModal()" class="btn btn-xs rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold shadow-md">Perbarui Sekarang</button>
+                    <button onclick="dismissUpdateBar()" class="btn btn-xs btn-ghost text-slate-400 hover:text-white">✕</button>
+                </div>
+            </div>
 
             <!-- Main Page Content Body -->
             <main class="flex-1 p-4 md:p-8 max-w-[1400px] w-full mx-auto space-y-8">
@@ -499,7 +516,7 @@
                     </div>
                     <div class="p-3 rounded-xl bg-black/40 border border-white/5 font-mono text-[10px] space-y-1 text-slate-400" id="diagnostic-box">
                         <div>APP_NAME : SiPenDosa (Academic Assistant)</div>
-                        <div>VERSION  : 1.0.0 (Multi-Platform / Mobile Server)</div>
+                        <div>VERSION  : 1.1.0 (Official Release / Multi-Platform)</div>
                         <div>CLIENT   : <span id="diag-url"></span></div>
                         <div>STATUS   : Active & Listening on Port 8473</div>
                     </div>
@@ -519,6 +536,78 @@
                 <form method="dialog" class="w-full">
                     <button class="btn btn-sm btn-outline w-full rounded-full border-white/10 text-slate-300 hover:bg-white/5">Tutup</button>
                 </form>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
+
+    <!-- System Automatic Update Modal -->
+    <dialog id="update_modal" class="modal">
+        <div class="modal-box bg-[#0c0e14] border border-white/10 max-w-lg p-6 rounded-3xl shadow-2xl space-y-5">
+            <div class="flex items-center justify-between pb-3 border-b border-white/10">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-rose-600 via-rose-500 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-rose-600/30">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base text-white">Pembaruan Sistem SiPenDosa</h3>
+                        <p class="text-[11px] text-amber-400 font-mono font-semibold" id="modal-update-badge">Versi Baru Resmi Tersedia</p>
+                    </div>
+                </div>
+                <form method="dialog">
+                    <button class="btn btn-sm btn-circle btn-ghost text-slate-400 hover:text-white">✕</button>
+                </form>
+            </div>
+
+            <div class="space-y-4 text-xs text-slate-300">
+                <!-- Version Comparison Card -->
+                <div class="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] border border-white/5">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Versi Saat Ini</span>
+                        <span id="modal-current-version" class="font-mono font-bold text-slate-300 text-sm">v1.1.0</span>
+                    </div>
+                    <div class="text-amber-400 font-bold text-lg">➔</div>
+                    <div class="flex flex-col items-end">
+                        <span class="text-[10px] text-emerald-400 uppercase font-semibold">Versi Terbaru</span>
+                        <span id="modal-latest-version" class="font-mono font-bold text-emerald-400 text-sm">v1.x.x</span>
+                    </div>
+                </div>
+
+                <!-- Release Title & Notes -->
+                <div class="space-y-1.5 text-left">
+                    <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Catatan Rilis Resmi</span>
+                    <div class="p-3.5 rounded-2xl bg-[#06070a] border border-white/10 max-h-48 overflow-y-auto font-mono text-[11px] text-slate-300 whitespace-pre-wrap leading-relaxed shadow-inner" id="modal-release-notes">
+                        Memeriksa rilis terbaru...
+                    </div>
+                </div>
+
+                <!-- Update Progress Indicator (Hidden until update starts) -->
+                <div id="update-progress-container" class="hidden space-y-2 p-3 rounded-2xl bg-rose-950/20 border border-rose-500/30 text-left">
+                    <div class="flex items-center justify-between text-xs font-semibold">
+                        <span id="update-progress-text" class="text-amber-400">Mengunduh pembaruan...</span>
+                        <span id="update-progress-percent" class="font-mono text-white">0%</span>
+                    </div>
+                    <progress id="update-progress-bar" class="progress progress-error w-full" value="0" max="100"></progress>
+                </div>
+            </div>
+
+            <!-- Modal Action Buttons -->
+            <div class="space-y-2 pt-2 border-t border-white/10">
+                <button type="button" id="btn-do-update" onclick="executeAutomaticUpdate()" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-rose-600 via-rose-500 to-amber-600 hover:from-rose-500 hover:to-amber-500 active:scale-[0.99] text-white font-bold text-xs shadow-xl shadow-rose-950/50 flex items-center justify-center gap-2 transition-all">
+                    <span class="text-base">⚡</span>
+                    <span id="btn-update-label">Perbarui Sekarang (Instal Otomatis)</span>
+                </button>
+
+                <div class="flex items-center justify-between gap-2">
+                    <a id="link-github-release" href="https://github.com/fk0u/SiPenDosa/releases" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-ghost text-slate-400 hover:text-white font-medium">
+                        Lihat di GitHub
+                    </a>
+                    <form method="dialog">
+                        <button onclick="dismissUpdateModalSession()" class="btn btn-xs btn-ghost text-slate-400 hover:text-white">
+                            Nanti Saja
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
         <form method="dialog" class="modal-backdrop"><button>close</button></form>

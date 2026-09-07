@@ -305,6 +305,174 @@
         });
     };
 
+    // ==========================================
+    // AUTOMATIC SYSTEM UPDATER CLIENT ENGINE
+    // ==========================================
+    window.latestUpdateData = null;
+
+    window.openUpdateModal = function () {
+        const modal = document.getElementById('update_modal');
+        if (modal) modal.showModal();
+    };
+
+    window.dismissUpdateBar = function () {
+        const bar = document.getElementById('top-update-bar');
+        if (bar) bar.classList.add('hidden');
+        sessionStorage.setItem('sipendosa_update_bar_dismissed', 'true');
+    };
+
+    window.dismissUpdateModalSession = function () {
+        sessionStorage.setItem('sipendosa_update_modal_dismissed', 'true');
+    };
+
+    window.checkSystemUpdate = function (manual = false) {
+        const url = manual ? '/api/system/update/check?force=true' : '/api/system/update/check';
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.has_update) {
+                    window.latestUpdateData = data;
+                    renderUpdateAvailable(data, manual);
+                } else {
+                    if (manual) {
+                        const current = data.current_version || 'v1.1.0';
+                        showToast('success', `✓ SiPenDosa Anda sudah menggunakan versi terbaru (${current})!`);
+                    }
+                }
+            })
+            .catch(err => {
+                console.warn('[SiPenDosa Update] Gagal memeriksa update:', err);
+                if (manual) {
+                    showToast('error', 'Gagal memeriksa pembaruan. Pastikan koneksi internet tersedia.');
+                }
+            });
+    };
+
+    function renderUpdateAvailable(data, isManual) {
+        // 1. Update header badge
+        const headerBadge = document.getElementById('header-update-badge');
+        const headerVer = document.getElementById('header-update-version');
+        if (headerBadge && headerVer) {
+            headerVer.innerText = data.latest_version;
+            headerBadge.classList.remove('hidden');
+        }
+
+        // 2. Top Banner
+        const topBar = document.getElementById('top-update-bar');
+        const barVer = document.getElementById('bar-update-version');
+        if (topBar && barVer && !sessionStorage.getItem('sipendosa_update_bar_dismissed')) {
+            barVer.innerText = data.latest_version;
+            topBar.classList.remove('hidden');
+        }
+
+        // 3. Modal Information
+        const curVerEl = document.getElementById('modal-current-version');
+        const latVerEl = document.getElementById('modal-latest-version');
+        const notesEl = document.getElementById('modal-release-notes');
+        const ghLink = document.getElementById('link-github-release');
+        const updateBadge = document.getElementById('modal-update-badge');
+
+        if (curVerEl) curVerEl.innerText = data.current_version;
+        if (latVerEl) latVerEl.innerText = data.latest_version;
+        if (updateBadge) updateBadge.innerText = `Versi Resmi Baru: ${data.latest_version}`;
+        if (ghLink && data.html_url) ghLink.href = data.html_url;
+
+        if (notesEl) {
+            let content = '';
+            if (data.release_title) {
+                content += `${data.release_title}\nTanggal: ${data.published_at || '-'}\n\n`;
+            }
+            content += data.release_notes || 'Tidak ada catatan rilis rinci.';
+            notesEl.innerText = content;
+        }
+
+        // Auto open modal on first visit if not dismissed or if user triggered manually
+        if (isManual || !sessionStorage.getItem('sipendosa_update_modal_dismissed')) {
+            const modal = document.getElementById('update_modal');
+            if (modal) {
+                modal.showModal();
+            }
+        }
+    }
+
+    window.executeAutomaticUpdate = function () {
+        const data = window.latestUpdateData;
+        const btn = document.getElementById('btn-do-update');
+        const btnLabel = document.getElementById('btn-update-label');
+        const progressContainer = document.getElementById('update-progress-container');
+        const progressText = document.getElementById('update-progress-text');
+        const progressBar = document.getElementById('update-progress-bar');
+        const progressPercent = document.getElementById('update-progress-percent');
+
+        // A. If Running Inside Native Android App (via AndroidBridge)
+        if (window.AndroidBridge && typeof window.AndroidBridge.downloadAndInstallUpdate === 'function') {
+            const apkUrl = (data && data.apk_url) ? data.apk_url : window.location.origin + '/api/system/update/apk';
+            const verName = (data && data.latest_version) ? data.latest_version : 'terbaru';
+            
+            showToast('info', 'Mengunduh paket Android APK langsung ke perangkat...');
+            window.AndroidBridge.downloadAndInstallUpdate(apkUrl, verName);
+            
+            const modal = document.getElementById('update_modal');
+            if (modal) modal.close();
+            return;
+        }
+
+        // B. If Mobile Browser (Android user-agent)
+        const isMobileAndroid = /Android/i.test(navigator.userAgent);
+        if (isMobileAndroid) {
+            showToast('info', 'Memulai pengunduhan berkas APK Android...');
+            window.location.href = '/api/system/update/apk';
+            return;
+        }
+
+        // C. Server / Desktop / CLI / Termux Self-Update Mode
+        if (btn) btn.disabled = true;
+        if (btnLabel) btnLabel.innerText = 'Sedang Memasang Pembaruan...';
+        if (progressContainer) progressContainer.classList.remove('hidden');
+
+        let percent = 10;
+        const interval = setInterval(() => {
+            if (percent < 85) {
+                percent += 15;
+                if (progressBar) progressBar.value = percent;
+                if (progressPercent) progressPercent.innerText = percent + '%';
+            }
+        }, 600);
+
+        fetch('/api/system/update/apply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                download_url: data ? data.download_url : ''
+            })
+        })
+            .then(res => res.json())
+            .then(resp => {
+                clearInterval(interval);
+                if (progressBar) progressBar.value = 100;
+                if (progressPercent) progressPercent.innerText = '100%';
+                if (progressText) progressText.innerText = '✓ Pembaruan berhasil dipasang! Memuat ulang sistem...';
+
+                showToast('success', 'Pembaruan berhasil! Memuat ulang halaman dalam 3 detik...');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
+            })
+            .catch(err => {
+                clearInterval(interval);
+                if (btn) btn.disabled = false;
+                if (btnLabel) btnLabel.innerText = 'Coba Pasang Lagi';
+                if (progressText) progressText.innerText = 'Gagal memasang update otomatis: ' + err;
+                alert('Gagal memasang update: ' + err);
+            });
+    };
+
     // Initialize on DOM load
-    document.addEventListener('DOMContentLoaded', initWebSocket);
+    document.addEventListener('DOMContentLoaded', () => {
+        initWebSocket();
+        // Check for updates automatically (silent check)
+        setTimeout(() => checkSystemUpdate(false), 1200);
+    });
 })();
+

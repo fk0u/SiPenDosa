@@ -1,6 +1,7 @@
 package com.sipendosa.app;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -9,13 +10,16 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.text.format.Formatter;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.Button;
@@ -23,6 +27,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -127,6 +134,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
         ws.setLoadWithOverviewMode(true);
 
         webView.setWebViewClient(new InternalWebClient());
+        webView.addJavascriptInterface(new AndroidBridge(this), "AndroidBridge");
         rootLayout.addView(webView);
 
         setContentView(rootLayout);
@@ -228,6 +236,133 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
             webView.goBack();
         } else {
             super.onBackPressed();
+        }
+    }
+
+    private ProgressDialog progressDialog;
+
+    public void startApkDownloadAndInstall(final String apkUrl, final String versionName) {
+        if (apkUrl == null || apkUrl.isEmpty()) {
+            Toast.makeText(this, "URL pembaruan tidak valid", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setTitle("Pembaruan SiPenDosa");
+        progressDialog.setMessage("Mengunduh versi " + (versionName != null && !versionName.isEmpty() ? versionName : "terbaru") + "...");
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        progressDialog.setMax(100);
+        progressDialog.setProgress(0);
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+
+        new Thread(ActionTask.doDownload(this, apkUrl)).start();
+    }
+
+    public void onDownloadProgress(int progress) {
+        if (progressDialog != null && progressDialog.isShowing()) {
+            progressDialog.setProgress(progress);
+        }
+    }
+
+    public void onDownloadSuccess(File apkFile) {
+        if (progressDialog != null && progressDialog.isShowing()) {
+            progressDialog.dismiss();
+        }
+        Toast.makeText(this, "✓ Unduhan selesai! Membuka instalasi...", Toast.LENGTH_SHORT).show();
+        installApk(apkFile);
+    }
+
+    public void onDownloadError(String error) {
+        if (progressDialog != null && progressDialog.isShowing()) {
+            progressDialog.dismiss();
+        }
+        Toast.makeText(this, "Gagal mengunduh pembaruan: " + error, Toast.LENGTH_LONG).show();
+    }
+
+    public void downloadApkInternal(String targetUrl) {
+        File apkFile = null;
+        try {
+            File baseDir = getExternalFilesDir(null);
+            if (baseDir == null) {
+                baseDir = getCacheDir();
+            }
+            apkFile = new File(baseDir, "SiPenDosa-Update.apk");
+            if (apkFile.exists()) {
+                apkFile.delete();
+            }
+
+            URL url = new URL(targetUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setInstanceFollowRedirects(true);
+            conn.setRequestProperty("User-Agent", "SiPenDosa-Android/1.1.0");
+            conn.connect();
+
+            int status = conn.getResponseCode();
+            if (status == HttpURLConnection.HTTP_MOVED_TEMP || status == HttpURLConnection.HTTP_MOVED_PERM || status == 307 || status == 308) {
+                String newUrl = conn.getHeaderField("Location");
+                conn.disconnect();
+                url = new URL(newUrl);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestProperty("User-Agent", "SiPenDosa-Android/1.1.0");
+                conn.connect();
+            }
+
+            final int fileLength = conn.getContentLength();
+            InputStream is = conn.getInputStream();
+            FileOutputStream fos = new FileOutputStream(apkFile);
+
+            byte[] buffer = new byte[8192];
+            long total = 0;
+            int count;
+            while ((count = is.read(buffer)) != -1) {
+                total += count;
+                fos.write(buffer, 0, count);
+                if (fileLength > 0) {
+                    final int progress = (int) (total * 100 / fileLength);
+                    handler.post(ActionTask.progress(this, progress));
+                }
+            }
+            fos.flush();
+            fos.close();
+            is.close();
+            conn.disconnect();
+
+            handler.post(ActionTask.success(this, apkFile));
+        } catch (Exception e) {
+            handler.post(ActionTask.failed(this, e.getMessage()));
+        }
+    }
+
+    public void installApk(File apkFile) {
+        if (apkFile == null || !apkFile.exists()) {
+            Toast.makeText(this, "Berkas APK pembaruan tidak ditemukan", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (!getPackageManager().canRequestPackageInstalls()) {
+                Toast.makeText(this, "Mohon izinkan pemasangan aplikasi dari sumber ini untuk melanjutkan", Toast.LENGTH_LONG).show();
+                Intent permIntent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName()));
+                startActivity(permIntent);
+                return;
+            }
+        }
+
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            Uri apkUri;
+            if (Build.VERSION.SDK_INT >= 24) {
+                apkUri = Uri.parse("content://" + ApkFileProvider.AUTHORITY + "/" + apkFile.getName());
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } else {
+                apkUri = Uri.fromFile(apkFile);
+            }
+            intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
+            startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(this, "Gagal membuka installer: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 }

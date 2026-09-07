@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -19,6 +21,8 @@ import (
 	"sipen/internal/scheduler"
 	"sipen/internal/store"
 	"sipen/internal/template"
+	"sipen/internal/updater"
+	"sipen/internal/version"
 	"sipen/internal/whatsapp"
 
 	"github.com/go-chi/chi/v5"
@@ -35,6 +39,7 @@ type Handlers struct {
 	tmplEngine *template.Engine
 	hub        *realtime.Hub
 	renderer   *ViewRenderer
+	updater    *updater.Manager
 }
 
 // NewHandlers creates an instance of application HTTP handlers
@@ -59,6 +64,7 @@ func NewHandlers(
 		tmplEngine: t,
 		hub:        h,
 		renderer:   r,
+		updater:    updater.NewManager(),
 	}
 }
 
@@ -1014,3 +1020,94 @@ func (h *Handlers) FaviconHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "public, max-age=604800")
 	http.ServeFile(w, r, "web/static/favicon.ico")
 }
+
+// SystemVersionHandler returns current version and environment info
+func (h *Handlers) SystemVersionHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"version":    version.CurrentVersion,
+		"os":         runtime.GOOS,
+		"arch":       runtime.GOARCH,
+		"go_version": runtime.Version(),
+	})
+}
+
+// CheckUpdateHandler checks GitHub releases for newer version
+func (h *Handlers) CheckUpdateHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+
+	force := r.URL.Query().Get("force") == "true"
+	isTest := r.URL.Query().Get("test") == "true"
+
+	res, err := h.updater.CheckUpdate(r.Context(), force)
+	if err != nil {
+		slog.Warn("Gagal memeriksa update GitHub", "err", err)
+		// Fallback graceful response if offline / rate limited
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"current_version": "v" + version.CurrentVersion,
+			"latest_version":  "v" + version.CurrentVersion,
+			"has_update":      false,
+			"error":           err.Error(),
+		})
+		return
+	}
+
+	if isTest {
+		res.HasUpdate = true
+		res.LatestVersion = "v1.2.0"
+		res.ReleaseTitle = "SiPenDosa v1.2.0 — (Simulasi Uji Coba Pembaruan)"
+		res.ReleaseNotes = "• Mode pengujian instalasi pembaruan otomatis\n• Peningkatan antarmuka dan kestabilan sistem"
+	}
+
+	_ = json.NewEncoder(w).Encode(res)
+}
+
+// DownloadApkHandler redirects directly to latest APK release download
+func (h *Handlers) DownloadApkHandler(w http.ResponseWriter, r *http.Request) {
+	res, err := h.updater.CheckUpdate(r.Context(), false)
+	if err != nil || res.ApkURL == "" {
+		fallbackURL := fmt.Sprintf("https://github.com/%s/%s/releases/latest/download/SiPenDosa-Android.apk", version.GitRepoOwner, version.GitRepoName)
+		http.Redirect(w, r, fallbackURL, http.StatusTemporaryRedirect)
+		return
+	}
+	http.Redirect(w, r, res.ApkURL, http.StatusTemporaryRedirect)
+}
+
+// ApplyUpdateHandler performs hot self-update of the binary (desktop/server/termux)
+func (h *Handlers) ApplyUpdateHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	var req struct {
+		DownloadURL string `json:"download_url"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&req)
+
+	if req.DownloadURL == "" {
+		res, err := h.updater.CheckUpdate(r.Context(), false)
+		if err == nil && res.DownloadURL != "" {
+			req.DownloadURL = res.DownloadURL
+		}
+	}
+
+	if req.DownloadURL == "" {
+		http.Error(w, `{"error":"URL pembaruan tidak ditemukan"}`, http.StatusBadRequest)
+		return
+	}
+
+	go func(dlURL string) {
+		time.Sleep(500 * time.Millisecond)
+		err := h.updater.ApplyBinarySelfUpdate(context.Background(), dlURL)
+		if err != nil {
+			slog.Error("Gagal memasang self-update binary", "err", err)
+		} else {
+			slog.Info("Self-update binary berhasil dipasang")
+		}
+	}(req.DownloadURL)
+
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Pembaruan sedang diunduh dan dipasang di latar belakang...",
+	})
+}
+

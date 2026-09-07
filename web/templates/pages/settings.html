@@ -141,9 +141,47 @@
 
         </div>
 
-        <!-- Holidays & User Management (5 cols) -->
+        <!-- Right Column: System Governance & Updates (5 cols) -->
         <div class="lg:col-span-5 space-y-6">
-            
+
+            <!-- Automatic System Updates & Firmware Card -->
+            <div class="bezel-outer p-1 rounded-2xl">
+                <div class="bezel-card rounded-xl p-5 space-y-4">
+                    <div class="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                        <h2 class="text-xs font-bold text-white tracking-tight flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Pembaruan Sistem & Firmware
+                        </h2>
+                        <span class="text-[10px] font-mono uppercase tracking-wider text-amber-400">OTA Engine</span>
+                    </div>
+                    
+                    <div class="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] text-slate-400">Versi Terpasang:</span>
+                            <span class="font-mono font-bold text-emerald-400 text-xs px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">v1.1.0 (Resmi)</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] text-slate-400">Kanal Pembaruan:</span>
+                            <span class="font-mono text-slate-300 text-xs">Official GitHub Releases</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] text-slate-400">Fitur Auto-Install:</span>
+                            <span class="text-emerald-400 font-semibold text-xs">Aktif & Siap 1-Klik</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-1 flex flex-col gap-2">
+                        <button type="button" onclick="checkSystemUpdate(true)" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-rose-600 via-rose-500 to-amber-600 hover:from-rose-500 hover:to-amber-500 active:scale-[0.99] text-white font-bold text-xs shadow-lg shadow-rose-950/40 flex items-center justify-center gap-2 transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            Periksa Pembaruan Sekarang
+                        </button>
+                        <a href="https://github.com/fk0u/SiPenDosa/releases" target="_blank" rel="noopener noreferrer" class="w-full py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 text-center text-xs font-semibold border border-white/10 transition">
+                            Lihat Catatan Rilis di GitHub ↗
+                        </a>
+                    </div>
+                </div>
+            </div>
+
             <!-- Holidays Manager Card -->
             <div class="bezel-outer p-1 rounded-2xl">
                 <div class="bezel-card rounded-xl p-5 space-y-4">
