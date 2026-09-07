@@ -53,7 +53,7 @@ func main() {
 * **Penghapusan Developer Bar**: Bilah navigasi debug di bagian atas yang memakan ruang kini dihilangkan sepenuhnya.
 * **Native Splash Loader Screen**: Tampilan splash modern dengan logo emas berkilau, judul aplikasi, dan indikator pemuatan halus yang otomatis memudar saat daemon backend siap.
 * **Immersive Android System Bars**: Penyelarasan status bar (#08090d) dan navigation bar sistem Android secara mulus tanpa batas patah.
-* **Floating Quick LAN Pill (` + "`⚡ IP`" + `)**: Tombol aksi mengambang minimalis di sudut kanan atas untuk menyalin alamat IP LAN atau membuka di browser eksternal melalui dialog modal elegan.
+* **Floating Quick LAN Pill ('⚡ IP')**: Tombol aksi mengambang minimalis di sudut kanan atas untuk menyalin alamat IP LAN atau membuka di browser eksternal melalui dialog modal elegan.
 * **Native Dialog Interceptor**: Pop-up konfirmasi dan peringatan web (alert / confirm) kini di-render menggunakan dialog native Android Material Alert.
 * **Mobile 5-Tab Navigation Bar**: Bilah navigasi bawah 5 tab (*Home, Kontak, Jadwal, Antrian, Menu*) dengan pill aktif crimson scarlet, titik indikator menyala, haptic feedback, dan safe-area ergonomis.
 
@@ -61,12 +61,12 @@ func main() {
 * **Pengecekan Otomatis GitHub Release**: Aplikasi secara cerdas mendeteksi ketersediaan rilis baru langsung dari API GitHub saat dibuka.
 * **Modal Pembaruan 1-Klik**: Notifikasi pembaruan instan lengkap dengan ringkasan fitur baru dan tombol unduh langsung tanpa langkah manual.
 
-#### 3. 📜 Pusat Catatan Rilis & In-App Changelog (`/changelog`)
+#### 3. 📜 Pusat Catatan Rilis & In-App Changelog ('/changelog')
 * **Changelog Bento Grid**: Halaman riwayat rilis interaktif yang dapat diakses langsung dari profil pengguna, sidebar, dan footer.
 * **Dokumentasi Lengkap Versi**: Catatan komprehensif untuk v1.1.1, v1.1.0, dan v1.0.0 dengan penanda kategori (*Fitur Baru, Peningkatan, Keamanan*).
 
 #### 4. 🧠 Integrasi Graphify Knowledge Graph
-* Terintegrasi penuh dengan kemampuan **Graphify** (`.agents/skills/graphify` dan CLI `graphify`) untuk pembuatan knowledge graph, analisis AST, dan relasi arsitektur kode.
+* Terintegrasi penuh dengan kemampuan **Graphify** (.agents/skills/graphify dan CLI graphify) untuk pembuatan knowledge graph, analisis AST, dan relasi arsitektur kode.
 
 ---
 
