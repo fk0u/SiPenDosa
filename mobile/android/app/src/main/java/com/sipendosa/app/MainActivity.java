@@ -42,6 +42,12 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            if (checkSelfPermission("android.permission.POST_NOTIFICATIONS") != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 101);
+            }
+        }
+
         Intent serviceIntent = new Intent(this, SiPenDosaServerService.class);
         startService(serviceIntent);
 

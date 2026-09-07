@@ -94,25 +94,32 @@ package-macos: build-darwin app-macos pkg dmg
 	@rm -rf $(DIST_DIR)/tmp_macos
 	@echo "==> Selesai paket macOS (App, PKG, DMG, Tarball) di $(DIST_DIR)/"
 
-# 7. Packaging Android (Native Standalone APK & Termux Script)
+# 7. Packaging Android (Universal APK, Google App Bundle AAB & Termux Script)
 build-android:
-	@echo "==> Mengompilasi binary Android ARM64..."
+	@echo "==> Mengompilasi binary Android untuk seluruh arsitektur (arm64, arm7, x86_64, x86)..."
 	@mkdir -p $(BIN_DIR)
 	CGO_ENABLED=0 GOOS=android GOARCH=arm64 go build -ldflags="-s -w" -o $(BIN_DIR)/$(APP_NAME)_android_arm64 ./cmd/$(APP_NAME)
-	@echo "==> Selesai: $(BIN_DIR)/$(APP_NAME)_android_arm64"
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -ldflags="-s -w" -o $(BIN_DIR)/$(APP_NAME)_android_arm7 ./cmd/$(APP_NAME)
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o $(BIN_DIR)/$(APP_NAME)_android_x86_64 ./cmd/$(APP_NAME)
+	CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -ldflags="-s -w" -o $(BIN_DIR)/$(APP_NAME)_android_x86 ./cmd/$(APP_NAME)
+	@echo "==> Selesai kompilasi biner Android multi-arch."
 
-package-apk: build-android
-	@echo "==> Membangun Android Standalone APK..."
-	@go run scripts/apkbuilder/main.go $(BIN_DIR)/$(APP_NAME)_android_arm64 $(DIST_DIR)/SiPenDosa-Android.apk
-	@echo "==> Selesai: $(DIST_DIR)/SiPenDosa-Android.apk"
+package-apk:
+	@bash scripts/build-android.sh
+
+package-aab:
+	@bash scripts/build-android.sh
+
+package-android: package-apk
 
 # 8. Package All Distributions
-package-all: build-all installer-windows package-deb package-linux package-macos package-apk
+package-all: build-all installer-windows package-deb package-linux package-macos package-android
 	@echo ""
 	@echo "╔════════════════════════════════════════════════════════════════════════╗"
 	@echo "║   ✓ SELURUH PAKET DISTRIBUSI STANDALONE SIPENDOSA BERHASIL DIBUAT!     ║"
 	@echo "╠════════════════════════════════════════════════════════════════════════╣"
 	@echo "║  • Android Standalone APK   : $(DIST_DIR)/SiPenDosa-Android.apk"
+	@echo "║  • Google App Bundle (AAB)  : $(DIST_DIR)/SiPenDosa-Android.aab"
 	@echo "║  • Apple Disk Image (.dmg)  : $(DIST_DIR)/SiPenDosa-1.0.0.dmg"
 	@echo "║  • Apple Installer (.pkg)   : $(DIST_DIR)/SiPenDosa-1.0.0-Installer.pkg"
 	@echo "║  • Apple Native (.app)      : $(DIST_DIR)/SiPenDosa.app"

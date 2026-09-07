@@ -65,60 +65,64 @@ func main() {
 
 	fmt.Printf("Release ID: %d\n", rel.ID)
 
-	// 2. Hapus APK lama jika ada
-	for _, asset := range rel.Assets {
-		if asset.Name == "SiPenDosa-Android.apk" {
-			fmt.Printf("==> Menghapus asset lama: %s (ID: %d)... ", asset.Name, asset.ID)
-			delReq, _ := http.NewRequest("DELETE", fmt.Sprintf("https://api.github.com/repos/fk0u/SiPenDosa/releases/assets/%d", asset.ID), nil)
-			delReq.Header.Set("Authorization", "Bearer "+token)
-			delResp, err := client.Do(delReq)
-			if err == nil && (delResp.StatusCode == http.StatusNoContent || delResp.StatusCode == http.StatusOK) {
-				fmt.Printf("✓ Terhapus\n")
-			} else {
-				fmt.Printf("Status: %d\n", delResp.StatusCode)
+	uploadFile := func(fileName, contentType string) {
+		filePath := "dist/" + fileName
+		file, err := os.Open(filePath)
+		if err != nil {
+			fmt.Printf("! File %s tidak ditemukan: %v\n", filePath, err)
+			return
+		}
+		defer file.Close()
+
+		stat, _ := file.Stat()
+		sizeMB := float64(stat.Size()) / 1024 / 1024
+
+		// Hapus asset lama jika ada
+		for _, asset := range rel.Assets {
+			if asset.Name == fileName {
+				fmt.Printf("==> Menghapus asset lama: %s (ID: %d)... ", asset.Name, asset.ID)
+				delReq, _ := http.NewRequest("DELETE", fmt.Sprintf("https://api.github.com/repos/fk0u/SiPenDosa/releases/assets/%d", asset.ID), nil)
+				delReq.Header.Set("Authorization", "Bearer "+token)
+				delResp, err := client.Do(delReq)
+				if err == nil && (delResp.StatusCode == http.StatusNoContent || delResp.StatusCode == http.StatusOK) {
+					fmt.Printf("✓ Terhapus\n")
+				} else {
+					fmt.Printf("Status: %d\n", delResp.StatusCode)
+				}
+				delResp.Body.Close()
 			}
-			delResp.Body.Close()
+		}
+
+		uploadBase := strings.Split(rel.UploadURL, "{")[0]
+		targetURL := fmt.Sprintf("%s?name=%s", uploadBase, fileName)
+
+		fmt.Printf("==> Mengunggah %s (%.2f MB) ke GitHub Release... ", fileName, sizeMB)
+		upReq, err := http.NewRequest("POST", targetURL, file)
+		if err != nil {
+			fmt.Printf("Error buat request: %v\n", err)
+			return
+		}
+		upReq.Header.Set("Authorization", "Bearer "+token)
+		upReq.Header.Set("Content-Type", contentType)
+		upReq.ContentLength = stat.Size()
+
+		upResp, err := client.Do(upReq)
+		if err != nil {
+			fmt.Printf("Error upload: %v\n", err)
+			return
+		}
+		defer upResp.Body.Close()
+
+		if upResp.StatusCode == http.StatusCreated || upResp.StatusCode == http.StatusOK {
+			fmt.Printf("✓ SELESAI!\n")
+		} else {
+			upBody, _ := io.ReadAll(upResp.Body)
+			fmt.Printf("GAGAL (%d): %s\n", upResp.StatusCode, string(upBody))
 		}
 	}
 
-	// 3. Upload APK baru yang 100% valid
-	newApkPath := "dist/SiPenDosa-Android.apk"
-	file, err := os.Open(newApkPath)
-	if err != nil {
-		fmt.Printf("Error buka APK: %v\n", err)
-		os.Exit(1)
-	}
-	defer file.Close()
+	uploadFile("SiPenDosa-Android.apk", "application/vnd.android.package-archive")
+	uploadFile("SiPenDosa-Android.aab", "application/octet-stream")
 
-	stat, _ := file.Stat()
-	sizeMB := float64(stat.Size()) / 1024 / 1024
-
-	uploadBase := strings.Split(rel.UploadURL, "{")[0]
-	targetURL := fmt.Sprintf("%s?name=SiPenDosa-Android.apk", uploadBase)
-
-	fmt.Printf("==> Mengunggah APK baru (%.2f MB) ke GitHub Release... ", sizeMB)
-	upReq, err := http.NewRequest("POST", targetURL, file)
-	if err != nil {
-		fmt.Printf("Error buat request: %v\n", err)
-		os.Exit(1)
-	}
-	upReq.Header.Set("Authorization", "Bearer "+token)
-	upReq.Header.Set("Content-Type", "application/vnd.android.package-archive")
-	upReq.ContentLength = stat.Size()
-
-	upResp, err := client.Do(upReq)
-	if err != nil {
-		fmt.Printf("Error upload: %v\n", err)
-		os.Exit(1)
-	}
-	defer upResp.Body.Close()
-
-	if upResp.StatusCode == http.StatusCreated || upResp.StatusCode == http.StatusOK {
-		fmt.Printf("✓ SELESAI!\n")
-		fmt.Println("🎉 Berkas SiPenDosa-Android.apk versi valid telah berhasil diperbarui di GitHub Release v1.0.0!")
-	} else {
-		upBody, _ := io.ReadAll(upResp.Body)
-		fmt.Printf("GAGAL (%d): %s\n", upResp.StatusCode, string(upBody))
-		os.Exit(1)
-	}
+	fmt.Println("\n🎉 Berkas SiPenDosa Android (APK & AAB Universal API 21+) berhasil diperbarui di GitHub Release v1.0.0!")
 }

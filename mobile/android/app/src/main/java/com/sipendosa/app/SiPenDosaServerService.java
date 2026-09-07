@@ -105,11 +105,25 @@ public class SiPenDosaServerService extends Service implements Runnable {
     public void run() {
         try {
             File filesDir = getFilesDir();
-            File binFile = new File(filesDir, "sipen");
+            File binFile = null;
 
-            extractAsset("sipen", binFile);
-            binFile.setExecutable(true, false);
-            binFile.setReadable(true, false);
+            // 1. Prioritaskan eksekusi dari nativeLibraryDir (resmi diizinkan oleh SELinux Android 10-14+)
+            File nativeDir = new File(getApplicationInfo().nativeLibraryDir);
+            File nativeBin = new File(nativeDir, "libsipen.so");
+            if (nativeBin.exists() && nativeBin.canExecute()) {
+                binFile = nativeBin;
+                Log.i(TAG, "Using native library binary: " + binFile.getAbsolutePath());
+            }
+
+            // 2. Fallback jika nativeLibraryDir belum terisi
+            if (binFile == null) {
+                File fallbackBin = new File(filesDir, "sipen");
+                extractAsset("sipen", fallbackBin);
+                fallbackBin.setExecutable(true, false);
+                fallbackBin.setReadable(true, false);
+                binFile = fallbackBin;
+                Log.i(TAG, "Using fallback asset binary: " + binFile.getAbsolutePath());
+            }
 
             File dataDir = new File(filesDir, "data");
             File sessionDir = new File(filesDir, "session");
@@ -148,20 +162,24 @@ public class SiPenDosaServerService extends Service implements Runnable {
         }
     }
 
-    private void extractAsset(String assetName, File dest) throws Exception {
-        if (dest.exists() && dest.length() > 0) {
-            return;
+    private void extractAsset(String assetName, File dest) {
+        try {
+            if (dest.exists() && dest.length() > 0) {
+                return;
+            }
+            InputStream in = getAssets().open(assetName);
+            FileOutputStream out = new FileOutputStream(dest);
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+            out.flush();
+            out.close();
+            in.close();
+        } catch (Exception e) {
+            Log.w(TAG, "Asset " + assetName + " not found or cannot extract: " + e.getMessage());
         }
-        InputStream in = getAssets().open(assetName);
-        FileOutputStream out = new FileOutputStream(dest);
-        byte[] buffer = new byte[8192];
-        int read;
-        while ((read = in.read(buffer)) != -1) {
-            out.write(buffer, 0, read);
-        }
-        out.flush();
-        out.close();
-        in.close();
     }
 
     public static List<String> getRecentLogs() {

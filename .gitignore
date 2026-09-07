@@ -31,3 +31,7 @@ sipen.exe
 cmd/installer/sipen.exe
 cmd/installer/*.syso
 *.syso
+
+# Android Keystore
+mobile/android/keystore/
+*.keystore
