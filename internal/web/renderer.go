@@ -90,6 +90,45 @@ func NewViewRenderer(templateFS fs.FS, diskDir string) *ViewRenderer {
 					return template.HTML(fmt.Sprintf(`<span class="badge badge-ghost badge-sm">%s</span>`, status))
 				}
 			},
+			"statVal": func(stats interface{}, field string) interface{} {
+				if stats == nil {
+					return 0
+				}
+				if ds, ok := stats.(*store.DashboardStats); ok && ds != nil {
+					switch field {
+					case "ActiveSchedules":
+						if ds.ActiveSchedules > 0 {
+							return ds.ActiveSchedules
+						}
+						return ds.TotalSchedules
+					case "TotalSchedules":
+						return ds.TotalSchedules
+					case "TotalContacts":
+						return ds.TotalContacts
+					case "TotalSentToday":
+						return ds.TotalSentToday
+					case "TotalSentAll":
+						return ds.TotalSentAll
+					case "TotalPending":
+						return ds.TotalPending
+					case "TotalFailedAll":
+						return ds.TotalFailedAll
+					case "SuccessRate":
+						return ds.SuccessRate
+					}
+				}
+				if m, ok := stats.(map[string]interface{}); ok && m != nil {
+					if v, exists := m[field]; exists && v != nil {
+						return v
+					}
+					// Check lowercase / snake_case alternative
+					snake := strings.ToLower(field)
+					if v, exists := m[snake]; exists && v != nil {
+						return v
+					}
+				}
+				return 0
+			},
 		},
 	}
 }

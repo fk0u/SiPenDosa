@@ -200,8 +200,11 @@ func (h *Handlers) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) OverviewHandler(w http.ResponseWriter, r *http.Request) {
 	stats, err := h.store.GetDashboardStats()
-	if err != nil {
-		slog.Error("Failed getting dashboard stats", "err", err)
+	if err != nil || stats == nil {
+		slog.Error("Failed getting dashboard stats, using safe defaults", "err", err)
+		stats = &store.DashboardStats{
+			SuccessRate: 100.0,
+		}
 	}
 
 	waState, waPhone, waPushName, waQR := h.waClient.Status()

@@ -53,7 +53,7 @@
                     <div class="space-y-1.5">
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-mono font-bold text-slate-400">LANGKAH 02</span>
-                            <span class="text-[11px] font-mono text-slate-400">{{.Data.Stats.TotalContacts}} Dosen</span>
+                            <span class="text-[11px] font-mono text-slate-400">{{statVal .Data.Stats "TotalContacts"}} Dosen</span>
                         </div>
                         <h4 class="font-bold text-white text-sm">Daftarkan Kontak Dosen</h4>
                         <p class="text-[11px] text-slate-400 leading-relaxed">
@@ -73,7 +73,7 @@
                     <div class="space-y-1.5">
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-mono font-bold text-slate-400">LANGKAH 03</span>
-                            <span class="text-[11px] font-mono text-slate-400">{{if .Data.Stats}}{{if .Data.Stats.ActiveSchedules}}{{.Data.Stats.ActiveSchedules}}{{else if .Data.Stats.TotalSchedules}}{{.Data.Stats.TotalSchedules}}{{else}}0{{end}}{{else}}0{{end}} Aktif</span>
+                            <span class="text-[11px] font-mono text-slate-400">{{statVal .Data.Stats "ActiveSchedules"}} Aktif</span>
                         </div>
                         <h4 class="font-bold text-white text-sm">Pasang Jadwal Kuliah</h4>
                         <p class="text-[11px] text-slate-400 leading-relaxed">
@@ -219,7 +219,7 @@
                     <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Stable</span>
                 </div>
                 <div class="text-4xl md:text-5xl font-black text-white font-mono tracking-tight">
-                    {{printf "%.1f" .Data.Stats.SuccessRate}}%
+                    {{printf "%.1f" (statVal .Data.Stats "SuccessRate")}}%
                 </div>
                 <div class="text-xs text-slate-400">
                     Rasio pengiriman sukses tanpa kendala jaringan.
@@ -232,7 +232,7 @@
             <div class="bezel-card rounded-[calc(1.5rem-0.25rem)] p-5 flex flex-col justify-between h-full space-y-1">
                 <span class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Hari Ini</span>
                 <div class="text-3xl font-black text-emerald-400 font-mono tracking-tight">
-                    {{.Data.Stats.TotalSentToday}}
+                    {{statVal .Data.Stats "TotalSentToday"}}
                 </div>
                 <span class="text-[11px] text-slate-500">Pesan sukses</span>
             </div>
@@ -243,7 +243,7 @@
             <div class="bezel-card rounded-[calc(1.5rem-0.25rem)] p-5 flex flex-col justify-between h-full space-y-1">
                 <span class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Total Kirim</span>
                 <div class="text-3xl font-black text-white font-mono tracking-tight">
-                    {{.Data.Stats.TotalSentAll}}
+                    {{statVal .Data.Stats "TotalSentAll"}}
                 </div>
                 <span class="text-[11px] text-slate-500">Sepanjang masa</span>
             </div>
@@ -254,7 +254,7 @@
             <div class="bezel-card rounded-[calc(1.5rem-0.25rem)] p-5 flex flex-col justify-between h-full space-y-1">
                 <span class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Antrian</span>
                 <div class="text-3xl font-black text-amber-400 font-mono tracking-tight">
-                    {{.Data.Stats.TotalPending}}
+                    {{statVal .Data.Stats "TotalPending"}}
                 </div>
                 <span class="text-[11px] text-slate-500">Menunggu jam kirim</span>
             </div>
@@ -265,7 +265,7 @@
             <div class="bezel-card rounded-[calc(1.5rem-0.25rem)] p-5 flex flex-col justify-between h-full space-y-1">
                 <span class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Gagal</span>
                 <div class="text-3xl font-black text-rose-400 font-mono tracking-tight">
-                    {{.Data.Stats.TotalFailedAll}}
+                    {{statVal .Data.Stats "TotalFailedAll"}}
                 </div>
                 <span class="text-[11px] text-slate-500">Ditinjau otomatis</span>
             </div>

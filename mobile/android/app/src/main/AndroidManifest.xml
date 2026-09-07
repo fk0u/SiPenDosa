@@ -23,6 +23,7 @@
         android:icon="@drawable/icon"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
         android:usesCleartextTraffic="true"
+        android:hardwareAccelerated="true"
         android:extractNativeLibs="true">
 
         <activity

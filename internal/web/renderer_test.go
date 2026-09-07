@@ -137,6 +137,45 @@ func TestAllTemplatesRender(t *testing.T) {
 			}
 		})
 	}
+
+	// Test Edge Cases for Overview with nil/untyped/map Stats
+	t.Run("overview_with_nil_stats", func(t *testing.T) {
+		nilData := dummyPageData
+		nilMap := make(map[string]interface{})
+		for k, v := range dummyPageData.Data.(map[string]interface{}) {
+			nilMap[k] = v
+		}
+		nilMap["Stats"] = nil
+		nilData.Data = nilMap
+
+		w := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/", nil)
+		renderer.Render(w, req, "pages/overview.html", nilData)
+		if w.Code != http.StatusOK {
+			t.Fatalf("Expected 200 OK for nil stats, got %d. Body: %s", w.Code, w.Body.String())
+		}
+	})
+
+	t.Run("overview_with_map_stats", func(t *testing.T) {
+		mapData := dummyPageData
+		customMap := make(map[string]interface{})
+		for k, v := range dummyPageData.Data.(map[string]interface{}) {
+			customMap[k] = v
+		}
+		customMap["Stats"] = map[string]interface{}{
+			"ActiveSchedules": 3,
+			"TotalContacts":   15,
+			"SuccessRate":     99.5,
+		}
+		mapData.Data = customMap
+
+		w := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/", nil)
+		renderer.Render(w, req, "pages/overview.html", mapData)
+		if w.Code != http.StatusOK {
+			t.Fatalf("Expected 200 OK for map stats, got %d. Body: %s", w.Code, w.Body.String())
+		}
+	})
 }
 
 func TestRenderStatusPages(t *testing.T) {

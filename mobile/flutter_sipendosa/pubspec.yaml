@@ -1,0 +1,26 @@
+name: sipendosa_mobile
+description: "Official Cross-Platform Mobile Client for SiPenDosa (Academic Assistant)"
+publish_to: 'none'
+version: 1.1.1+4
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.0
+  provider: ^6.1.1
+  google_fonts: ^6.1.0
+  intl: ^0.19.0
+  flutter_svg: ^2.0.9
+  qr_flutter: ^4.1.0
+  shared_preferences: ^2.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
