@@ -829,6 +829,7 @@ func (s *Store) GetDashboardStats() (*DashboardStats, error) {
 	// Total active schedules
 	_ = s.db.QueryRow(`SELECT COUNT(*) FROM schedules WHERE is_active = 1`).
 		Scan(&stats.TotalSchedules)
+	stats.ActiveSchedules = stats.TotalSchedules
 
 	// Total contacts
 	_ = s.db.QueryRow(`SELECT COUNT(*) FROM contacts`).

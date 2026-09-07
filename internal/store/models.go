@@ -140,6 +140,7 @@ type DashboardStats struct {
 	TotalFailedAll  int     `json:"total_failed_all"`
 	TotalPending    int     `json:"total_pending"`
 	TotalSchedules  int     `json:"total_schedules"`
+	ActiveSchedules int     `json:"active_schedules"`
 	TotalContacts   int     `json:"total_contacts"`
 	SuccessRate     float64 `json:"success_rate"`
 }

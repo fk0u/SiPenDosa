@@ -44,8 +44,8 @@ func main() {
 
 	client := &http.Client{}
 
-	// 1. Dapatkan Release v1.0.0
-	req, _ := http.NewRequest("GET", "https://api.github.com/repos/fk0u/SiPenDosa/releases/tags/v1.0.0", nil)
+	// 1. Dapatkan Release v1.1.0
+	req, _ := http.NewRequest("GET", "https://api.github.com/repos/fk0u/SiPenDosa/releases/tags/v1.1.0", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Accept", "application/vnd.github+json")
 
@@ -124,5 +124,5 @@ func main() {
 	uploadFile("SiPenDosa-Android.apk", "application/vnd.android.package-archive")
 	uploadFile("SiPenDosa-Android.aab", "application/octet-stream")
 
-	fmt.Println("\n🎉 Berkas SiPenDosa Android (APK & AAB Universal API 21+) berhasil diperbarui di GitHub Release v1.0.0!")
+	fmt.Println("\n🎉 Berkas SiPenDosa Android (APK & AAB Universal API 21+) berhasil diperbarui di GitHub Release v1.1.0!")
 }

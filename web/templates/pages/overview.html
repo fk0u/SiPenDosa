@@ -73,7 +73,7 @@
                     <div class="space-y-1.5">
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-mono font-bold text-slate-400">LANGKAH 03</span>
-                            <span class="text-[11px] font-mono text-slate-400">{{.Data.Stats.ActiveSchedules}} Aktif</span>
+                            <span class="text-[11px] font-mono text-slate-400">{{if .Data.Stats}}{{if .Data.Stats.ActiveSchedules}}{{.Data.Stats.ActiveSchedules}}{{else if .Data.Stats.TotalSchedules}}{{.Data.Stats.TotalSchedules}}{{else}}0{{end}}{{else}}0{{end}} Aktif</span>
                         </div>
                         <h4 class="font-bold text-white text-sm">Pasang Jadwal Kuliah</h4>
                         <p class="text-[11px] text-slate-400 leading-relaxed">

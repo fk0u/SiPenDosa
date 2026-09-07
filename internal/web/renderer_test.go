@@ -32,6 +32,16 @@ func TestAllTemplatesRender(t *testing.T) {
 		User:        dummyUser,
 		CurrentYear: 2026,
 		Data: map[string]interface{}{
+			"Stats": &store.DashboardStats{
+				TotalSentToday:  5,
+				TotalSentAll:    42,
+				TotalFailedAll:  0,
+				TotalPending:    1,
+				TotalSchedules:  8,
+				ActiveSchedules: 8,
+				TotalContacts:   12,
+				SuccessRate:     100.0,
+			},
 			"WANumber":       "628111222333@s.whatsapp.net",
 			"WAConnected":    true,
 			"SentToday":      5,
