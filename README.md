@@ -22,7 +22,8 @@
 ## 🧭 Daftar Isi
 - [Makna & Filosofi Nama](#-makna--filosofi-nama)
 - [Arsitektur Sistem](#-arsitektur-sistem)
-- [Matriks Paket Rilis Resmi](#-matriks-paket-rilis-resmi-v100)
+- [📐 Dokumentasi Desain Sistem, Flow State & DFD Lengkap](docs/SYSTEM_DESIGN_AND_FLOWS.md)
+- [Matriks Paket Rilis Resmi](#-matriks-paket-rilis-resmi-v110)
 - [Fitur Utama](#-fitur-utama)
 - [Panduan Instalasi Multi-Platform](#-panduan-instalasi-multi-platform)
   - [Apple macOS (DMG & PKG)](#-1-apple-macos-apple-silicon--intel)
