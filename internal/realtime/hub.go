@@ -23,12 +23,45 @@ type Event struct {
 	Payload interface{} `json:"payload"` // Detailed data
 }
 
+// ClientConn wraps websocket.Conn with thread-safe write synchronization
+type ClientConn struct {
+	conn *websocket.Conn
+	mu   sync.Mutex
+}
+
+func (c *ClientConn) WriteJSON(v interface{}) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	_ = c.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+	return c.conn.WriteJSON(v)
+}
+
+func (c *ClientConn) WritePing() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	_ = c.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+	return c.conn.WriteMessage(websocket.PingMessage, nil)
+}
+
+func (c *ClientConn) WritePong(appData []byte) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	_ = c.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+	return c.conn.WriteMessage(websocket.PongMessage, appData)
+}
+
+func (c *ClientConn) Close() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.conn.Close()
+}
+
 // Hub manages WebSocket clients and message broadcasting
 type Hub struct {
-	clients    map[*websocket.Conn]bool
+	clients    map[*ClientConn]bool
 	broadcast  chan Event
-	register   chan *websocket.Conn
-	unregister chan *websocket.Conn
+	register   chan *ClientConn
+	unregister chan *ClientConn
 	mu         sync.RWMutex
 	lastEvents map[string]Event // Cache last status & countdown for instant delivery on connect
 }
@@ -36,38 +69,38 @@ type Hub struct {
 // NewHub creates a new WebSocket hub
 func NewHub() *Hub {
 	return &Hub{
-		clients:    make(map[*websocket.Conn]bool),
+		clients:    make(map[*ClientConn]bool),
 		broadcast:  make(chan Event, 64),
-		register:   make(chan *websocket.Conn),
-		unregister: make(chan *websocket.Conn),
+		register:   make(chan *ClientConn),
+		unregister: make(chan *ClientConn),
 		lastEvents: make(map[string]Event),
 	}
 }
 
 // Run starts the WebSocket event routing loop
 func (h *Hub) Run() {
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(25 * time.Second)
 	defer ticker.Stop()
 
 	for {
 		select {
-		case conn := <-h.register:
+		case client := <-h.register:
 			h.mu.Lock()
-			h.clients[conn] = true
+			h.clients[client] = true
 			h.mu.Unlock()
 
 			// Send cached state immediately upon connection
 			h.mu.RLock()
 			for _, ev := range h.lastEvents {
-				_ = conn.WriteJSON(ev)
+				_ = client.WriteJSON(ev)
 			}
 			h.mu.RUnlock()
 
-		case conn := <-h.unregister:
+		case client := <-h.unregister:
 			h.mu.Lock()
-			if _, ok := h.clients[conn]; ok {
-				delete(h.clients, conn)
-				_ = conn.Close()
+			if _, ok := h.clients[client]; ok {
+				delete(h.clients, client)
+				_ = client.Close()
 			}
 			h.mu.Unlock()
 
@@ -80,13 +113,13 @@ func (h *Hub) Run() {
 			}
 
 			h.mu.RLock()
-			for conn := range h.clients {
-				err := conn.WriteJSON(event)
+			for client := range h.clients {
+				err := client.WriteJSON(event)
 				if err != nil {
 					slog.Debug("Error writing to websocket client", "err", err)
-					go func(c *websocket.Conn) {
+					go func(c *ClientConn) {
 						h.unregister <- c
-					}(conn)
+					}(client)
 				}
 			}
 			h.mu.RUnlock()
@@ -94,12 +127,11 @@ func (h *Hub) Run() {
 		case <-ticker.C:
 			// Heartbeat ping
 			h.mu.RLock()
-			for conn := range h.clients {
-				_ = conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-				if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-					go func(c *websocket.Conn) {
+			for client := range h.clients {
+				if err := client.WritePing(); err != nil {
+					go func(c *ClientConn) {
 						h.unregister <- c
-					}(conn)
+					}(client)
 				}
 			}
 			h.mu.RUnlock()
@@ -136,12 +168,17 @@ func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.register <- conn
+	client := &ClientConn{conn: conn}
+	conn.SetPingHandler(func(appData string) error {
+		return client.WritePong([]byte(appData))
+	})
+
+	h.register <- client
 
 	// Keep connection open and read messages (discard or handle ping/pong)
 	go func() {
 		defer func() {
-			h.unregister <- conn
+			h.unregister <- client
 		}()
 		for {
 			_, _, err := conn.ReadMessage()

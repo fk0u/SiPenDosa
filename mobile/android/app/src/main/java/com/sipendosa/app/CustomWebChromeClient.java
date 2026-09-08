@@ -2,6 +2,8 @@ package com.sipendosa.app;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.util.Log;
+import android.webkit.ConsoleMessage;
 import android.webkit.JsResult;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
@@ -11,6 +13,13 @@ public class CustomWebChromeClient extends WebChromeClient {
 
     public CustomWebChromeClient(Activity activity) {
         this.activity = activity;
+    }
+
+    @Override
+    public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+        Log.d("SiPenDosaWeb", "[" + consoleMessage.messageLevel() + "] " +
+                consoleMessage.message() + " (" + consoleMessage.sourceId() + ":" + consoleMessage.lineNumber() + ")");
+        return true;
     }
 
     @Override

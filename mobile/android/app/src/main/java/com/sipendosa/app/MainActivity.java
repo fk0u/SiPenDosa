@@ -26,6 +26,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.CookieManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.Button;
@@ -36,6 +37,8 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -49,14 +52,6 @@ import java.net.URL;
 public class MainActivity extends Activity implements View.OnClickListener, Runnable {
     public static final String SERVER_URL = "http://127.0.0.1:8473";
 
-    private static final String[] TAB_ROUTES = {
-            "/",
-            "/contacts",
-            "/schedules",
-            "/queue",
-            "/settings"
-    };
-
     // Theme Colors (Crimson Scarlet, Burnished Gold, Emerald, Obsidian Dark)
     private static final int COLOR_BG = Color.parseColor("#08090d");
     private static final int COLOR_SURFACE = Color.parseColor("#0d1017");
@@ -69,7 +64,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
     private FrameLayout rootContainer;
     private LinearLayout mainContentLayout;
     private LinearLayout topNavBar;
-    private LinearLayout bottomNavBar;
     private WebView webView;
     private ProgressBar pageProgressBar;
     private LinearLayout splashOverlay;
@@ -81,13 +75,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
     private Button btnLan;
     private Button btnWaPair;
     private Button btnRefresh;
-
-    // Bottom Nav Tabs (5 items)
-    private final LinearLayout[] navTabViews = new LinearLayout[5];
-    private final TextView[] navIconViews = new TextView[5];
-    private final TextView[] navLabelViews = new TextView[5];
-    private final View[] navIndicatorViews = new View[5];
-    private int currentTab = 0;
 
     private Handler handler;
     private boolean isServerReady = false;
@@ -188,15 +175,17 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
             WebView.setWebContentsDebuggingEnabled(false);
         }
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            ws.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+            CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
+        }
+        CookieManager.getInstance().setAcceptCookie(true);
+
         webView.setWebViewClient(new InternalWebClient(this));
         webView.setWebChromeClient(new CustomWebChromeClient(this));
         webView.addJavascriptInterface(new AndroidBridge(this), "AndroidBridge");
         webContainer.addView(webView);
         mainContentLayout.addView(webContainer);
-
-        // Bottom Navigation Bar
-        buildBottomNavBar();
-        mainContentLayout.addView(bottomNavBar);
 
         rootContainer.addView(mainContentLayout);
 
@@ -309,90 +298,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
         return btn;
     }
 
-    private void buildBottomNavBar() {
-        bottomNavBar = new LinearLayout(this);
-        bottomNavBar.setOrientation(LinearLayout.HORIZONTAL);
-        bottomNavBar.setBackgroundColor(COLOR_SURFACE);
-        bottomNavBar.setLayoutParams(new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                dp(58)
-        ));
-
-        String[][] tabs = {
-                {"🏠", "Beranda"},
-                {"👥", "Dosen"},
-                {"📅", "Jadwal"},
-                {"📨", "Antrean"},
-                {"⚙️", "Setelan"}
-        };
-
-        for (int i = 0; i < 5; i++) {
-            LinearLayout tab = new LinearLayout(this);
-            tab.setOrientation(LinearLayout.VERTICAL);
-            tab.setGravity(Gravity.CENTER);
-            LinearLayout.LayoutParams tabParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1.0f);
-            tab.setLayoutParams(tabParams);
-            tab.setClickable(true);
-            tab.setTag(Integer.valueOf(i));
-            tab.setOnClickListener(this);
-
-            // Active indicator pill (top of tab)
-            View indicator = new View(this);
-            LinearLayout.LayoutParams indParams = new LinearLayout.LayoutParams(dp(24), dp(3));
-            indParams.setMargins(0, 0, 0, dp(4));
-            indicator.setLayoutParams(indParams);
-            GradientDrawable indBg = new GradientDrawable();
-            indBg.setCornerRadius(dp(2));
-            indBg.setColor(i == 0 ? COLOR_CRIMSON : Color.TRANSPARENT);
-            indicator.setBackground(indBg);
-
-            // Icon
-            TextView tvIcon = new TextView(this);
-            tvIcon.setText(tabs[i][0]);
-            tvIcon.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-            tvIcon.setGravity(Gravity.CENTER);
-
-            // Label
-            TextView tvLabel = new TextView(this);
-            tvLabel.setText(tabs[i][1]);
-            tvLabel.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
-            tvLabel.setTypeface(Typeface.SANS_SERIF, Typeface.BOLD);
-            tvLabel.setTextColor(i == 0 ? COLOR_TEXT_ACTIVE : COLOR_TEXT_MUTED);
-            tvLabel.setGravity(Gravity.CENTER);
-            tvLabel.setPadding(0, dp(1), 0, 0);
-
-            tab.addView(indicator);
-            tab.addView(tvIcon);
-            tab.addView(tvLabel);
-
-            navTabViews[i] = tab;
-            navIndicatorViews[i] = indicator;
-            navIconViews[i] = tvIcon;
-            navLabelViews[i] = tvLabel;
-
-            bottomNavBar.addView(tab);
-        }
-    }
-
-    private void selectTab(int index, boolean animate) {
-        currentTab = index;
-        for (int i = 0; i < 5; i++) {
-            boolean isActive = (i == index);
-            GradientDrawable indBg = new GradientDrawable();
-            indBg.setCornerRadius(dp(2));
-            indBg.setColor(isActive ? COLOR_CRIMSON : Color.TRANSPARENT);
-            navIndicatorViews[i].setBackground(indBg);
-            navLabelViews[i].setTextColor(isActive ? COLOR_TEXT_ACTIVE : COLOR_TEXT_MUTED);
-            navIconViews[i].setAlpha(isActive ? 1.0f : 0.6f);
-        }
-    }
-
-    private void loadRoute(String path) {
-        if (webView != null) {
-            webView.loadUrl(SERVER_URL + path);
-        }
-    }
-
     public void onPageStarted(String url) {
         if (pageProgressBar != null) {
             pageProgressBar.setVisibility(View.VISIBLE);
@@ -403,23 +308,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
     public void onPageNavigated(String url) {
         if (pageProgressBar != null) {
             pageProgressBar.setVisibility(View.GONE);
-        }
-
-        if (url == null) return;
-
-        int newTab = 0;
-        if (url.contains("/contacts")) {
-            newTab = 1;
-        } else if (url.contains("/schedules")) {
-            newTab = 2;
-        } else if (url.contains("/queue")) {
-            newTab = 3;
-        } else if (url.contains("/settings") || url.contains("/changelog") || url.contains("/logs")) {
-            newTab = 4;
-        }
-
-        if (newTab != currentTab) {
-            selectTab(newTab, false);
         }
     }
 
@@ -458,7 +346,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
         splashOverlay.addView(tvTitle);
 
         TextView tvSub = new TextView(this);
-        tvSub.setText("Academic Assistant • v1.1.1");
+        tvSub.setText("Academic Assistant • v1.1.2");
         tvSub.setTextColor(COLOR_GOLD);
         tvSub.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         tvSub.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
@@ -491,12 +379,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
         } else if (v == btnRefresh) {
             if (webView != null) {
                 webView.reload();
-            }
-        } else if (v.getTag() instanceof Integer) {
-            int tabIndex = ((Integer) v.getTag()).intValue();
-            if (tabIndex >= 0 && tabIndex < TAB_ROUTES.length) {
-                selectTab(tabIndex, true);
-                loadRoute(TAB_ROUTES[tabIndex]);
             }
         }
     }
@@ -592,7 +474,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
     public void requestPairingCodeInternal(String phone) {
         String pairCode = null;
         try {
-            URL url = new URL(SERVER_URL + "/api/whatsapp/pair-phone");
+            URL url = new URL(SERVER_URL + "/api/internal/pair-phone");
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
@@ -610,7 +492,20 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
                 sb.append(line);
             }
             reader.close();
-            pairCode = sb.toString();
+
+            String raw = sb.toString().trim();
+            try {
+                JSONObject json = new JSONObject(raw);
+                if (json.has("code")) {
+                    pairCode = json.getString("code");
+                } else if (json.has("error")) {
+                    pairCode = "ERR: " + json.getString("error");
+                } else {
+                    pairCode = raw;
+                }
+            } catch (Exception ignored) {
+                pairCode = raw;
+            }
         } catch (Exception e) {
             pairCode = "ERR: " + e.getMessage();
         }
@@ -746,7 +641,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
             URL url = new URL(targetUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setInstanceFollowRedirects(true);
-            conn.setRequestProperty("User-Agent", "SiPenDosa-Android/1.1.1");
+            conn.setRequestProperty("User-Agent", "SiPenDosa-Android/1.1.2");
             conn.connect();
 
             int status = conn.getResponseCode();
@@ -755,7 +650,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
                 conn.disconnect();
                 url = new URL(newUrl);
                 conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestProperty("User-Agent", "SiPenDosa-Android/1.1.1");
+                conn.setRequestProperty("User-Agent", "SiPenDosa-Android/1.1.2");
                 conn.connect();
             }
 

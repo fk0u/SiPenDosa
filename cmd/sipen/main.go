@@ -17,6 +17,7 @@ import (
 	"sipen/internal/auth"
 	"sipen/internal/banner"
 	"sipen/internal/config"
+	"sipen/internal/netutil"
 	"sipen/internal/queue"
 	"sipen/internal/realtime"
 	"sipen/internal/scheduler"
@@ -28,6 +29,9 @@ import (
 )
 
 func main() {
+	// Inisialisasi Lingkungan Jaringan (DNS Fallback & Root CA untuk Android/Embedded)
+	netutil.SetupNetworkEnvironment()
+
 	// Muat Konfigurasi Lingkungan
 	cfg, err := config.Load()
 	if err != nil {

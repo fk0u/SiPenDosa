@@ -59,8 +59,8 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 	r.Get("/api/system/update/check", h.CheckUpdateHandler)
 	r.Get("/api/system/update/apk", h.DownloadApkHandler)
 
-	// Internal loopback API for local CLI / Termux commands
-	r.Post("/api/internal/pair-phone", func(w http.ResponseWriter, r *http.Request) {
+	// Internal loopback API for local CLI / Android / Termux commands
+	loopbackPairPhone := func(w http.ResponseWriter, r *http.Request) {
 		host, _, _ := net.SplitHostPort(r.RemoteAddr)
 		if host == "" {
 			host = r.RemoteAddr
@@ -70,7 +70,9 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 			return
 		}
 		h.WhatsAppPairPhoneHandler(w, r)
-	})
+	}
+	r.Post("/api/internal/pair-phone", loopbackPairPhone)
+	r.Post("/api/whatsapp/pair-phone", loopbackPairPhone)
 
 	r.Get("/login", h.LoginHandler)
 	r.With(authRateLimiter.Middleware).Post("/login", h.LoginPostHandler)

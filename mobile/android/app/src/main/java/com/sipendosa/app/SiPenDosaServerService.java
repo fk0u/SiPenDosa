@@ -138,6 +138,7 @@ public class SiPenDosaServerService extends Service implements Runnable {
             pb.environment().put("DB_PATH", new File(dataDir, "sipen.db").getAbsolutePath());
             pb.environment().put("WA_SESSION_PATH", new File(sessionDir, "whatsapp.db").getAbsolutePath());
             pb.environment().put("SESSION_SECRET", "sipendosa-android-service-session-key-32-chars");
+            pb.environment().put("SSL_CERT_DIR", "/system/etc/security/cacerts:/apex/com.android.conscrypt/cacerts");
 
             pb.redirectErrorStream(true);
             serverProcess = pb.start();

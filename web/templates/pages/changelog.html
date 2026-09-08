@@ -13,7 +13,7 @@
     <!-- Timeline Wrapper -->
     <div class="space-y-6">
 
-        <!-- RELEASE v1.1.1 (CURRENT) -->
+        <!-- RELEASE v1.1.2 (CURRENT) -->
         <div class="bezel-outer p-1 rounded-3xl relative overflow-hidden ring-1 ring-rose-500/30">
             <div class="bezel-card rounded-[1.4rem] p-6 md:p-8 space-y-5 bg-[#0a0c12]">
                 
@@ -21,12 +21,81 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-600 via-rose-500 to-amber-500 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-rose-600/30">
+                            1.1.2
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h2 class="text-lg font-bold text-white tracking-tight">SiPenDosa v1.1.2</h2>
+                                <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono font-bold uppercase">Versi Terpasang</span>
+                            </div>
+                            <span class="text-xs text-slate-400">Rilis Resmi: 08 September 2026</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="openUpdateModal()" class="btn btn-xs rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-bold border-none gap-1 shadow-md">
+                            <span>⚡ Cek Update OTA</span>
+                        </button>
+                        <a href="https://github.com/fk0u/SiPenDosa/releases/tag/v1.1.2" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-ghost text-slate-400 hover:text-white rounded-xl">
+                            GitHub ↗
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Release Items Bento -->
+                <div class="space-y-4 text-xs">
+                    
+                    <!-- Feature 1: Android WhatsApp WebSocket Fix -->
+                    <div class="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
+                        <div class="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider">
+                            <span>⚡</span>
+                            <span>Perbaikan Krusial WhatsApp WebSocket di Android</span>
+                        </div>
+                        <p class="text-slate-300 leading-relaxed">
+                            Memperbaiki kegagalan resolusi DNS saat engine WhatsApp menghubungkan WebSocket ke server WhatsApp Web di Android melalui <strong>DNS Fallback Resolver</strong> mandiri, sinkronisasi thread-safe write mutex pada Gorilla WebSocket Hub, serta pemuatan bundel sertifikat Root CA Android.
+                        </p>
+                    </div>
+
+                    <!-- Feature 2: Mobile UI Single Dock -->
+                    <div class="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
+                        <div class="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
+                            <span>📱</span>
+                            <span>Penyempurnaan UI Mobile (Single Bottom Dock Bar)</span>
+                        </div>
+                        <p class="text-slate-300 leading-relaxed">
+                            Menghilangkan masalah bilah dock ganda (double bottom dock) dengan menghapus dock native Android dan mempertahankan dock bar responsif Web UI SiPenDosa yang elegan, ergonomis, dan berfitur lengkap.
+                        </p>
+                    </div>
+
+                    <!-- Feature 3: Resilient Realtime Client -->
+                    <div class="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
+                        <div class="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider">
+                            <span>🛡️</span>
+                            <span>Client Realtime Tangguh & Polling Fallback</span>
+                        </div>
+                        <p class="text-slate-300 leading-relaxed">
+                            Bootstrapping client JavaScript diperbaiki agar langsung terhubung pada WebView Android, dilengkapi sistem <em>HTTP Polling Fallback</em> otomatis saat WebSocket terputus sehingga status WhatsApp dan QR Code selalu tampil real-time.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- RELEASE v1.1.1 -->
+        <div class="bezel-outer p-1 rounded-3xl relative overflow-hidden border border-white/5 opacity-85">
+            <div class="bezel-card rounded-[1.4rem] p-6 md:p-8 space-y-5 bg-[#0a0c12]">
+                
+                <!-- Release Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 font-black text-sm">
                             1.1.1
                         </div>
                         <div>
                             <div class="flex items-center gap-2">
                                 <h2 class="text-lg font-bold text-white tracking-tight">SiPenDosa v1.1.1</h2>
-                                <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono font-bold uppercase">Versi Terpasang</span>
+                                <span class="px-2 py-0.5 rounded-full bg-white/10 text-slate-400 text-[10px] font-mono font-bold uppercase">Rilis Sebelumnya</span>
                             </div>
                             <span class="text-xs text-slate-400">Rilis Resmi: 07 September 2026</span>
                         </div>

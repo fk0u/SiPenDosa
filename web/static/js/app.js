@@ -2,15 +2,31 @@
 (function () {
     let ws = null;
     let wsReconnectTimeout = null;
+    let fallbackPollInterval = null;
+    let isWsConnected = false;
 
     function initWebSocket() {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws`;
+        if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+            return;
+        }
 
-        ws = new WebSocket(wsUrl);
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host || '127.0.0.1:8473';
+        const wsUrl = `${protocol}//${host}/ws`;
+
+        try {
+            ws = new WebSocket(wsUrl);
+        } catch (e) {
+            console.error('[SiPenDosa WS] Gagal membuat WebSocket:', e);
+            startFallbackPolling();
+            scheduleReconnect();
+            return;
+        }
 
         ws.onopen = function () {
             console.log('[SiPenDosa WS] Terhubung ke server realtime');
+            isWsConnected = true;
+            stopFallbackPolling();
             if (wsReconnectTimeout) {
                 clearTimeout(wsReconnectTimeout);
                 wsReconnectTimeout = null;
@@ -27,14 +43,77 @@
         };
 
         ws.onclose = function () {
-            console.warn('[SiPenDosa WS] Terputus dari server. Mencoba rekoneksi dalam 3 detik...');
-            wsReconnectTimeout = setTimeout(initWebSocket, 3000);
+            console.warn('[SiPenDosa WS] Terputus dari server. Memulai fallback polling...');
+            isWsConnected = false;
+            startFallbackPolling();
+            scheduleReconnect();
         };
 
         ws.onerror = function (err) {
             console.error('[SiPenDosa WS] Terjadi kesalahan:', err);
-            ws.close();
+            isWsConnected = false;
+            startFallbackPolling();
+            try { ws.close(); } catch (_) {}
         };
+
+        // If WebSocket doesn't connect within 2.5s, activate fallback polling
+        setTimeout(() => {
+            if (!isWsConnected) {
+                startFallbackPolling();
+            }
+        }, 2500);
+    }
+
+    function scheduleReconnect() {
+        if (!wsReconnectTimeout) {
+            wsReconnectTimeout = setTimeout(() => {
+                wsReconnectTimeout = null;
+                initWebSocket();
+            }, 3000);
+        }
+    }
+
+    function startFallbackPolling() {
+        if (fallbackPollInterval) return;
+        pollStatusFallback();
+        fallbackPollInterval = setInterval(pollStatusFallback, 4000);
+    }
+
+    function stopFallbackPolling() {
+        if (fallbackPollInterval) {
+            clearInterval(fallbackPollInterval);
+            fallbackPollInterval = null;
+        }
+    }
+
+    function pollStatusFallback() {
+        if (isWsConnected) {
+            stopFallbackPolling();
+            return;
+        }
+        fetch('/api/wa/qr', { method: 'GET', credentials: 'same-origin' })
+            .then(res => {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(data => {
+                if (data.state) {
+                    updateWhatsAppStatus({
+                        state: data.state,
+                        phone: data.phone,
+                        push_name: data.push_name
+                    });
+                }
+                if (data.qr) {
+                    updateWhatsAppQR(data.qr);
+                }
+                if (data.pairing_code) {
+                    renderPairingCode(data.pairing_code);
+                }
+            })
+            .catch(() => {
+                // Ignore transient network errors during poll
+            });
     }
 
     function handleEvent(event) {
@@ -468,11 +547,17 @@
             });
     };
 
-    // Initialize on DOM load
-    document.addEventListener('DOMContentLoaded', () => {
+    // Initialize on DOM load or immediately if already loaded
+    function bootstrapApp() {
         initWebSocket();
         // Check for updates automatically (silent check)
         setTimeout(() => checkSystemUpdate(false), 1200);
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bootstrapApp);
+    } else {
+        bootstrapApp();
+    }
 })();
 
