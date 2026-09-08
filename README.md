@@ -332,6 +332,12 @@ sipendosa.kampus.ac.id {
 
 ---
 
+## 🗺️ Roadmap & Rencana Masa Depan
+
+Lihat rencana pengembangan fitur selanjutnya, termasuk *Group & Contact Picker Dropdown*, *Built-in Public Tunneling*, dan *Public Schedule Portal* pada dokumen **[ROADMAP.md](ROADMAP.md)** atau pantau di **[GitHub Issues](https://github.com/fk0u/SiPenDosa/issues)**.
+
+---
+
 ## 📄 Lisensi
 
 Proyek ini dirilis di bawah lisensi **[MIT License](LICENSE)**. Bebas digunakan, dikembangkan, dan dimanfaatkan untuk mempermudah kegiatan perkuliahan di seluruh kampus Indonesia.
