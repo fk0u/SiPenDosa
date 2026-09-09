@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"sipen/internal/store"
+	"sipen/internal/totp"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -21,10 +22,11 @@ const (
 )
 
 var (
-	ErrUnauthorized     = errors.New("unauthorized")
-	ErrRegistrationClosed = errors.New("pendaftaran pengguna baru sedang ditutup")
-	ErrUserExists       = errors.New("username sudah digunakan")
-	ErrInvalidCreds     = errors.New("username atau password salah")
+	ErrUnauthorized       = errors.New("unauthorized")
+	ErrRegistrationClosed = errors.New("pendaftaran pengguna baru hanya dapat dibuat oleh Administrator")
+	ErrUserExists         = errors.New("username sudah digunakan")
+	ErrInvalidCreds       = errors.New("username atau password salah")
+	ErrInvalid2FA         = errors.New("kode verifikasi 2FA tidak valid atau telah kedaluwarsa")
 )
 
 // Service handles authentication and user authorization
@@ -73,8 +75,8 @@ func (s *Service) RegisterUser(username, password, role string, allowOverride bo
 		}
 	}
 
-	if role != "superadmin" && role != "admin" {
-		role = "admin"
+	if role != "superadmin" && role != "admin" && role != "user" {
+		role = "user"
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -184,6 +186,54 @@ func (s *Service) RequireAuth(next http.Handler) http.Handler {
 
 		ctx := context.WithValue(r.Context(), UserContextKey, user)
 		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// Create2FAChallenge creates a short-lived token (5 minutes) for verifying 2FA code
+func (s *Service) Create2FAChallenge(userID int64) (string, error) {
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	token := hex.EncodeToString(bytes)
+	expiresAt := time.Now().Add(5 * time.Minute)
+
+	if err := s.store.Create2FAChallenge(token, userID, expiresAt); err != nil {
+		return "", err
+	}
+	return token, nil
+}
+
+// Verify2FA validates the 6-digit TOTP code against the challenge and user's 2FA secret
+func (s *Service) Verify2FA(challengeToken, passcode string) (*store.User, error) {
+	challenge, err := s.store.Get2FAChallenge(challengeToken)
+	if err != nil {
+		return nil, ErrInvalid2FA
+	}
+
+	user, err := s.store.GetUserByID(challenge.UserID)
+	if err != nil {
+		return nil, ErrInvalid2FA
+	}
+
+	if !totp.ValidatePasscode(user.TwoFactorSecret, passcode, 1) {
+		return nil, ErrInvalid2FA
+	}
+
+	// Delete challenge after successful consumption
+	_ = s.store.Delete2FAChallenge(challengeToken)
+	return user, nil
+}
+
+// RequireAdmin middleware restricts access to Admins or SuperAdmins
+func RequireAdmin(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := GetUserFromContext(r.Context())
+		if user == nil || (user.Role != "superadmin" && user.Role != "admin") {
+			http.Error(w, "Akses ditolak: Hanya Administrator yang memiliki izin tindakan ini", http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
 	})
 }
 

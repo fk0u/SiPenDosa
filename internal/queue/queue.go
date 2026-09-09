@@ -15,23 +15,23 @@ import (
 
 // Manager manages message queue execution, rate limiting, and auto-retry
 type Manager struct {
-	store    *store.Store
-	waClient *whatsapp.Client
-	hub      *realtime.Hub
-	stopChan chan struct{}
-	trigger  chan struct{}
-	mu       sync.Mutex
-	running  bool
+	store     *store.Store
+	waManager *whatsapp.Manager
+	hub       *realtime.Hub
+	stopChan  chan struct{}
+	trigger   chan struct{}
+	mu        sync.Mutex
+	running   bool
 }
 
 // NewManager initializes the message queue manager
-func NewManager(s *store.Store, wa *whatsapp.Client, hub *realtime.Hub) *Manager {
+func NewManager(s *store.Store, waMgr *whatsapp.Manager, hub *realtime.Hub) *Manager {
 	return &Manager{
-		store:    s,
-		waClient: wa,
-		hub:      hub,
-		stopChan: make(chan struct{}),
-		trigger:  make(chan struct{}, 1),
+		store:     s,
+		waManager: waMgr,
+		hub:       hub,
+		stopChan:  make(chan struct{}),
+		trigger:   make(chan struct{}, 1),
 	}
 }
 
@@ -163,7 +163,12 @@ func (m *Manager) processSingleMessage(msg store.QueueMessage, settings *store.S
 	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 	defer cancel()
 
-	err := m.waClient.SendMessage(ctx, msg.RecipientJID, msg.Message)
+	waClient, err := m.waManager.GetClient(msg.UserID)
+	if err != nil {
+		slog.Warn("Failed to obtain WhatsApp client for user", "user_id", msg.UserID, "err", err)
+	} else {
+		err = waClient.SendMessage(ctx, msg.RecipientJID, msg.Message)
+	}
 	if err != nil {
 		slog.Warn("Failed to send queued WhatsApp message", "id", msg.ID, "err", err)
 

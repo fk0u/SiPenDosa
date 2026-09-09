@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="night" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifikasi 2FA — SiPenDosa</title>
+
+    <!-- Tailwind CSS & DaisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Menlo', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #08090d;
+            color: #f1f5f9;
+        }
+        .bezel-card {
+            background: rgba(18, 19, 26, 0.75);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.08), 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+        }
+        .bezel-outer {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="min-h-[100dvh] flex items-center justify-center p-4 selection:bg-rose-600 selection:text-white relative overflow-hidden">
+
+    <!-- Ambient Glow Orbs (Ember & Gold) -->
+    <div class="fixed top-1/4 left-1/3 w-96 h-96 bg-rose-600/15 rounded-full blur-[140px] pointer-events-none -z-10"></div>
+    <div class="fixed bottom-1/4 right-1/3 w-96 h-96 bg-amber-500/10 rounded-full blur-[140px] pointer-events-none -z-10"></div>
+
+    <div class="w-full max-w-md">
+        <div class="bezel-outer p-1.5 rounded-3xl">
+            <div class="bezel-card rounded-[22px] p-8 space-y-6">
+                
+                <!-- Brand Header -->
+                <div class="text-center space-y-2">
+                    <div class="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-600 via-rose-600 to-rose-700 items-center justify-center shadow-lg shadow-amber-600/25 mb-2 border border-white/20">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    </div>
+                    <div class="flex items-center justify-center gap-2">
+                        <h1 class="text-2xl font-extrabold tracking-tight text-white">Verifikasi 2FA</h1>
+                    </div>
+                    <p class="text-xs text-slate-400 max-w-xs mx-auto">Akun ini dilindungi Autentikasi Dua Faktor. Masukkan 6 digit kode dari aplikasi autentikator Anda.</p>
+                </div>
+
+                {{if .FlashError}}
+                <div class="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-start gap-2.5 text-xs text-rose-300">
+                    <svg class="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>{{.FlashError}}</span>
+                </div>
+                {{end}}
+
+                <form action="/login/2fa" method="POST" class="space-y-4">
+                    <input type="hidden" name="challenge" value="{{.Data.Challenge}}" />
+
+                    <div class="space-y-2">
+                        <label class="text-xs font-semibold text-slate-300 block text-center">Kode Verifikasi (TOTP)</label>
+                        <input type="text" name="code" placeholder="123456" maxlength="6" pattern="[0-9]{6}" required autofocus
+                               class="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.1] focus:border-amber-500/60 font-mono text-center text-2xl tracking-[0.3em] font-bold text-white placeholder-slate-600 outline-none transition" />
+                        <span class="text-[11px] text-slate-500 block text-center">Buka Google Authenticator, Microsoft Authenticator, atau Authy.</span>
+                    </div>
+
+                    <button type="submit" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-rose-600 hover:from-amber-500 hover:to-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/30 transition-all active:scale-95">
+                        Verifikasi & Masuk
+                    </button>
+
+                    <div class="text-center pt-2">
+                        <a href="/login" class="text-[11px] text-slate-400 hover:text-white transition">
+                            &larr; Kembali ke halaman login
+                        </a>
+                    </div>
+                </form>
+
+                <!-- Footer Links -->
+                <div class="pt-4 border-t border-white/[0.06] text-center space-y-2">
+                    <div class="flex items-center justify-center gap-3 text-[11px] text-slate-400">
+                        <a href="/about" class="hover:text-white transition">Tentang</a>
+                        <span>&bull;</span>
+                        <a href="/terms" class="hover:text-white transition">Ketentuan Layanan</a>
+                        <span>&bull;</span>
+                        <a href="/privacy" class="hover:text-white transition">Privasi</a>
+                    </div>
+                    <div class="text-[10px] text-slate-400 font-mono">
+                        SiPenDosa Daemon Engine &copy; {{.CurrentYear}}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

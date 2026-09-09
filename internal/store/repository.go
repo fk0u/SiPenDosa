@@ -36,28 +36,42 @@ func (s *Store) CreateUser(username, passwordHash, role string) (*User, error) {
 
 func (s *Store) GetUserByUsername(username string) (*User, error) {
 	var u User
-	err := s.db.QueryRow(`SELECT id, username, password_hash, role, created_at, updated_at 
+	var tfaEnabled int
+	err := s.db.QueryRow(`SELECT id, username, password_hash, role, 
+		COALESCE(two_factor_secret, ''), COALESCE(two_factor_enabled, 0), COALESCE(two_factor_backup_codes, ''),
+		created_at, updated_at 
 		FROM users WHERE username = ?`, username).
-		Scan(&u.ID, &u.Username, &u.PasswordHash, &u.Role, &u.CreatedAt, &u.UpdatedAt)
+		Scan(&u.ID, &u.Username, &u.PasswordHash, &u.Role, 
+			&u.TwoFactorSecret, &tfaEnabled, &u.TwoFactorBackupCodes,
+			&u.CreatedAt, &u.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
+	u.TwoFactorEnabled = tfaEnabled == 1
 	return &u, nil
 }
 
 func (s *Store) GetUserByID(id int64) (*User, error) {
 	var u User
-	err := s.db.QueryRow(`SELECT id, username, password_hash, role, created_at, updated_at 
+	var tfaEnabled int
+	err := s.db.QueryRow(`SELECT id, username, password_hash, role, 
+		COALESCE(two_factor_secret, ''), COALESCE(two_factor_enabled, 0), COALESCE(two_factor_backup_codes, ''),
+		created_at, updated_at 
 		FROM users WHERE id = ?`, id).
-		Scan(&u.ID, &u.Username, &u.PasswordHash, &u.Role, &u.CreatedAt, &u.UpdatedAt)
+		Scan(&u.ID, &u.Username, &u.PasswordHash, &u.Role, 
+			&u.TwoFactorSecret, &tfaEnabled, &u.TwoFactorBackupCodes,
+			&u.CreatedAt, &u.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
+	u.TwoFactorEnabled = tfaEnabled == 1
 	return &u, nil
 }
 
 func (s *Store) ListUsers() ([]User, error) {
-	rows, err := s.db.Query(`SELECT id, username, role, created_at, updated_at FROM users ORDER BY id ASC`)
+	rows, err := s.db.Query(`SELECT id, username, role, 
+		COALESCE(two_factor_secret, ''), COALESCE(two_factor_enabled, 0), COALESCE(two_factor_backup_codes, ''),
+		created_at, updated_at FROM users ORDER BY id ASC`)
 	if err != nil {
 		return nil, err
 	}
@@ -66,16 +80,56 @@ func (s *Store) ListUsers() ([]User, error) {
 	var users []User
 	for rows.Next() {
 		var u User
-		if err := rows.Scan(&u.ID, &u.Username, &u.Role, &u.CreatedAt, &u.UpdatedAt); err != nil {
+		var tfaEnabled int
+		if err := rows.Scan(&u.ID, &u.Username, &u.Role, &u.TwoFactorSecret, &tfaEnabled, &u.TwoFactorBackupCodes, &u.CreatedAt, &u.UpdatedAt); err != nil {
 			return nil, err
 		}
+		u.TwoFactorEnabled = tfaEnabled == 1
 		users = append(users, u)
 	}
 	return users, nil
 }
 
+func (s *Store) UpdateUser2FA(userID int64, secret string, enabled bool) error {
+	val := 0
+	if enabled {
+		val = 1
+	}
+	_, err := s.db.Exec(`UPDATE users SET two_factor_secret = ?, two_factor_enabled = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+		secret, val, userID)
+	return err
+}
+
+func (s *Store) UpdateUserPassword(userID int64, passwordHash string) error {
+	_, err := s.db.Exec(`UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+		passwordHash, userID)
+	return err
+}
+
 func (s *Store) DeleteUser(id int64) error {
 	_, err := s.db.Exec("DELETE FROM users WHERE id = ?", id)
+	return err
+}
+
+func (s *Store) Create2FAChallenge(token string, userID int64, expiresAt time.Time) error {
+	_, err := s.db.Exec(`INSERT INTO two_factor_challenges (token, user_id, expires_at, created_at) 
+		VALUES (?, ?, ?, CURRENT_TIMESTAMP)`, token, userID, expiresAt)
+	return err
+}
+
+func (s *Store) Get2FAChallenge(token string) (*TwoFactorChallenge, error) {
+	var c TwoFactorChallenge
+	err := s.db.QueryRow(`SELECT token, user_id, expires_at, created_at 
+		FROM two_factor_challenges WHERE token = ? AND expires_at > CURRENT_TIMESTAMP`, token).
+		Scan(&c.Token, &c.UserID, &c.ExpiresAt, &c.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &c, nil
+}
+
+func (s *Store) Delete2FAChallenge(token string) error {
+	_, err := s.db.Exec("DELETE FROM two_factor_challenges WHERE token = ?", token)
 	return err
 }
 
@@ -166,11 +220,15 @@ func (s *Store) SetGlobalDryRun(dryRun bool) error {
 // Contacts
 // ==========================================
 
-func (s *Store) ListContacts(contactType string) ([]Contact, error) {
-	query := `SELECT id, name, phone, contact_type, nim, email, notes, created_at, updated_at FROM contacts`
+func (s *Store) ListContacts(userID int64, contactType string) ([]Contact, error) {
+	query := `SELECT id, user_id, name, phone, contact_type, nim, email, notes, created_at, updated_at FROM contacts WHERE 1=1`
 	var args []interface{}
+	if userID > 0 {
+		query += ` AND user_id = ?`
+		args = append(args, userID)
+	}
 	if contactType != "" {
-		query += ` WHERE contact_type = ?`
+		query += ` AND contact_type = ?`
 		args = append(args, contactType)
 	}
 	query += ` ORDER BY name ASC`
@@ -184,7 +242,7 @@ func (s *Store) ListContacts(contactType string) ([]Contact, error) {
 	var contacts []Contact
 	for rows.Next() {
 		var c Contact
-		if err := rows.Scan(&c.ID, &c.Name, &c.Phone, &c.ContactType, &c.NIM, &c.Email, &c.Notes, &c.CreatedAt, &c.UpdatedAt); err != nil {
+		if err := rows.Scan(&c.ID, &c.UserID, &c.Name, &c.Phone, &c.ContactType, &c.NIM, &c.Email, &c.Notes, &c.CreatedAt, &c.UpdatedAt); err != nil {
 			return nil, err
 		}
 		contacts = append(contacts, c)
@@ -194,9 +252,9 @@ func (s *Store) ListContacts(contactType string) ([]Contact, error) {
 
 func (s *Store) GetContactByID(id int64) (*Contact, error) {
 	var c Contact
-	err := s.db.QueryRow(`SELECT id, name, phone, contact_type, nim, email, notes, created_at, updated_at 
+	err := s.db.QueryRow(`SELECT id, user_id, name, phone, contact_type, nim, email, notes, created_at, updated_at 
 		FROM contacts WHERE id = ?`, id).
-		Scan(&c.ID, &c.Name, &c.Phone, &c.ContactType, &c.NIM, &c.Email, &c.Notes, &c.CreatedAt, &c.UpdatedAt)
+		Scan(&c.ID, &c.UserID, &c.Name, &c.Phone, &c.ContactType, &c.NIM, &c.Email, &c.Notes, &c.CreatedAt, &c.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -205,9 +263,12 @@ func (s *Store) GetContactByID(id int64) (*Contact, error) {
 
 func (s *Store) CreateContact(c *Contact) (*Contact, error) {
 	now := time.Now()
-	res, err := s.db.Exec(`INSERT INTO contacts (name, phone, contact_type, nim, email, notes, created_at, updated_at) 
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		c.Name, c.Phone, c.ContactType, c.NIM, c.Email, c.Notes, now, now)
+	if c.UserID <= 0 {
+		c.UserID = 1
+	}
+	res, err := s.db.Exec(`INSERT INTO contacts (user_id, name, phone, contact_type, nim, email, notes, created_at, updated_at) 
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		c.UserID, c.Name, c.Phone, c.ContactType, c.NIM, c.Email, c.Notes, now, now)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +296,7 @@ func (s *Store) DeleteContact(id int64) error {
 // ==========================================
 
 func (s *Store) ListTemplates() ([]Template, error) {
-	rows, err := s.db.Query(`SELECT id, name, content, is_default, created_at, updated_at FROM templates ORDER BY id ASC`)
+	rows, err := s.db.Query(`SELECT id, user_id, name, content, is_default, created_at, updated_at FROM templates ORDER BY is_default DESC, id ASC`)
 	if err != nil {
 		return nil, err
 	}
@@ -245,7 +306,7 @@ func (s *Store) ListTemplates() ([]Template, error) {
 	for rows.Next() {
 		var t Template
 		var isDefault int
-		if err := rows.Scan(&t.ID, &t.Name, &t.Content, &isDefault, &t.CreatedAt, &t.UpdatedAt); err != nil {
+		if err := rows.Scan(&t.ID, &t.UserID, &t.Name, &t.Content, &isDefault, &t.CreatedAt, &t.UpdatedAt); err != nil {
 			return nil, err
 		}
 		t.IsDefault = isDefault == 1
@@ -257,8 +318,8 @@ func (s *Store) ListTemplates() ([]Template, error) {
 func (s *Store) GetTemplateByID(id int64) (*Template, error) {
 	var t Template
 	var isDefault int
-	err := s.db.QueryRow(`SELECT id, name, content, is_default, created_at, updated_at FROM templates WHERE id = ?`, id).
-		Scan(&t.ID, &t.Name, &t.Content, &isDefault, &t.CreatedAt, &t.UpdatedAt)
+	err := s.db.QueryRow(`SELECT id, user_id, name, content, is_default, created_at, updated_at FROM templates WHERE id = ?`, id).
+		Scan(&t.ID, &t.UserID, &t.Name, &t.Content, &isDefault, &t.CreatedAt, &t.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -269,12 +330,12 @@ func (s *Store) GetTemplateByID(id int64) (*Template, error) {
 func (s *Store) GetDefaultTemplate() (*Template, error) {
 	var t Template
 	var isDefault int
-	err := s.db.QueryRow(`SELECT id, name, content, is_default, created_at, updated_at FROM templates WHERE is_default = 1 LIMIT 1`).
-		Scan(&t.ID, &t.Name, &t.Content, &isDefault, &t.CreatedAt, &t.UpdatedAt)
+	err := s.db.QueryRow(`SELECT id, user_id, name, content, is_default, created_at, updated_at FROM templates WHERE is_default = 1 LIMIT 1`).
+		Scan(&t.ID, &t.UserID, &t.Name, &t.Content, &isDefault, &t.CreatedAt, &t.UpdatedAt)
 	if err != nil {
 		// Fallback to first template
-		err = s.db.QueryRow(`SELECT id, name, content, is_default, created_at, updated_at FROM templates ORDER BY id ASC LIMIT 1`).
-			Scan(&t.ID, &t.Name, &t.Content, &isDefault, &t.CreatedAt, &t.UpdatedAt)
+		err = s.db.QueryRow(`SELECT id, user_id, name, content, is_default, created_at, updated_at FROM templates ORDER BY id ASC LIMIT 1`).
+			Scan(&t.ID, &t.UserID, &t.Name, &t.Content, &isDefault, &t.CreatedAt, &t.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -291,8 +352,8 @@ func (s *Store) CreateTemplate(t *Template) (*Template, error) {
 		_, _ = s.db.Exec("UPDATE templates SET is_default = 0")
 	}
 
-	res, err := s.db.Exec(`INSERT INTO templates (name, content, is_default, created_at, updated_at) 
-		VALUES (?, ?, ?, ?, ?)`, t.Name, t.Content, isDefault, now, now)
+	res, err := s.db.Exec(`INSERT INTO templates (user_id, name, content, is_default, created_at, updated_at) 
+		VALUES (?, ?, ?, ?, ?, ?)`, t.UserID, t.Name, t.Content, isDefault, now, now)
 	if err != nil {
 		return nil, err
 	}
@@ -358,22 +419,30 @@ func (s *Store) ListTemplateVersions(templateID int64) ([]TemplateVersion, error
 // Schedules
 // ==========================================
 
-func (s *Store) ListSchedules() ([]ScheduleDetail, error) {
+func (s *Store) ListSchedules(userID int64) ([]ScheduleDetail, error) {
 	query := `SELECT 
-		s.id, s.title, s.matkul, s.dosen_id, s.recipient_id, s.target_phone, s.template_id,
+		s.id, s.user_id, s.title, s.matkul, s.dosen_id, s.recipient_id, s.target_phone, s.template_id,
 		s.day_of_week, s.start_time, s.end_time, s.location, s.link_group, s.mode, s.send_at_time,
-		s.is_active, s.dry_run, s.last_sent_at, s.created_at, s.updated_at,
+		s.is_active, s.is_public, s.dry_run, s.last_sent_at, s.created_at, s.updated_at,
 		COALESCE(d.name, '') as dosen_name,
 		COALESCE(r.name, '') as recipient_name,
 		COALESCE(r.contact_type, '') as recipient_type,
-		COALESCE(t.name, '') as template_name
+		COALESCE(t.name, '') as template_name,
+		COALESCE(u.username, '') as creator_name
 	FROM schedules s
 	LEFT JOIN contacts d ON s.dosen_id = d.id
 	LEFT JOIN contacts r ON s.recipient_id = r.id
 	LEFT JOIN templates t ON s.template_id = t.id
-	ORDER BY s.day_of_week ASC, s.start_time ASC`
+	LEFT JOIN users u ON s.user_id = u.id`
 
-	rows, err := s.db.Query(query)
+	var args []interface{}
+	if userID > 0 {
+		query += ` WHERE s.user_id = ?`
+		args = append(args, userID)
+	}
+	query += ` ORDER BY s.day_of_week ASC, s.start_time ASC`
+
+	rows, err := s.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -382,19 +451,20 @@ func (s *Store) ListSchedules() ([]ScheduleDetail, error) {
 	var list []ScheduleDetail
 	for rows.Next() {
 		var sd ScheduleDetail
-		var isActive, dryRun int
+		var isActive, isPublic, dryRun int
 		var lastSentAt sql.NullTime
 
 		if err := rows.Scan(
-			&sd.ID, &sd.Title, &sd.Matkul, &sd.DosenID, &sd.RecipientID, &sd.TargetPhone, &sd.TemplateID,
+			&sd.ID, &sd.UserID, &sd.Title, &sd.Matkul, &sd.DosenID, &sd.RecipientID, &sd.TargetPhone, &sd.TemplateID,
 			&sd.DayOfWeek, &sd.StartTime, &sd.EndTime, &sd.Location, &sd.LinkGroup, &sd.Mode, &sd.SendAtTime,
-			&isActive, &dryRun, &lastSentAt, &sd.CreatedAt, &sd.UpdatedAt,
-			&sd.DosenName, &sd.RecipientName, &sd.RecipientType, &sd.TemplateName,
+			&isActive, &isPublic, &dryRun, &lastSentAt, &sd.CreatedAt, &sd.UpdatedAt,
+			&sd.DosenName, &sd.RecipientName, &sd.RecipientType, &sd.TemplateName, &sd.CreatorName,
 		); err != nil {
 			return nil, err
 		}
 
 		sd.IsActive = isActive == 1
+		sd.IsPublic = isPublic == 1
 		sd.DryRun = dryRun == 1
 		if lastSentAt.Valid {
 			sd.LastSentAt = &lastSentAt.Time
@@ -406,17 +476,19 @@ func (s *Store) ListSchedules() ([]ScheduleDetail, error) {
 
 func (s *Store) ListActiveSchedules() ([]ScheduleDetail, error) {
 	query := `SELECT 
-		s.id, s.title, s.matkul, s.dosen_id, s.recipient_id, s.target_phone, s.template_id,
+		s.id, s.user_id, s.title, s.matkul, s.dosen_id, s.recipient_id, s.target_phone, s.template_id,
 		s.day_of_week, s.start_time, s.end_time, s.location, s.link_group, s.mode, s.send_at_time,
-		s.is_active, s.dry_run, s.last_sent_at, s.created_at, s.updated_at,
+		s.is_active, s.is_public, s.dry_run, s.last_sent_at, s.created_at, s.updated_at,
 		COALESCE(d.name, '') as dosen_name,
 		COALESCE(r.name, '') as recipient_name,
 		COALESCE(r.contact_type, '') as recipient_type,
-		COALESCE(t.name, '') as template_name
+		COALESCE(t.name, '') as template_name,
+		COALESCE(u.username, '') as creator_name
 	FROM schedules s
 	LEFT JOIN contacts d ON s.dosen_id = d.id
 	LEFT JOIN contacts r ON s.recipient_id = r.id
 	LEFT JOIN templates t ON s.template_id = t.id
+	LEFT JOIN users u ON s.user_id = u.id
 	WHERE s.is_active = 1
 	ORDER BY s.day_of_week ASC, s.start_time ASC`
 
@@ -429,19 +501,70 @@ func (s *Store) ListActiveSchedules() ([]ScheduleDetail, error) {
 	var list []ScheduleDetail
 	for rows.Next() {
 		var sd ScheduleDetail
-		var isActive, dryRun int
+		var isActive, isPublic, dryRun int
 		var lastSentAt sql.NullTime
 
 		if err := rows.Scan(
-			&sd.ID, &sd.Title, &sd.Matkul, &sd.DosenID, &sd.RecipientID, &sd.TargetPhone, &sd.TemplateID,
+			&sd.ID, &sd.UserID, &sd.Title, &sd.Matkul, &sd.DosenID, &sd.RecipientID, &sd.TargetPhone, &sd.TemplateID,
 			&sd.DayOfWeek, &sd.StartTime, &sd.EndTime, &sd.Location, &sd.LinkGroup, &sd.Mode, &sd.SendAtTime,
-			&isActive, &dryRun, &lastSentAt, &sd.CreatedAt, &sd.UpdatedAt,
-			&sd.DosenName, &sd.RecipientName, &sd.RecipientType, &sd.TemplateName,
+			&isActive, &isPublic, &dryRun, &lastSentAt, &sd.CreatedAt, &sd.UpdatedAt,
+			&sd.DosenName, &sd.RecipientName, &sd.RecipientType, &sd.TemplateName, &sd.CreatorName,
 		); err != nil {
 			return nil, err
 		}
 
 		sd.IsActive = isActive == 1
+		sd.IsPublic = isPublic == 1
+		sd.DryRun = dryRun == 1
+		if lastSentAt.Valid {
+			sd.LastSentAt = &lastSentAt.Time
+		}
+		list = append(list, sd)
+	}
+	return list, nil
+}
+
+func (s *Store) ListPublicSchedules() ([]ScheduleDetail, error) {
+	query := `SELECT 
+		s.id, s.user_id, s.title, s.matkul, s.dosen_id, s.recipient_id, s.target_phone, s.template_id,
+		s.day_of_week, s.start_time, s.end_time, s.location, s.link_group, s.mode, s.send_at_time,
+		s.is_active, s.is_public, s.dry_run, s.last_sent_at, s.created_at, s.updated_at,
+		COALESCE(d.name, '') as dosen_name,
+		COALESCE(r.name, '') as recipient_name,
+		COALESCE(r.contact_type, '') as recipient_type,
+		COALESCE(t.name, '') as template_name,
+		COALESCE(u.username, '') as creator_name
+	FROM schedules s
+	LEFT JOIN contacts d ON s.dosen_id = d.id
+	LEFT JOIN contacts r ON s.recipient_id = r.id
+	LEFT JOIN templates t ON s.template_id = t.id
+	LEFT JOIN users u ON s.user_id = u.id
+	WHERE s.is_public = 1 AND s.is_active = 1
+	ORDER BY s.day_of_week ASC, s.start_time ASC`
+
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []ScheduleDetail
+	for rows.Next() {
+		var sd ScheduleDetail
+		var isActive, isPublic, dryRun int
+		var lastSentAt sql.NullTime
+
+		if err := rows.Scan(
+			&sd.ID, &sd.UserID, &sd.Title, &sd.Matkul, &sd.DosenID, &sd.RecipientID, &sd.TargetPhone, &sd.TemplateID,
+			&sd.DayOfWeek, &sd.StartTime, &sd.EndTime, &sd.Location, &sd.LinkGroup, &sd.Mode, &sd.SendAtTime,
+			&isActive, &isPublic, &dryRun, &lastSentAt, &sd.CreatedAt, &sd.UpdatedAt,
+			&sd.DosenName, &sd.RecipientName, &sd.RecipientType, &sd.TemplateName, &sd.CreatorName,
+		); err != nil {
+			return nil, err
+		}
+
+		sd.IsActive = isActive == 1
+		sd.IsPublic = isPublic == 1
 		sd.DryRun = dryRun == 1
 		if lastSentAt.Valid {
 			sd.LastSentAt = &lastSentAt.Time
@@ -453,23 +576,24 @@ func (s *Store) ListActiveSchedules() ([]ScheduleDetail, error) {
 
 func (s *Store) GetScheduleByID(id int64) (*Schedule, error) {
 	var sc Schedule
-	var isActive, dryRun int
+	var isActive, isPublic, dryRun int
 	var lastSentAt sql.NullTime
 
 	err := s.db.QueryRow(`SELECT 
-		id, title, matkul, dosen_id, recipient_id, target_phone, template_id,
+		id, user_id, title, matkul, dosen_id, recipient_id, target_phone, template_id,
 		day_of_week, start_time, end_time, location, link_group, mode, send_at_time,
-		is_active, dry_run, last_sent_at, created_at, updated_at
+		is_active, is_public, dry_run, last_sent_at, created_at, updated_at
 		FROM schedules WHERE id = ?`, id).
 		Scan(
-			&sc.ID, &sc.Title, &sc.Matkul, &sc.DosenID, &sc.RecipientID, &sc.TargetPhone, &sc.TemplateID,
+			&sc.ID, &sc.UserID, &sc.Title, &sc.Matkul, &sc.DosenID, &sc.RecipientID, &sc.TargetPhone, &sc.TemplateID,
 			&sc.DayOfWeek, &sc.StartTime, &sc.EndTime, &sc.Location, &sc.LinkGroup, &sc.Mode, &sc.SendAtTime,
-			&isActive, &dryRun, &lastSentAt, &sc.CreatedAt, &sc.UpdatedAt,
+			&isActive, &isPublic, &dryRun, &lastSentAt, &sc.CreatedAt, &sc.UpdatedAt,
 		)
 	if err != nil {
 		return nil, err
 	}
 	sc.IsActive = isActive == 1
+	sc.IsPublic = isPublic == 1
 	sc.DryRun = dryRun == 1
 	if lastSentAt.Valid {
 		sc.LastSentAt = &lastSentAt.Time
@@ -479,33 +603,36 @@ func (s *Store) GetScheduleByID(id int64) (*Schedule, error) {
 
 func (s *Store) GetScheduleDetailByID(id int64) (*ScheduleDetail, error) {
 	query := `SELECT 
-		s.id, s.title, s.matkul, s.dosen_id, s.recipient_id, s.target_phone, s.template_id,
+		s.id, s.user_id, s.title, s.matkul, s.dosen_id, s.recipient_id, s.target_phone, s.template_id,
 		s.day_of_week, s.start_time, s.end_time, s.location, s.link_group, s.mode, s.send_at_time,
-		s.is_active, s.dry_run, s.last_sent_at, s.created_at, s.updated_at,
+		s.is_active, s.is_public, s.dry_run, s.last_sent_at, s.created_at, s.updated_at,
 		COALESCE(d.name, '') as dosen_name,
 		COALESCE(r.name, '') as recipient_name,
 		COALESCE(r.contact_type, '') as recipient_type,
-		COALESCE(t.name, '') as template_name
+		COALESCE(t.name, '') as template_name,
+		COALESCE(u.username, '') as creator_name
 	FROM schedules s
 	LEFT JOIN contacts d ON s.dosen_id = d.id
 	LEFT JOIN contacts r ON s.recipient_id = r.id
 	LEFT JOIN templates t ON s.template_id = t.id
+	LEFT JOIN users u ON s.user_id = u.id
 	WHERE s.id = ?`
 
 	var sd ScheduleDetail
-	var isActive, dryRun int
+	var isActive, isPublic, dryRun int
 	var lastSentAt sql.NullTime
 
 	err := s.db.QueryRow(query, id).Scan(
-		&sd.ID, &sd.Title, &sd.Matkul, &sd.DosenID, &sd.RecipientID, &sd.TargetPhone, &sd.TemplateID,
+		&sd.ID, &sd.UserID, &sd.Title, &sd.Matkul, &sd.DosenID, &sd.RecipientID, &sd.TargetPhone, &sd.TemplateID,
 		&sd.DayOfWeek, &sd.StartTime, &sd.EndTime, &sd.Location, &sd.LinkGroup, &sd.Mode, &sd.SendAtTime,
-		&isActive, &dryRun, &lastSentAt, &sd.CreatedAt, &sd.UpdatedAt,
-		&sd.DosenName, &sd.RecipientName, &sd.RecipientType, &sd.TemplateName,
+		&isActive, &isPublic, &dryRun, &lastSentAt, &sd.CreatedAt, &sd.UpdatedAt,
+		&sd.DosenName, &sd.RecipientName, &sd.RecipientType, &sd.TemplateName, &sd.CreatorName,
 	)
 	if err != nil {
 		return nil, err
 	}
 	sd.IsActive = isActive == 1
+	sd.IsPublic = isPublic == 1
 	sd.DryRun = dryRun == 1
 	if lastSentAt.Valid {
 		sd.LastSentAt = &lastSentAt.Time
@@ -515,9 +642,16 @@ func (s *Store) GetScheduleDetailByID(id int64) (*ScheduleDetail, error) {
 
 func (s *Store) CreateSchedule(sc *Schedule) (*Schedule, error) {
 	now := time.Now()
+	if sc.UserID <= 0 {
+		sc.UserID = 1
+	}
 	isActive := 0
 	if sc.IsActive {
 		isActive = 1
+	}
+	isPublic := 0
+	if sc.IsPublic {
+		isPublic = 1
 	}
 	dryRun := 0
 	if sc.DryRun {
@@ -525,13 +659,13 @@ func (s *Store) CreateSchedule(sc *Schedule) (*Schedule, error) {
 	}
 
 	res, err := s.db.Exec(`INSERT INTO schedules (
-		title, matkul, dosen_id, recipient_id, target_phone, template_id,
+		user_id, title, matkul, dosen_id, recipient_id, target_phone, template_id,
 		day_of_week, start_time, end_time, location, link_group, mode, send_at_time,
-		is_active, dry_run, created_at, updated_at
-	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		sc.Title, sc.Matkul, sc.DosenID, sc.RecipientID, sc.TargetPhone, sc.TemplateID,
+		is_active, is_public, dry_run, created_at, updated_at
+	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		sc.UserID, sc.Title, sc.Matkul, sc.DosenID, sc.RecipientID, sc.TargetPhone, sc.TemplateID,
 		sc.DayOfWeek, sc.StartTime, sc.EndTime, sc.Location, sc.LinkGroup, sc.Mode, sc.SendAtTime,
-		isActive, dryRun, now, now,
+		isActive, isPublic, dryRun, now, now,
 	)
 	if err != nil {
 		return nil, err
@@ -548,6 +682,10 @@ func (s *Store) UpdateSchedule(sc *Schedule) error {
 	if sc.IsActive {
 		isActive = 1
 	}
+	isPublic := 0
+	if sc.IsPublic {
+		isPublic = 1
+	}
 	dryRun := 0
 	if sc.DryRun {
 		dryRun = 1
@@ -556,12 +694,11 @@ func (s *Store) UpdateSchedule(sc *Schedule) error {
 	_, err := s.db.Exec(`UPDATE schedules SET 
 		title = ?, matkul = ?, dosen_id = ?, recipient_id = ?, target_phone = ?, template_id = ?,
 		day_of_week = ?, start_time = ?, end_time = ?, location = ?, link_group = ?, mode = ?, send_at_time = ?,
-		is_active = ?, dry_run = ?, updated_at = ?
+		is_active = ?, is_public = ?, dry_run = ?, updated_at = ?
 		WHERE id = ?`,
 		sc.Title, sc.Matkul, sc.DosenID, sc.RecipientID, sc.TargetPhone, sc.TemplateID,
 		sc.DayOfWeek, sc.StartTime, sc.EndTime, sc.Location, sc.LinkGroup, sc.Mode, sc.SendAtTime,
-		isActive, dryRun, now, sc.ID,
-	)
+		isActive, isPublic, dryRun, now, sc.ID)
 	return err
 }
 
@@ -634,11 +771,14 @@ func (s *Store) DeleteHoliday(id int64) error {
 
 func (s *Store) CreateQueueMessage(qm *QueueMessage) (*QueueMessage, error) {
 	now := time.Now()
+	if qm.UserID <= 0 {
+		qm.UserID = 1
+	}
 	res, err := s.db.Exec(`INSERT INTO queue_messages (
-		schedule_id, recipient_jid, recipient_name, message, status, 
+		user_id, schedule_id, recipient_jid, recipient_name, message, status, 
 		retry_count, max_retries, error_message, scheduled_for, created_at, updated_at
-	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		qm.ScheduleID, qm.RecipientJID, qm.RecipientName, qm.Message, qm.Status,
+	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		qm.UserID, qm.ScheduleID, qm.RecipientJID, qm.RecipientName, qm.Message, qm.Status,
 		qm.RetryCount, qm.MaxRetries, qm.ErrorMessage, qm.ScheduledFor, now, now,
 	)
 	if err != nil {
@@ -650,13 +790,17 @@ func (s *Store) CreateQueueMessage(qm *QueueMessage) (*QueueMessage, error) {
 	return qm, nil
 }
 
-func (s *Store) ListQueueMessages(status string, limit int) ([]QueueMessage, error) {
-	query := `SELECT id, schedule_id, recipient_jid, recipient_name, message, status, 
+func (s *Store) ListQueueMessages(userID int64, status string, limit int) ([]QueueMessage, error) {
+	query := `SELECT id, user_id, schedule_id, recipient_jid, recipient_name, message, status, 
 		retry_count, max_retries, error_message, scheduled_for, sent_at, created_at, updated_at 
-		FROM queue_messages`
+		FROM queue_messages WHERE 1=1`
 	var args []interface{}
+	if userID > 0 {
+		query += ` AND user_id = ?`
+		args = append(args, userID)
+	}
 	if status != "" {
-		query += ` WHERE status = ?`
+		query += ` AND status = ?`
 		args = append(args, status)
 	}
 	query += ` ORDER BY scheduled_for DESC`
@@ -675,7 +819,7 @@ func (s *Store) ListQueueMessages(status string, limit int) ([]QueueMessage, err
 		var qm QueueMessage
 		var sentAt sql.NullTime
 		if err := rows.Scan(
-			&qm.ID, &qm.ScheduleID, &qm.RecipientJID, &qm.RecipientName, &qm.Message, &qm.Status,
+			&qm.ID, &qm.UserID, &qm.ScheduleID, &qm.RecipientJID, &qm.RecipientName, &qm.Message, &qm.Status,
 			&qm.RetryCount, &qm.MaxRetries, &qm.ErrorMessage, &qm.ScheduledFor, &sentAt, &qm.CreatedAt, &qm.UpdatedAt,
 		); err != nil {
 			return nil, err
@@ -689,7 +833,7 @@ func (s *Store) ListQueueMessages(status string, limit int) ([]QueueMessage, err
 }
 
 func (s *Store) GetPendingQueueMessages(now time.Time, limit int) ([]QueueMessage, error) {
-	rows, err := s.db.Query(`SELECT id, schedule_id, recipient_jid, recipient_name, message, status, 
+	rows, err := s.db.Query(`SELECT id, user_id, schedule_id, recipient_jid, recipient_name, message, status, 
 		retry_count, max_retries, error_message, scheduled_for, sent_at, created_at, updated_at 
 		FROM queue_messages 
 		WHERE status = 'pending' AND scheduled_for <= ? 
@@ -704,7 +848,7 @@ func (s *Store) GetPendingQueueMessages(now time.Time, limit int) ([]QueueMessag
 		var qm QueueMessage
 		var sentAt sql.NullTime
 		if err := rows.Scan(
-			&qm.ID, &qm.ScheduleID, &qm.RecipientJID, &qm.RecipientName, &qm.Message, &qm.Status,
+			&qm.ID, &qm.UserID, &qm.ScheduleID, &qm.RecipientJID, &qm.RecipientName, &qm.Message, &qm.Status,
 			&qm.RetryCount, &qm.MaxRetries, &qm.ErrorMessage, &qm.ScheduledFor, &sentAt, &qm.CreatedAt, &qm.UpdatedAt,
 		); err != nil {
 			return nil, err
@@ -720,11 +864,11 @@ func (s *Store) GetPendingQueueMessages(now time.Time, limit int) ([]QueueMessag
 func (s *Store) GetQueueMessageByID(id int64) (*QueueMessage, error) {
 	var qm QueueMessage
 	var sentAt sql.NullTime
-	err := s.db.QueryRow(`SELECT id, schedule_id, recipient_jid, recipient_name, message, status, 
+	err := s.db.QueryRow(`SELECT id, user_id, schedule_id, recipient_jid, recipient_name, message, status, 
 		retry_count, max_retries, error_message, scheduled_for, sent_at, created_at, updated_at 
 		FROM queue_messages WHERE id = ?`, id).
 		Scan(
-			&qm.ID, &qm.ScheduleID, &qm.RecipientJID, &qm.RecipientName, &qm.Message, &qm.Status,
+			&qm.ID, &qm.UserID, &qm.ScheduleID, &qm.RecipientJID, &qm.RecipientName, &qm.Message, &qm.Status,
 			&qm.RetryCount, &qm.MaxRetries, &qm.ErrorMessage, &qm.ScheduledFor, &sentAt, &qm.CreatedAt, &qm.UpdatedAt,
 		)
 	if err != nil {
@@ -805,35 +949,57 @@ func (s *Store) ListActivityLogs(limit int, category string) ([]ActivityLog, err
 // Dashboard Statistics
 // ==========================================
 
-func (s *Store) GetDashboardStats() (*DashboardStats, error) {
+func (s *Store) GetDashboardStats(userID int64) (*DashboardStats, error) {
 	var stats DashboardStats
 
 	todayStart := time.Now().Format("2006-01-02") + " 00:00:00"
 
-	// Sent today
-	_ = s.db.QueryRow(`SELECT COUNT(*) FROM queue_messages WHERE status = 'sent' AND sent_at >= ?`, todayStart).
-		Scan(&stats.TotalSentToday)
+	if userID > 0 {
+		// Sent today
+		_ = s.db.QueryRow(`SELECT COUNT(*) FROM queue_messages WHERE user_id = ? AND status = 'sent' AND sent_at >= ?`, userID, todayStart).
+			Scan(&stats.TotalSentToday)
 
-	// Total sent all time (including dry_run for statistics)
-	_ = s.db.QueryRow(`SELECT COUNT(*) FROM queue_messages WHERE status IN ('sent', 'dry_run')`).
-		Scan(&stats.TotalSentAll)
+		// Total sent all time (including dry_run for statistics)
+		_ = s.db.QueryRow(`SELECT COUNT(*) FROM queue_messages WHERE user_id = ? AND status IN ('sent', 'dry_run')`, userID).
+			Scan(&stats.TotalSentAll)
 
-	// Total failed all time
-	_ = s.db.QueryRow(`SELECT COUNT(*) FROM queue_messages WHERE status = 'failed'`).
-		Scan(&stats.TotalFailedAll)
+		// Total failed all time
+		_ = s.db.QueryRow(`SELECT COUNT(*) FROM queue_messages WHERE user_id = ? AND status = 'failed'`, userID).
+			Scan(&stats.TotalFailedAll)
 
-	// Total pending
-	_ = s.db.QueryRow(`SELECT COUNT(*) FROM queue_messages WHERE status = 'pending'`).
-		Scan(&stats.TotalPending)
+		// Total pending
+		_ = s.db.QueryRow(`SELECT COUNT(*) FROM queue_messages WHERE user_id = ? AND status = 'pending'`, userID).
+			Scan(&stats.TotalPending)
 
-	// Total active schedules
-	_ = s.db.QueryRow(`SELECT COUNT(*) FROM schedules WHERE is_active = 1`).
-		Scan(&stats.TotalSchedules)
-	stats.ActiveSchedules = stats.TotalSchedules
+		// Total active schedules
+		_ = s.db.QueryRow(`SELECT COUNT(*) FROM schedules WHERE user_id = ? AND is_active = 1`, userID).
+			Scan(&stats.TotalSchedules)
+		stats.ActiveSchedules = stats.TotalSchedules
 
-	// Total contacts
-	_ = s.db.QueryRow(`SELECT COUNT(*) FROM contacts`).
-		Scan(&stats.TotalContacts)
+		// Total contacts
+		_ = s.db.QueryRow(`SELECT COUNT(*) FROM contacts WHERE user_id = ?`, userID).
+			Scan(&stats.TotalContacts)
+	} else {
+		// System-wide
+		_ = s.db.QueryRow(`SELECT COUNT(*) FROM queue_messages WHERE status = 'sent' AND sent_at >= ?`, todayStart).
+			Scan(&stats.TotalSentToday)
+
+		_ = s.db.QueryRow(`SELECT COUNT(*) FROM queue_messages WHERE status IN ('sent', 'dry_run')`).
+			Scan(&stats.TotalSentAll)
+
+		_ = s.db.QueryRow(`SELECT COUNT(*) FROM queue_messages WHERE status = 'failed'`).
+			Scan(&stats.TotalFailedAll)
+
+		_ = s.db.QueryRow(`SELECT COUNT(*) FROM queue_messages WHERE status = 'pending'`).
+			Scan(&stats.TotalPending)
+
+		_ = s.db.QueryRow(`SELECT COUNT(*) FROM schedules WHERE is_active = 1`).
+			Scan(&stats.TotalSchedules)
+		stats.ActiveSchedules = stats.TotalSchedules
+
+		_ = s.db.QueryRow(`SELECT COUNT(*) FROM contacts`).
+			Scan(&stats.TotalContacts)
+	}
 
 	// Calculate success rate
 	totalAttempts := stats.TotalSentAll + stats.TotalFailedAll

@@ -42,11 +42,12 @@ const (
 
 // Client wraps whatsmeow with connection tracking, auto-reconnect, and anti-ban presence simulation
 type Client struct {
-	client     *whatsmeow.Client
-	container  *sqlstore.Container
-	hub        *realtime.Hub
-	dbPath     string
-	port       string
+	client      *whatsmeow.Client
+	container   *sqlstore.Container
+	hub         *realtime.Hub
+	dbPath      string
+	port        string
+	userID      int64
 	state       State
 	currentQR   string
 	pairingCode string
@@ -59,7 +60,7 @@ type Client struct {
 }
 
 // NewClient initializes the whatsmeow storage container and client wrapper
-func NewClient(dbPath string, hub *realtime.Hub, port string) (*Client, error) {
+func NewClient(dbPath string, hub *realtime.Hub, port string, userID int64) (*Client, error) {
 	dir := filepath.Dir(dbPath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create session directory: %w", err)
@@ -83,6 +84,7 @@ func NewClient(dbPath string, hub *realtime.Hub, port string) (*Client, error) {
 		hub:        hub,
 		dbPath:     dbPath,
 		port:       port,
+		userID:     userID,
 		state:      StateDisconnected,
 		ctx:        ctx,
 		cancelFunc: cancel,
@@ -148,7 +150,12 @@ func (c *Client) listenQR(qrChan <-chan whatsmeow.QRChannelItem) {
 				c.setState(StateNeedQR)
 				c.mu.Unlock()
 
-				c.hub.Broadcast("wa_qr", dataURL)
+				if c.hub != nil {
+					c.hub.Broadcast("wa_qr", map[string]interface{}{
+						"user_id": c.userID,
+						"qr":      dataURL,
+					})
+				}
 			}
 
 		case "timeout":
@@ -321,13 +328,20 @@ func (c *Client) Close() {
 	_ = c.container.Close()
 }
 
+func (c *Client) UserID() int64 {
+	return c.userID
+}
+
 func (c *Client) setState(s State) {
 	c.state = s
-	c.hub.Broadcast("wa_status", map[string]interface{}{
-		"state":     string(s),
-		"phone":     c.phoneJID,
-		"push_name": c.pushName,
-	})
+	if c.hub != nil {
+		c.hub.Broadcast("wa_status", map[string]interface{}{
+			"user_id":   c.userID,
+			"state":     string(s),
+			"phone":     c.phoneJID,
+			"push_name": c.pushName,
+		})
+	}
 }
 
 // Status returns current WhatsApp connection info
@@ -379,12 +393,15 @@ func (c *Client) PairPhone(ctx context.Context, phone string) (string, error) {
 	c.currentQR = ""
 	c.setState(StateNeedQR)
 
-	c.hub.Broadcast("wa_pairing_code", map[string]string{
-		"code":  code,
-		"phone": cleaned,
-	})
+	if c.hub != nil {
+		c.hub.Broadcast("wa_pairing_code", map[string]interface{}{
+			"user_id": c.userID,
+			"code":    code,
+			"phone":   cleaned,
+		})
+	}
 
-	slog.Info("WhatsApp pairing code generated", "phone", cleaned, "code", code)
+	slog.Info("WhatsApp pairing code generated", "user_id", c.userID, "phone", cleaned, "code", code)
 	return code, nil
 }
 
@@ -393,6 +410,98 @@ func (c *Client) GetPairingCode() string {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.pairingCode
+}
+
+// GroupItem represents a WhatsApp group
+type GroupItem struct {
+	JID               string `json:"jid"`
+	Name              string `json:"name"`
+	Topic             string `json:"topic"`
+	ParticipantsCount int    `json:"participants_count"`
+}
+
+// ContactItem represents a WhatsApp contact
+type ContactItem struct {
+	JID      string `json:"jid"`
+	Name     string `json:"name"`
+	Phone    string `json:"phone"`
+	PushName string `json:"push_name"`
+}
+
+// GetJoinedGroups retrieves all groups joined by this WhatsApp account
+func (c *Client) GetJoinedGroups(ctx context.Context) ([]GroupItem, error) {
+	c.mu.RLock()
+	client := c.client
+	isConnected := client != nil && client.IsConnected()
+	c.mu.RUnlock()
+
+	if !isConnected {
+		return nil, errors.New("whatsapp belum terhubung")
+	}
+
+	groups, err := client.GetJoinedGroups(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("gagal mengambil grup whatsapp: %w", err)
+	}
+
+	var res []GroupItem
+	for _, g := range groups {
+		if g == nil {
+			continue
+		}
+		count := g.ParticipantCount
+		if count == 0 && len(g.Participants) > 0 {
+			count = len(g.Participants)
+		}
+		name := g.GroupName.Name
+		if name == "" {
+			name = g.JID.String()
+		}
+		res = append(res, GroupItem{
+			JID:               g.JID.String(),
+			Name:              name,
+			Topic:             g.GroupTopic.Topic,
+			ParticipantsCount: count,
+		})
+	}
+	return res, nil
+}
+
+// GetStoredContacts retrieves contacts synced on this WhatsApp account
+func (c *Client) GetStoredContacts(ctx context.Context) ([]ContactItem, error) {
+	c.mu.RLock()
+	client := c.client
+	c.mu.RUnlock()
+
+	if client == nil || client.Store == nil || client.Store.Contacts == nil {
+		return nil, errors.New("whatsapp store belum diinisialisasi")
+	}
+
+	contacts, err := client.Store.Contacts.GetAllContacts(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("gagal mengambil kontak whatsapp: %w", err)
+	}
+
+	var res []ContactItem
+	for jid, info := range contacts {
+		name := info.FullName
+		if name == "" {
+			name = info.BusinessName
+		}
+		if name == "" {
+			name = info.PushName
+		}
+		if name == "" {
+			name = jid.User
+		}
+		res = append(res, ContactItem{
+			JID:      jid.String(),
+			Name:     name,
+			Phone:    jid.User,
+			PushName: info.PushName,
+		})
+	}
+	return res, nil
 }
 
 // FormatJID normalizes raw phone numbers or group links into WhatsApp JID

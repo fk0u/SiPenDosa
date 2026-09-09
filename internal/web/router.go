@@ -54,6 +54,11 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 	r.Get("/api/health", h.HealthzHandler) // Alias for Android MainActivity health check
 	r.Get("/ws", h.hub.HandleWS)
 
+	// Issue #4: Public Academic Schedule Portal & iCalendar .ics download
+	r.Get("/jadwal", h.PublicScheduleHandler)
+	r.Get("/public/schedule", h.PublicScheduleHandler)
+	r.Get("/jadwal/calendar.ics", h.PublicCalendarICSHandler)
+
 	// System Version & Automatic Update API
 	r.Get("/api/system/version", h.SystemVersionHandler)
 	r.Get("/api/system/update/check", h.CheckUpdateHandler)
@@ -74,8 +79,12 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 	r.Post("/api/internal/pair-phone", loopbackPairPhone)
 	r.Post("/api/whatsapp/pair-phone", loopbackPairPhone)
 
+	// Authentication routes
 	r.Get("/login", h.LoginHandler)
 	r.With(authRateLimiter.Middleware).Post("/login", h.LoginPostHandler)
+	r.Get("/login/2fa", h.Login2FAHandler)
+	r.With(authRateLimiter.Middleware).Post("/login/2fa", h.Login2FAPostHandler)
+
 	r.Get("/register", h.RegisterHandler)
 	r.With(authRateLimiter.Middleware).Post("/register", h.RegisterPostHandler)
 	r.Get("/logout", h.LogoutHandler)
@@ -150,6 +159,13 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 			set.Post("/update", h.UpdateSettingsHandler)
 			set.Post("/holidays/create", h.CreateHolidayHandler)
 			set.Post("/holidays/{id}/delete", h.DeleteHolidayHandler)
+			set.Post("/tunnel/toggle", h.ToggleTunnelHandler)
+
+			// Admin-restricted user creation (Only admins can create accounts)
+			set.Group(func(admin chi.Router) {
+				admin.Use(auth.RequireAdmin)
+				admin.Post("/users/create", h.CreateUserHandler)
+			})
 
 			// SuperAdmin-restricted sensitive endpoints (OWASP BFLA remediation)
 			set.Group(func(super chi.Router) {
@@ -166,14 +182,29 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 		// System Update Apply (Protected)
 		protected.Post("/api/system/update/apply", h.ApplyUpdateHandler)
 
-		// WhatsApp Actions API
+		// WhatsApp Actions API (Scoped to User)
 		protected.Route("/api/wa", func(war chi.Router) {
 			war.Get("/qr", h.WhatsAppQRHandler)
 			war.Post("/pair-phone", h.WhatsAppPairPhoneHandler)
 			war.Post("/reconnect", h.WhatsAppReconnectHandler)
 			war.Post("/disconnect", h.WhatsAppDisconnectHandler)
 			war.Post("/test-send", h.WhatsAppTestSendHandler)
+			war.Get("/groups", h.WhatsAppGroupsHandler)     // Issue #2
+			war.Get("/contacts", h.WhatsAppContactsHandler) // Issue #2
 		})
+		// Aliases for convenience
+		protected.Get("/api/whatsapp/groups", h.WhatsAppGroupsHandler)
+		protected.Get("/api/whatsapp/contacts", h.WhatsAppContactsHandler)
+
+		// Two-Factor Authentication API
+		protected.Route("/api/2fa", func(twofa chi.Router) {
+			twofa.Get("/setup", h.TwoFactorSetupAPIHandler)
+			twofa.Post("/enable", h.TwoFactorEnableAPIHandler)
+			twofa.Post("/disable", h.TwoFactorDisableAPIHandler)
+		})
+
+		// Tunnel status API
+		protected.Get("/api/tunnel/status", h.TunnelStatusHandler)
 	})
 
 	return r

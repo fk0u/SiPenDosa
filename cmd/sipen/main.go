@@ -23,6 +23,7 @@ import (
 	"sipen/internal/scheduler"
 	"sipen/internal/store"
 	"sipen/internal/template"
+	"sipen/internal/tunnel"
 	"sipen/internal/web"
 	"sipen/internal/whatsapp"
 	webassets "sipen/web"
@@ -83,34 +84,33 @@ func main() {
 	hub := realtime.NewHub()
 	go hub.Run()
 
-	// 7. Inisialisasi WhatsApp Engine (whatsmeow)
-	banner.LogStep("WHATSAPP", fmt.Sprintf("Menginisialisasi engine WhatsApp di %s...", cfg.WASessionPath))
-	waClient, err := whatsapp.NewClient(cfg.WASessionPath, hub, cfg.Port)
-	if err != nil {
-		slog.Error("Gagal menginisialisasi engine WhatsApp", "error", err)
-		os.Exit(1)
-	}
+	// 7. Inisialisasi WhatsApp Multi-Account Engine (whatsmeow)
+	banner.LogStep("WHATSAPP", fmt.Sprintf("Menginisialisasi WhatsApp Multi-Account Engine di %s...", cfg.WASessionPath))
+	waManager := whatsapp.NewManager(cfg.WASessionPath, hub, cfg.Port)
 
-	// 8. Inisialisasi Antrian Pesan & Anti-Ban Rate Limiter
-	queueMgr := queue.NewManager(appStore, waClient, hub)
+	// 8. Inisialisasi Cloudflare Quick Tunnel Manager (Issue #3)
+	tunnelMgr := tunnel.NewManager("data/bin", cfg.Port)
+
+	// 9. Inisialisasi Antrian Pesan & Anti-Ban Rate Limiter (Multi-Account)
+	queueMgr := queue.NewManager(appStore, waManager, hub)
 	queueMgr.Start()
 	defer queueMgr.Stop()
 
-	// 9. Inisialisasi Template Engine & Dynamic Parser
+	// 10. Inisialisasi Template Engine & Dynamic Parser
 	tmplEngine := template.NewEngine()
 
-	// 10. Inisialisasi Smart Scheduler
+	// 11. Inisialisasi Smart Scheduler
 	banner.LogStep("SCHEDULER", fmt.Sprintf("Mengaktifkan scheduler zona waktu %s (Jendela: %s - %s)...",
 		cfg.DefaultTimezone, cfg.SendWindowStart, cfg.SendWindowEnd))
 	sch := scheduler.NewScheduler(appStore, queueMgr, tmplEngine, hub)
 	sch.Start()
 	defer sch.Stop()
 
-	// 11. Inisialisasi View Renderer & HTTP Handlers
+	// 12. Inisialisasi View Renderer & HTTP Handlers
 	viewRenderer := web.NewViewRenderer(webassets.Templates(), "web/templates")
-	handlers := web.NewHandlers(cfg, appStore, authSvc, waClient, queueMgr, sch, tmplEngine, hub, viewRenderer)
+	handlers := web.NewHandlers(cfg, appStore, authSvc, waManager, tunnelMgr, queueMgr, sch, tmplEngine, hub, viewRenderer)
 
-	// 12. Rakit Router HTTP (Chi)
+	// 13. Rakit Router HTTP (Chi)
 	router := web.SetupRouter(handlers, webassets.Static(), "web/static")
 
 	serverAddr := fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
@@ -123,15 +123,20 @@ func main() {
 		IdleTimeout:       120 * time.Second,
 	}
 
-	// 13. Sambungkan WhatsApp Secara Latar Belakang (Auto-Reconnect)
+	// 14. Sambungkan WhatsApp Superadmin Default (User ID 1) Secara Latar Belakang
 	go func() {
-		banner.LogStep("WHATSAPP", "Memulai koneksi sesi WhatsApp...")
-		if err := waClient.Start(); err != nil {
+		banner.LogStep("WHATSAPP", "Memulai koneksi sesi WhatsApp akun utama...")
+		client1, err := waManager.GetClient(1)
+		if err != nil {
+			slog.Warn("Gagal memuat sesi WhatsApp akun utama", "detail", err)
+			return
+		}
+		if err := client1.Start(); err != nil {
 			slog.Warn("WhatsApp belum tertaut atau sesi terputus. Silakan scan QR via terminal atau web.", "detail", err)
 		}
 	}()
 
-	// 14. Jalankan Server HTTP di Goroutine Terpisah
+	// 15. Jalankan Server HTTP di Goroutine Terpisah
 	go func() {
 		banner.LogStep("SYSTEM", fmt.Sprintf("HTTP Web Dashboard aktif melayani di http://%s", serverAddr))
 		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -140,7 +145,7 @@ func main() {
 		}
 	}()
 
-	// 15. Tangani Sinyal Shutdown (Graceful Termination)
+	// 16. Tangani Sinyal Shutdown (Graceful Termination)
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
@@ -155,8 +160,9 @@ func main() {
 		slog.Error("Gagal mematikan server HTTP secara mulus", "error", err)
 	}
 
-	// Putuskan koneksi WhatsApp secara aman
-	waClient.Close()
+	// Matikan WhatsApp dan Tunnel secara aman
+	waManager.CloseAll()
+	_ = tunnelMgr.Stop()
 
 	banner.LogStep("DAEMON", "Seluruh subsistem SiPenDosa berhasil dimatikan dengan aman. Sampai jumpa!")
 }

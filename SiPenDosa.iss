@@ -4,7 +4,7 @@
 ; ========================================================================
 
 #define MyAppName "SiPenDosa"
-#define MyAppVersion "1.1.2"
+#define MyAppVersion "1.2.0"
 #define MyAppPublisher "SiPenDosa Team"
 #define MyAppURL "http://localhost:8473"
 #define MyAppExeName "sipen.exe"

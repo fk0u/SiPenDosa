@@ -10,10 +10,16 @@
             <h2 class="text-2xl font-black text-white tracking-tight">Jadwal Kuliah & Pengingat</h2>
             <p class="text-xs text-slate-400">Atur jadwal perkuliahan mingguan, mode H-1, template pesan, dan penerima notifikasi otomatis.</p>
         </div>
-        <button onclick="modal_add_schedule.showModal()" class="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs shadow-lg shadow-rose-600/25 transition-all duration-200 active:scale-[0.98] self-start sm:self-auto">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-            <span>Tambah Jadwal Baru</span>
-        </button>
+        <div class="flex items-center gap-2 self-start sm:self-auto">
+            <a href="/jadwal" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 font-semibold text-xs transition">
+                <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                <span>Lihat Portal Publik ↗</span>
+            </a>
+            <button onclick="modal_add_schedule.showModal()" class="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs shadow-lg shadow-rose-600/25 transition-all duration-200 active:scale-[0.98]">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                <span>Tambah Jadwal Baru</span>
+            </button>
+        </div>
     </div>
 
     <!-- Schedules Table (Double-Bezel) -->
@@ -37,7 +43,12 @@
                         {{range .Data.Schedules}}
                         <tr class="hover:bg-white/[0.02] transition-colors duration-150">
                             <td class="py-3.5 px-4">
-                                <div class="font-bold text-white text-sm tracking-tight">{{.Matkul}}</div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-white text-sm tracking-tight">{{.Matkul}}</span>
+                                    {{if .IsPublic}}
+                                    <span class="px-1.5 py-0.2 rounded text-[9px] font-mono uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Publik</span>
+                                    {{end}}
+                                </div>
                                 <div class="text-[11px] text-slate-400">{{.Title}}</div>
                                 {{if .Location}}<div class="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5"><span>📍</span> {{.Location}}</div>{{end}}
                             </td>
@@ -132,8 +143,8 @@
 
                 <div class="space-y-1">
                     <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Target Kontak Penerima</label>
-                    <select name="recipient_id" class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white text-xs">
-                        <option value="">-- Pilih Penerima / Grup --</option>
+                    <select id="schedule-recipient-select" name="recipient_id" class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white text-xs">
+                        <option value="">-- Pilih Penerima Tersimpan --</option>
                         {{range .Data.Contacts}}
                         <option value="{{.ID}}">{{.Name}} ({{.ContactType}} - {{.Phone}})</option>
                         {{end}}
@@ -141,10 +152,23 @@
                 </div>
             </div>
 
-            <div class="space-y-1">
-                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Nomor Telepon Cadangan (Opsional)</label>
-                <input type="text" name="target_phone" placeholder="Jika tidak memilih penerima di atas (08... / 628... / ID grup)"
+            <!-- Issue #2: WhatsApp Group & Contact Picker Integration -->
+            <div class="space-y-1 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+                <div class="flex items-center justify-between gap-2 mb-1.5">
+                    <label class="text-[11px] font-bold uppercase tracking-wider text-rose-400">Nomor Telepon / JID WhatsApp Tujuan</label>
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" onclick="openWAPicker('groups')" class="px-2 py-0.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold transition flex items-center gap-1">
+                            <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            Pilih Grup WA
+                        </button>
+                        <button type="button" onclick="openWAPicker('contacts')" class="px-2 py-0.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold transition flex items-center gap-1">
+                            Pilih Kontak WA
+                        </button>
+                    </div>
+                </div>
+                <input type="text" id="schedule-target-phone" name="target_phone" placeholder="Ketik nomor (08... / 628...) atau pilih grup WhatsApp di atas"
                        class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white font-mono text-xs" />
+                <div class="text-[10px] text-slate-500">Jika memilih dari grup WA, pesan akan dikirim otomatis ke grup tersebut.</div>
             </div>
 
             <div class="grid grid-cols-3 gap-3">
@@ -214,15 +238,22 @@
                 </select>
             </div>
 
-            <div class="flex gap-6 py-2">
+            <!-- Toggles for Active, Public Schedule, and Dry Run -->
+            <div class="flex flex-wrap items-center gap-4 py-2 border-t border-white/[0.06]">
                 <label class="cursor-pointer flex items-center gap-2">
                     <input type="checkbox" name="is_active" checked class="w-4 h-4 rounded bg-white/[0.05] border border-white/[0.1] text-rose-600 focus:ring-0 focus:ring-offset-0 transition cursor-pointer" />
                     <span class="text-xs text-slate-300">Aktifkan Otomatis</span>
                 </label>
 
+                <!-- Issue #4: Public Schedule Toggle -->
+                <label class="cursor-pointer flex items-center gap-2">
+                    <input type="checkbox" name="is_public" checked class="w-4 h-4 rounded bg-white/[0.05] border border-white/[0.1] text-indigo-500 focus:ring-0 focus:ring-offset-0 transition cursor-pointer" />
+                    <span class="text-xs text-indigo-300 font-semibold">Tampilkan di Portal Publik</span>
+                </label>
+
                 <label class="cursor-pointer flex items-center gap-2">
                     <input type="checkbox" name="dry_run" class="w-4 h-4 rounded bg-white/[0.05] border border-white/[0.1] text-amber-500 focus:ring-0 focus:ring-offset-0 transition cursor-pointer" />
-                    <span class="text-xs text-slate-300">Dry Run (Simulasi Saja)</span>
+                    <span class="text-xs text-slate-300">Dry Run (Simulasi)</span>
                 </label>
             </div>
 
@@ -260,11 +291,34 @@
     <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
 
-<script>
-function openTriggerModal(id, matkul) {
-    document.getElementById('form-trigger-schedule').action = '/schedules/' + id + '/trigger';
-    document.getElementById('trigger-matkul-name').innerText = matkul;
-    modal_trigger_schedule.showModal();
-}
-</script>
+<!-- Issue #2: Modal WhatsApp Group & Contact Picker -->
+<dialog id="modal_wa_picker" class="modal">
+    <div class="modal-box bg-[#0c0e14] border border-white/10 max-w-md p-6 rounded-3xl shadow-2xl space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+            <div>
+                <h3 id="wa-picker-title" class="font-bold text-white text-base">Pilih WhatsApp</h3>
+                <p id="wa-picker-subtitle" class="text-xs text-slate-400">Memuat data dari sesi WhatsApp...</p>
+            </div>
+            <button type="button" onclick="modal_wa_picker.close()" class="btn btn-xs btn-ghost text-slate-400">✕</button>
+        </div>
+
+        <input type="text" id="wa-picker-search" oninput="filterWAPickerItems()" placeholder="Cari nama atau nomor..."
+               class="w-full px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/10 focus:border-rose-500 text-white text-xs outline-none" />
+
+        <div id="wa-picker-loading" class="py-8 text-center text-xs text-slate-500 space-y-2">
+            <span class="loading loading-spinner loading-sm text-rose-500"></span>
+            <div>Mengambil daftar dari WhatsApp...</div>
+        </div>
+
+        <div id="wa-picker-list" class="space-y-1.5 max-h-64 overflow-y-auto pr-1 hidden">
+            <!-- Items injected by JS -->
+        </div>
+
+        <div class="modal-action justify-end pt-2">
+            <button type="button" onclick="modal_wa_picker.close()" class="btn btn-xs btn-ghost rounded-full text-slate-400">Tutup</button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
 {{end}}

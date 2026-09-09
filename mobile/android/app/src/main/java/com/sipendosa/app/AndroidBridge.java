@@ -16,7 +16,7 @@ public class AndroidBridge {
 
     @JavascriptInterface
     public String getAppVersion() {
-        return "1.1.2";
+        return "1.2.0";
     }
 
     @JavascriptInterface

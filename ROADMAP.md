@@ -7,7 +7,7 @@ Dokumen ini merangkum rencana pengembangan fitur masa depan untuk **SiPenDosa** 
 ## 📌 Fitur Mendatang (Upcoming Features)
 
 ### 1. 👥 Dynamic WhatsApp Group & Contact Picker Dropdown
-* **Status**: Direncanakan (Roadmap v1.2.0)
+* **Status**: ✅ Selesai & Dirilis (Shipped in v1.2.0)
 * **GitHub Issue**: [#2](https://github.com/fk0u/SiPenDosa/issues/2)
 * **Masalah**: Pengguna kesulitan mencari dan menyalin **WhatsApp Group JID** (`... @g.us`) secara manual saat ingin mengirimkan pengingat ke grup kelas/praktikum.
 * **Solusi & Rencana**:
@@ -22,7 +22,7 @@ Dokumen ini merangkum rencana pengembangan fitur masa depan untuk **SiPenDosa** 
 ---
 
 ### 2. 🌐 Built-in Zero-Config Public Tunneling (Akses Global Otomatis)
-* **Status**: Direncanakan (Roadmap v1.2.0)
+* **Status**: ✅ Selesai & Dirilis (Shipped in v1.2.0)
 * **GitHub Issue**: [#3](https://github.com/fk0u/SiPenDosa/issues/3)
 * **Masalah**: SiPenDosa berjalan di localhost / LAN lokal. Pengguna yang menjalankan SiPenDosa di laptop/server lokal kesulitan mengaksesnya dari jaringan luar (internet publik) tanpa port forwarding atau IP publik statis.
 * **Solusi & Rencana**:
@@ -34,7 +34,7 @@ Dokumen ini merangkum rencana pengembangan fitur masa depan untuk **SiPenDosa** 
 ---
 
 ### 3. 📅 Public Academic Schedule Board / Portal (`/jadwal/public`)
-* **Status**: Direncanakan (Roadmap v1.2.0)
+* **Status**: ✅ Selesai & Dirilis (Shipped in v1.2.0)
 * **GitHub Issue**: [#4](https://github.com/fk0u/SiPenDosa/issues/4)
 * **Masalah**: Teman sekelas atau mahasiswa sering membutuhkan informasi jadwal kuliah, lokasi ruangan/gedung, dan dosen pengampu secara transparan tanpa perlu hak akses admin.
 * **Solusi & Rencana**:

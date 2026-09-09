@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="night" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Papan Jadwal Perkuliahan — SiPenDosa</title>
+    <meta name="description" content="Portal jadwal kuliah, ruangan, dan dosen pengampu real-time berbasis SiPenDosa." />
+
+    <!-- Tailwind CSS & DaisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Menlo', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #08090d;
+            color: #f1f5f9;
+        }
+        .bezel-card {
+            background: rgba(18, 19, 26, 0.75);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.08), 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+        }
+        .bezel-outer {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="min-h-screen selection:bg-rose-600 selection:text-white relative pb-16">
+
+    <!-- Ambient Glow Orbs -->
+    <div class="fixed top-10 left-1/4 w-96 h-96 bg-rose-600/10 rounded-full blur-[160px] pointer-events-none -z-10"></div>
+    <div class="fixed top-1/2 right-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-[160px] pointer-events-none -z-10"></div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-white/[0.08] bg-[#08090d]/80 backdrop-blur-xl sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-700 via-rose-600 to-amber-500 flex items-center justify-center shadow-lg shadow-rose-600/30 border border-white/20">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                </div>
+                <div>
+                    <span class="font-extrabold text-white text-base tracking-tight block">SiPenDosa</span>
+                    <span class="text-[10px] text-slate-400 block -mt-1 font-mono">Papan Jadwal Perkuliahan</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2.5">
+                <a href="/jadwal/calendar.ics" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <span>Unduh Kalender (.ics)</span>
+                </a>
+                <a href="/login" class="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 hover:text-white border border-white/[0.08] text-xs font-medium transition">
+                    <span>Masuk Admin</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
+        
+        <!-- Hero & Countdown Section -->
+        <div class="bezel-outer p-1.5 rounded-3xl">
+            <div class="bezel-card rounded-[22px] p-6 sm:p-8 space-y-6">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-white/[0.06]">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold mb-2">
+                            <span class="w-2 h-2 rounded-full bg-rose-400 animate-pulse"></span>
+                            Portal Akademik Publik
+                        </div>
+                        <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Jadwal Kuliah & Ruangan</h1>
+                        <p class="text-xs sm:text-sm text-slate-400 mt-1">Informasi waktu, ruangan, dan dosen pengampu perkuliahan secara transparan.</p>
+                    </div>
+
+                    <!-- Live Clock -->
+                    <div class="p-3 rounded-2xl bg-white/[0.02] border border-white/[0.06] text-right">
+                        <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400">Waktu Sekarang</div>
+                        <div id="live-clock" class="text-xl sm:text-2xl font-mono font-extrabold text-white tracking-wider">--:--:--</div>
+                        <div id="live-date" class="text-[11px] text-slate-400 font-medium">Memuat tanggal...</div>
+                    </div>
+                </div>
+
+                <!-- Next Upcoming Class Banner -->
+                <div id="next-class-banner" class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-rose-950/40 via-amber-950/20 to-black/40 border border-rose-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">Kuliah Berikutnya</span>
+                            <span id="next-class-day" class="text-xs font-semibold text-slate-300"></span>
+                        </div>
+                        <h3 id="next-class-title" class="text-lg font-extrabold text-white">Menghitung jadwal...</h3>
+                        <p id="next-class-meta" class="text-xs text-slate-400">Lokasi & Dosen pengampu</p>
+                    </div>
+                    <div class="text-left sm:text-right">
+                        <div class="text-[11px] font-mono text-slate-400">Dimulai dalam:</div>
+                        <div id="next-class-countdown" class="text-xl sm:text-2xl font-mono font-extrabold text-amber-400">--:--:--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls: Day Filter & Search -->
+        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+            
+            <!-- Day Filter Tabs -->
+            <div class="flex flex-wrap gap-1.5 p-1 rounded-2xl bg-white/[0.03] border border-white/[0.08] max-w-fit">
+                <button onclick="filterDay('all')" class="day-tab px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-rose-600 text-white" data-day="all">Semua</button>
+                <button onclick="filterDay('today')" class="day-tab px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition" data-day="today">Hari Ini</button>
+                <button onclick="filterDay('1')" class="day-tab px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition" data-day="1">Senin</button>
+                <button onclick="filterDay('2')" class="day-tab px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition" data-day="2">Selasa</button>
+                <button onclick="filterDay('3')" class="day-tab px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition" data-day="3">Rabu</button>
+                <button onclick="filterDay('4')" class="day-tab px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition" data-day="4">Kamis</button>
+                <button onclick="filterDay('5')" class="day-tab px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition" data-day="5">Jumat</button>
+                <button onclick="filterDay('6')" class="day-tab px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition" data-day="6">Sabtu</button>
+            </div>
+
+            <!-- Search Input -->
+            <div class="relative w-full md:w-72">
+                <svg class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input id="search-input" type="text" placeholder="Cari mata kuliah, ruangan, dosen..." oninput="filterSearch()"
+                       class="w-full pl-9 pr-3.5 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-rose-500/50 text-xs text-white placeholder-slate-500 outline-none transition" />
+            </div>
+        </div>
+
+        <!-- Schedule Cards Grid -->
+        <div id="schedule-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {{if .Data.Schedules}}
+            {{range .Data.Schedules}}
+            <div class="schedule-card bezel-outer p-1 rounded-2xl" 
+                 data-day="{{.DayOfWeek}}"
+                 data-start="{{.StartTime}}"
+                 data-title="{{lower .Matkul}}"
+                 data-dosen="{{lower .DosenName}}"
+                 data-location="{{lower .Location}}">
+                <div class="bezel-card rounded-xl p-5 flex flex-col justify-between h-full space-y-4">
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase bg-white/[0.05] border border-white/[0.08] text-slate-300">
+                                {{dayName .DayOfWeek}}
+                            </span>
+                            <span class="font-mono text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+                                {{.StartTime}} - {{.EndTime}}
+                            </span>
+                        </div>
+
+                        <div>
+                            <h3 class="text-base font-extrabold text-white leading-snug tracking-tight">{{.Matkul}}</h3>
+                            {{if .Title}}<p class="text-xs text-slate-400 mt-0.5">{{.Title}}</p>{{end}}
+                        </div>
+
+                        <div class="space-y-1.5 pt-1 text-xs">
+                            <div class="flex items-center gap-2 text-slate-300">
+                                <svg class="w-4 h-4 text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                <span class="font-medium text-slate-200">{{if .Location}}{{.Location}}{{else}}<span class="text-slate-500 italic">Ruangan belum ditentukan</span>{{end}}</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-slate-300">
+                                <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                <span class="text-slate-300">{{if .DosenName}}{{.DosenName}}{{else}}<span class="text-slate-500 italic">Dosen belum dipilih</span>{{end}}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{if .LinkGroup}}
+                    <div class="pt-3 border-t border-white/[0.06]">
+                        <a href="{{.LinkGroup}}" target="_blank" rel="noopener noreferrer" class="w-full py-2 px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-xs font-semibold flex items-center justify-center gap-1.5 border border-emerald-500/20 transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                            <span>Grup Kelas / Perkuliahan</span>
+                        </a>
+                    </div>
+                    {{end}}
+
+                </div>
+            </div>
+            {{end}}
+            {{else}}
+            <div class="col-span-full py-16 text-center space-y-3">
+                <div class="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto text-slate-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+                <div class="text-sm font-bold text-white">Belum Ada Jadwal Publik</div>
+                <p class="text-xs text-slate-500 max-w-sm mx-auto">Admin belum mempublikasikan jadwal perkuliahan ke portal ini. Silakan hubungi pengurus kelas.</p>
+            </div>
+            {{end}}
+        </div>
+
+        <div id="no-results" class="hidden py-16 text-center space-y-2">
+            <div class="text-sm font-bold text-white">Tidak Ada Jadwal yang Cocok</div>
+            <p class="text-xs text-slate-500">Coba ubah kata kunci pencarian atau pilih tab hari lain.</p>
+        </div>
+
+    </main>
+
+    <footer class="mt-16 border-t border-white/[0.06] pt-8 text-center text-xs text-slate-500">
+        <p>SiPenDosa — Sistem Pengingat Dosen Saatnya &copy; {{.CurrentYear}}</p>
+    </footer>
+
+    <!-- Interactive Client Script -->
+    <script>
+        let currentDayFilter = 'all';
+
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+            const dateStr = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            
+            const clockEl = document.getElementById('live-clock');
+            const dateEl = document.getElementById('live-date');
+            if (clockEl) clockEl.innerText = timeStr;
+            if (dateEl) dateEl.innerText = dateStr;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        function filterDay(day) {
+            currentDayFilter = day;
+            document.querySelectorAll('.day-tab').forEach(b => {
+                if (b.getAttribute('data-day') === day) {
+                    b.className = 'day-tab px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-rose-600 text-white';
+                } else {
+                    b.className = 'day-tab px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition';
+                }
+            });
+            applyFilters();
+        }
+
+        function filterSearch() {
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const query = (document.getElementById('search-input').value || '').trim().toLowerCase();
+            const cards = document.querySelectorAll('.schedule-card');
+            const todayDay = new Date().getDay().toString();
+            let visibleCount = 0;
+
+            cards.forEach(card => {
+                const cardDay = card.getAttribute('data-day');
+                const title = card.getAttribute('data-title') || '';
+                const dosen = card.getAttribute('data-dosen') || '';
+                const location = card.getAttribute('data-location') || '';
+
+                let matchesDay = false;
+                if (currentDayFilter === 'all') {
+                    matchesDay = true;
+                } else if (currentDayFilter === 'today') {
+                    matchesDay = cardDay === todayDay;
+                } else {
+                    matchesDay = cardDay === currentDayFilter;
+                }
+
+                let matchesSearch = true;
+                if (query !== '') {
+                    matchesSearch = title.includes(query) || dosen.includes(query) || location.includes(query);
+                }
+
+                if (matchesDay && matchesSearch) {
+                    card.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            const noResults = document.getElementById('no-results');
+            if (noResults) {
+                if (visibleCount === 0 && cards.length > 0) {
+                    noResults.classList.remove('hidden');
+                } else {
+                    noResults.classList.add('hidden');
+                }
+            }
+        }
+
+        // Live Countdown Calculation
+        function updateUpcomingCountdown() {
+            const cards = Array.from(document.querySelectorAll('.schedule-card'));
+            if (cards.length === 0) return;
+
+            const now = new Date();
+            const currentDay = now.getDay();
+            const currentHours = now.getHours();
+            const currentMinutes = now.getMinutes();
+            const currentTotalMins = currentHours * 60 + currentMinutes;
+
+            let upcoming = null;
+            let minDiffMins = Infinity;
+
+            cards.forEach(card => {
+                const day = parseInt(card.getAttribute('data-day'));
+                const startStr = card.getAttribute('data-start') || '00:00';
+                const parts = startStr.split(':');
+                const startHours = parseInt(parts[0]) || 0;
+                const startMins = parseInt(parts[1]) || 0;
+                const scheduleTotalMins = startHours * 60 + startMins;
+
+                let dayDiff = (day - currentDay + 7) % 7;
+                let diffMins = dayDiff * 24 * 60 + (scheduleTotalMins - currentTotalMins);
+
+                // If scheduled for today but already past by more than 90 minutes, consider next week
+                if (diffMins < -90) {
+                    diffMins += 7 * 24 * 60;
+                }
+
+                if (diffMins > 0 && diffMins < minDiffMins) {
+                    minDiffMins = diffMins;
+                    upcoming = {
+                        title: card.querySelector('h3').innerText,
+                        dayName: card.querySelector('.font-mono').innerText,
+                        meta: card.querySelector('.text-slate-200')?.innerText || '',
+                        dosen: card.querySelector('.text-slate-300')?.innerText || '',
+                        diffMins: diffMins,
+                    };
+                }
+            });
+
+            if (upcoming) {
+                document.getElementById('next-class-title').innerText = upcoming.title;
+                document.getElementById('next-class-day').innerText = upcoming.dayName;
+                document.getElementById('next-class-meta').innerText = `${upcoming.meta} • ${upcoming.dosen}`;
+
+                const hours = Math.floor(upcoming.diffMins / 60);
+                const mins = upcoming.diffMins % 60;
+                const secs = 59 - now.getSeconds();
+
+                if (hours > 24) {
+                    const days = Math.floor(hours / 24);
+                    document.getElementById('next-class-countdown').innerText = `${days} hari lagi`;
+                } else {
+                    document.getElementById('next-class-countdown').innerText = 
+                        `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                }
+            } else {
+                document.getElementById('next-class-title').innerText = "Tidak ada kuliah dalam waktu dekat";
+                document.getElementById('next-class-countdown').innerText = "--";
+            }
+        }
+
+        setInterval(updateUpcomingCountdown, 1000);
+        updateUpcomingCountdown();
+    </script>
+</body>
+</html>

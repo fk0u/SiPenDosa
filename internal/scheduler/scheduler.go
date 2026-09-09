@@ -189,7 +189,7 @@ func (s *Scheduler) fireSchedule(sc store.ScheduleDetail, lectureDate time.Time,
 
 	// Resolve student/komti contact
 	var studentContact *store.Contact
-	contacts, _ := s.store.ListContacts("komti")
+	contacts, _ := s.store.ListContacts(sc.UserID, "komti")
 	if len(contacts) > 0 {
 		studentContact = &contacts[0]
 	}
@@ -222,6 +222,7 @@ func (s *Scheduler) fireSchedule(sc store.ScheduleDetail, lectureDate time.Time,
 	}
 
 	qm := &store.QueueMessage{
+		UserID:        sc.UserID,
 		ScheduleID:    sql.NullInt64{Int64: sc.ID, Valid: true},
 		RecipientJID:  targetPhone,
 		RecipientName: sc.RecipientName,
@@ -280,7 +281,7 @@ func (s *Scheduler) TriggerScheduleManually(scheduleID int64, dryRun bool) (*sto
 	}
 
 	var studentContact *store.Contact
-	contacts, _ := s.store.ListContacts("komti")
+	contacts, _ := s.store.ListContacts(sc.UserID, "komti")
 	if len(contacts) > 0 {
 		studentContact = &contacts[0]
 	}
@@ -314,6 +315,7 @@ func (s *Scheduler) TriggerScheduleManually(scheduleID int64, dryRun bool) (*sto
 	}
 
 	qm := &store.QueueMessage{
+		UserID:        sc.UserID,
 		ScheduleID:    sql.NullInt64{Int64: sc.ID, Valid: true},
 		RecipientJID:  targetPhone,
 		RecipientName: recipientName,

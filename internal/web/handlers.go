@@ -21,6 +21,8 @@ import (
 	"sipen/internal/scheduler"
 	"sipen/internal/store"
 	"sipen/internal/template"
+	"sipen/internal/totp"
+	"sipen/internal/tunnel"
 	"sipen/internal/updater"
 	"sipen/internal/version"
 	"sipen/internal/whatsapp"
@@ -33,7 +35,8 @@ type Handlers struct {
 	cfg        *config.Config
 	store      *store.Store
 	authSvc    *auth.Service
-	waClient   *whatsapp.Client
+	waManager  *whatsapp.Manager
+	tunnelMgr  *tunnel.Manager
 	queueMgr   *queue.Manager
 	scheduler  *scheduler.Scheduler
 	tmplEngine *template.Engine
@@ -47,7 +50,8 @@ func NewHandlers(
 	cfg *config.Config,
 	s *store.Store,
 	a *auth.Service,
-	wa *whatsapp.Client,
+	wam *whatsapp.Manager,
+	tun *tunnel.Manager,
 	q *queue.Manager,
 	sch *scheduler.Scheduler,
 	t *template.Engine,
@@ -58,7 +62,8 @@ func NewHandlers(
 		cfg:        cfg,
 		store:      s,
 		authSvc:    a,
-		waClient:   wa,
+		waManager:  wam,
+		tunnelMgr:  tun,
 		queueMgr:   q,
 		scheduler:  sch,
 		tmplEngine: t,
@@ -66,6 +71,29 @@ func NewHandlers(
 		renderer:   r,
 		updater:    updater.NewManager(),
 	}
+}
+
+// Helper to retrieve the isolated WhatsApp client for the authenticated user
+func (h *Handlers) getActiveWAClient(r *http.Request) *whatsapp.Client {
+	user := auth.GetUserFromContext(r.Context())
+	var uid int64 = 1
+	if user != nil && user.ID > 0 {
+		uid = user.ID
+	}
+	client, err := h.waManager.GetClient(uid)
+	if err != nil {
+		slog.Error("Failed to get WA client for user", "user_id", uid, "err", err)
+	}
+	return client
+}
+
+// Helper to retrieve the current user ID
+func (h *Handlers) getActiveUserID(r *http.Request) int64 {
+	user := auth.GetUserFromContext(r.Context())
+	if user != nil && user.ID > 0 {
+		return user.ID
+	}
+	return 1
 }
 
 // ==========================================
@@ -107,6 +135,20 @@ func (h *Handlers) LoginPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if 2FA is enabled for this account
+	if user.TwoFactorEnabled {
+		challengeID, err := h.authSvc.Create2FAChallenge(user.ID)
+		if err != nil {
+			h.renderer.RenderPlain(w, "auth/login.html", PageData{
+				Title:      "Masuk — SiPenDosa",
+				FlashError: "Gagal membuat sesi 2FA: " + err.Error(),
+			})
+			return
+		}
+		http.Redirect(w, r, "/login/2fa?challenge="+challengeID, http.StatusSeeOther)
+		return
+	}
+
 	token, err := h.authSvc.CreateSession(user.ID)
 	if err != nil {
 		h.renderer.RenderPlain(w, "auth/login.html", PageData{
@@ -121,21 +163,68 @@ func (h *Handlers) LoginPostHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
+func (h *Handlers) Login2FAHandler(w http.ResponseWriter, r *http.Request) {
+	challenge := strings.TrimSpace(r.URL.Query().Get("challenge"))
+	if challenge == "" {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	h.renderer.RenderPlain(w, "auth/two_factor.html", PageData{
+		Title: "Verifikasi Dua Langkah (2FA) — SiPenDosa",
+		Data: map[string]interface{}{
+			"Challenge": challenge,
+		},
+	})
+}
+
+func (h *Handlers) Login2FAPostHandler(w http.ResponseWriter, r *http.Request) {
+	_ = r.ParseForm()
+	challenge := strings.TrimSpace(r.FormValue("challenge"))
+	code := strings.TrimSpace(r.FormValue("code"))
+
+	user, err := h.authSvc.Verify2FA(challenge, code)
+	if err != nil {
+		h.renderer.RenderPlain(w, "auth/two_factor.html", PageData{
+			Title:      "Verifikasi Dua Langkah (2FA) — SiPenDosa",
+			FlashError: "Kode autentikasi 2FA tidak valid atau telah kadaluarsa.",
+			Data: map[string]interface{}{
+				"Challenge": challenge,
+			},
+		})
+		return
+	}
+
+	token, err := h.authSvc.CreateSession(user.ID)
+	if err != nil {
+		h.renderer.RenderPlain(w, "auth/two_factor.html", PageData{
+			Title:      "Verifikasi Dua Langkah (2FA) — SiPenDosa",
+			FlashError: "Gagal membuat sesi login.",
+			Data: map[string]interface{}{
+				"Challenge": challenge,
+			},
+		})
+		return
+	}
+
+	auth.SetSessionCookie(w, token)
+	h.store.AddActivityLog("auth", "User Login 2FA Berhasil", "Username: "+user.Username)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
 func (h *Handlers) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	count, _ := h.store.CountUsers()
 	isFirstUser := count == 0
 
+	// If superadmin already exists, public registration is completely closed!
 	if !isFirstUser {
-		settings, err := h.store.GetSettings()
-		if err != nil || !settings.RegistrationOpen {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
-			return
-		}
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
 	}
 
 	h.renderer.RenderPlain(w, "auth/register.html", PageData{
-		Title:          "Pendaftaran — SiPenDosa",
-		IsRegistration: isFirstUser,
+		Title:          "Inisialisasi Superadmin — SiPenDosa",
+		IsRegistration: true,
 	})
 }
 
@@ -148,9 +237,18 @@ func (h *Handlers) RegisterPostHandler(w http.ResponseWriter, r *http.Request) {
 	count, _ := h.store.CountUsers()
 	isFirstUser := count == 0
 
+	// Disallow public registration if user already exists
+	if !isFirstUser {
+		h.renderer.RenderPlain(w, "auth/register.html", PageData{
+			Title:      "Pendaftaran Ditutup — SiPenDosa",
+			FlashError: "Pendaftaran publik dinonaktifkan. Akun baru hanya dapat dibuat oleh Administrator melalui Pengaturan.",
+		})
+		return
+	}
+
 	if username == "" || len(password) < 6 {
 		h.renderer.RenderPlain(w, "auth/register.html", PageData{
-			Title:          "Pendaftaran — SiPenDosa",
+			Title:          "Inisialisasi Superadmin — SiPenDosa",
 			IsRegistration: isFirstUser,
 			FlashError:     "Username wajib diisi dan kata sandi minimal 6 karakter.",
 		})
@@ -159,23 +257,17 @@ func (h *Handlers) RegisterPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	if password != confirmPassword {
 		h.renderer.RenderPlain(w, "auth/register.html", PageData{
-			Title:          "Pendaftaran — SiPenDosa",
+			Title:          "Inisialisasi Superadmin — SiPenDosa",
 			IsRegistration: isFirstUser,
 			FlashError:     "Konfirmasi kata sandi tidak cocok.",
 		})
 		return
 	}
 
-	var err error
-	if isFirstUser {
-		_, err = h.authSvc.RegisterFirstUser(username, password)
-	} else {
-		_, err = h.authSvc.RegisterUser(username, password, "admin", false)
-	}
-
+	_, err := h.authSvc.RegisterFirstUser(username, password)
 	if err != nil {
 		h.renderer.RenderPlain(w, "auth/register.html", PageData{
-			Title:          "Pendaftaran — SiPenDosa",
+			Title:          "Inisialisasi Superadmin — SiPenDosa",
 			IsRegistration: isFirstUser,
 			FlashError:     err.Error(),
 		})
@@ -195,11 +287,195 @@ func (h *Handlers) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // ==========================================
+// 2FA Management API (Protected)
+// ==========================================
+
+func (h *Handlers) TwoFactorSetupAPIHandler(w http.ResponseWriter, r *http.Request) {
+	user := auth.GetUserFromContext(r.Context())
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	secret, err := totp.GenerateSecret(20)
+	if err != nil {
+		http.Error(w, "Gagal membuat rahasia 2FA: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	qrCode, err := totp.GenerateQRCodeDataURL(user.Username, secret, "SiPenDosa")
+	if err != nil {
+		http.Error(w, "Gagal membuat QR code 2FA: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"secret":  secret,
+		"qr_code": qrCode,
+	})
+}
+
+func (h *Handlers) TwoFactorEnableAPIHandler(w http.ResponseWriter, r *http.Request) {
+	user := auth.GetUserFromContext(r.Context())
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var req struct {
+		Secret string `json:"secret"`
+		Code   string `json:"code"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	req.Secret = strings.TrimSpace(req.Secret)
+	req.Code = strings.TrimSpace(req.Code)
+
+	if !totp.ValidatePasscode(req.Secret, req.Code, 1) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Kode verifikasi 6-digit salah atau kadaluarsa. Pastikan jam pada perangkat Anda akurat.",
+		})
+		return
+	}
+
+	if err := h.store.UpdateUser2FA(user.ID, req.Secret, true); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Gagal menyimpan status 2FA: " + err.Error(),
+		})
+		return
+	}
+
+	h.store.AddActivityLog("auth", "2FA Diaktifkan", fmt.Sprintf("User %s mengaktifkan 2FA", user.Username))
+	h.hub.BroadcastToast("success", "Two-Factor Authentication (2FA) berhasil diaktifkan!")
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Two-Factor Authentication berhasil diaktifkan.",
+	})
+}
+
+func (h *Handlers) TwoFactorDisableAPIHandler(w http.ResponseWriter, r *http.Request) {
+	user := auth.GetUserFromContext(r.Context())
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var req struct {
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	// Verify current password before disabling
+	if _, err := h.authSvc.Authenticate(user.Username, req.Password); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Kata sandi saat ini tidak valid.",
+		})
+		return
+	}
+
+	if err := h.store.UpdateUser2FA(user.ID, "", false); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Gagal menonaktifkan 2FA: " + err.Error(),
+		})
+		return
+	}
+
+	h.store.AddActivityLog("auth", "2FA Dinonaktifkan", fmt.Sprintf("User %s menonaktifkan 2FA", user.Username))
+	h.hub.BroadcastToast("info", "Two-Factor Authentication telah dinonaktifkan.")
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Two-Factor Authentication berhasil dinonaktifkan.",
+	})
+}
+
+// ==========================================
+// Admin-Only User Management Handlers
+// ==========================================
+
+func (h *Handlers) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
+	_ = r.ParseForm()
+	username := strings.TrimSpace(r.FormValue("username"))
+	password := r.FormValue("password")
+	role := strings.TrimSpace(r.FormValue("role"))
+	if role != "admin" {
+		role = "user"
+	}
+
+	currentUser := auth.GetUserFromContext(r.Context())
+	if currentUser == nil || (currentUser.Role != "admin" && currentUser.Role != "superadmin") {
+		http.Error(w, "Akses ditolak: Hanya administrator yang dapat membuat akun", http.StatusForbidden)
+		return
+	}
+
+	if username == "" || len(password) < 6 {
+		h.hub.BroadcastToast("error", "Username wajib diisi dan kata sandi minimal 6 karakter.")
+		http.Redirect(w, r, "/settings", http.StatusSeeOther)
+		return
+	}
+
+	newUser, err := h.authSvc.RegisterUser(username, password, role, true)
+	if err != nil {
+		h.hub.BroadcastToast("error", "Gagal membuat akun: "+err.Error())
+		http.Redirect(w, r, "/settings", http.StatusSeeOther)
+		return
+	}
+
+	h.store.AddActivityLog("user_management", "Akun Baru Dibuat", fmt.Sprintf("Admin %s membuat akun %s (Role: %s)", currentUser.Username, newUser.Username, newUser.Role))
+	h.hub.BroadcastToast("success", fmt.Sprintf("Akun %s (%s) berhasil dibuat!", newUser.Username, newUser.Role))
+	http.Redirect(w, r, "/settings", http.StatusSeeOther)
+}
+
+func (h *Handlers) DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, _ := strconv.ParseInt(idStr, 10, 64)
+
+	currentUser := auth.GetUserFromContext(r.Context())
+	if currentUser != nil && currentUser.ID == id {
+		h.hub.BroadcastToast("error", "Anda tidak dapat menghapus akun Anda sendiri.")
+		http.Redirect(w, r, "/settings", http.StatusSeeOther)
+		return
+	}
+
+	// Close WhatsApp client for this user if running
+	h.waManager.CloseClient(id)
+
+	_ = h.store.DeleteUser(id)
+	h.store.AddActivityLog("user_management", "Akun Pengguna Dihapus", fmt.Sprintf("User ID %d dihapus", id))
+	h.hub.BroadcastToast("info", "Pengguna telah dihapus.")
+	http.Redirect(w, r, "/settings", http.StatusSeeOther)
+}
+
+// ==========================================
 // Overview Dashboard
 // ==========================================
 
 func (h *Handlers) OverviewHandler(w http.ResponseWriter, r *http.Request) {
-	stats, err := h.store.GetDashboardStats()
+	userID := h.getActiveUserID(r)
+	stats, err := h.store.GetDashboardStats(userID)
 	if err != nil || stats == nil {
 		slog.Error("Failed getting dashboard stats, using safe defaults", "err", err)
 		stats = &store.DashboardStats{
@@ -207,10 +483,17 @@ func (h *Handlers) OverviewHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	waState, waPhone, waPushName, waQR := h.waClient.Status()
-	recentMessages, _ := h.store.ListQueueMessages("", 6)
+	waClient := h.getActiveWAClient(r)
+	var waState whatsapp.State = whatsapp.StateDisconnected
+	var waPhone, waPushName, waQR string
+	if waClient != nil {
+		waState, waPhone, waPushName, waQR = waClient.Status()
+	}
+
+	recentMessages, _ := h.store.ListQueueMessages(userID, "", 6)
 	nextInfo := h.scheduler.GetNextDeliveryInfo()
 	settings, _ := h.store.GetSettings()
+	tunnelStatus := h.tunnelMgr.Status()
 
 	data := map[string]interface{}{
 		"Stats":          stats,
@@ -221,6 +504,7 @@ func (h *Handlers) OverviewHandler(w http.ResponseWriter, r *http.Request) {
 		"RecentMessages": recentMessages,
 		"NextDelivery":   nextInfo,
 		"Settings":       settings,
+		"Tunnel":         tunnelStatus,
 	}
 
 	h.renderer.Render(w, r, "pages/overview.html", PageData{
@@ -235,8 +519,9 @@ func (h *Handlers) OverviewHandler(w http.ResponseWriter, r *http.Request) {
 // ==========================================
 
 func (h *Handlers) ContactsHandler(w http.ResponseWriter, r *http.Request) {
+	userID := h.getActiveUserID(r)
 	filterType := r.URL.Query().Get("type")
-	contacts, err := h.store.ListContacts(filterType)
+	contacts, err := h.store.ListContacts(userID, filterType)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -256,7 +541,10 @@ func (h *Handlers) ContactsHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) CreateContactHandler(w http.ResponseWriter, r *http.Request) {
 	_ = r.ParseForm()
+	userID := h.getActiveUserID(r)
+
 	c := &store.Contact{
+		UserID:      userID,
 		Name:        strings.TrimSpace(r.FormValue("name")),
 		Phone:       strings.TrimSpace(r.FormValue("phone")),
 		ContactType: r.FormValue("contact_type"),
@@ -284,10 +572,12 @@ func (h *Handlers) CreateContactHandler(w http.ResponseWriter, r *http.Request) 
 func (h *Handlers) UpdateContactHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, _ := strconv.ParseInt(idStr, 10, 64)
+	userID := h.getActiveUserID(r)
 
 	_ = r.ParseForm()
 	c := &store.Contact{
 		ID:          id,
+		UserID:      userID,
 		Name:        strings.TrimSpace(r.FormValue("name")),
 		Phone:       strings.TrimSpace(r.FormValue("phone")),
 		ContactType: r.FormValue("contact_type"),
@@ -317,8 +607,9 @@ func (h *Handlers) DeleteContactHandler(w http.ResponseWriter, r *http.Request) 
 // ==========================================
 
 func (h *Handlers) SchedulesHandler(w http.ResponseWriter, r *http.Request) {
-	schedules, _ := h.store.ListSchedules()
-	contacts, _ := h.store.ListContacts("")
+	userID := h.getActiveUserID(r)
+	schedules, _ := h.store.ListSchedules(userID)
+	contacts, _ := h.store.ListContacts(userID, "")
 	templates, _ := h.store.ListTemplates()
 
 	data := map[string]interface{}{
@@ -336,6 +627,7 @@ func (h *Handlers) SchedulesHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) CreateScheduleHandler(w http.ResponseWriter, r *http.Request) {
 	_ = r.ParseForm()
+	userID := h.getActiveUserID(r)
 
 	dayOfWeek, _ := strconv.Atoi(r.FormValue("day_of_week"))
 	dosenID, _ := strconv.ParseInt(r.FormValue("dosen_id"), 10, 64)
@@ -343,6 +635,7 @@ func (h *Handlers) CreateScheduleHandler(w http.ResponseWriter, r *http.Request)
 	templateID, _ := strconv.ParseInt(r.FormValue("template_id"), 10, 64)
 
 	sc := &store.Schedule{
+		UserID:      userID,
 		Title:       strings.TrimSpace(r.FormValue("title")),
 		Matkul:      strings.TrimSpace(r.FormValue("matkul")),
 		TargetPhone: strings.TrimSpace(r.FormValue("target_phone")),
@@ -354,6 +647,7 @@ func (h *Handlers) CreateScheduleHandler(w http.ResponseWriter, r *http.Request)
 		Mode:        r.FormValue("mode"),
 		SendAtTime:  r.FormValue("send_at_time"),
 		IsActive:    r.FormValue("is_active") == "on" || r.FormValue("is_active") == "1",
+		IsPublic:    r.FormValue("is_public") == "on" || r.FormValue("is_public") == "1",
 		DryRun:      r.FormValue("dry_run") == "on" || r.FormValue("dry_run") == "1",
 	}
 
@@ -381,6 +675,7 @@ func (h *Handlers) CreateScheduleHandler(w http.ResponseWriter, r *http.Request)
 func (h *Handlers) UpdateScheduleHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, _ := strconv.ParseInt(idStr, 10, 64)
+	userID := h.getActiveUserID(r)
 
 	_ = r.ParseForm()
 	dayOfWeek, _ := strconv.Atoi(r.FormValue("day_of_week"))
@@ -390,6 +685,7 @@ func (h *Handlers) UpdateScheduleHandler(w http.ResponseWriter, r *http.Request)
 
 	sc := &store.Schedule{
 		ID:          id,
+		UserID:      userID,
 		Title:       strings.TrimSpace(r.FormValue("title")),
 		Matkul:      strings.TrimSpace(r.FormValue("matkul")),
 		TargetPhone: strings.TrimSpace(r.FormValue("target_phone")),
@@ -401,6 +697,7 @@ func (h *Handlers) UpdateScheduleHandler(w http.ResponseWriter, r *http.Request)
 		Mode:        r.FormValue("mode"),
 		SendAtTime:  r.FormValue("send_at_time"),
 		IsActive:    r.FormValue("is_active") == "on" || r.FormValue("is_active") == "1",
+		IsPublic:    r.FormValue("is_public") == "on" || r.FormValue("is_public") == "1",
 		DryRun:      r.FormValue("dry_run") == "on" || r.FormValue("dry_run") == "1",
 	}
 
@@ -471,7 +768,6 @@ func (h *Handlers) DeleteScheduleHandler(w http.ResponseWriter, r *http.Request)
 func (h *Handlers) TemplatesHandler(w http.ResponseWriter, r *http.Request) {
 	templates, _ := h.store.ListTemplates()
 
-	// Select first template or requested template
 	var selected *store.Template
 	selIDStr := r.URL.Query().Get("id")
 	if selIDStr != "" {
@@ -506,7 +802,10 @@ func (h *Handlers) TemplatesHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) CreateTemplateHandler(w http.ResponseWriter, r *http.Request) {
 	_ = r.ParseForm()
+	userID := h.getActiveUserID(r)
+
 	t := &store.Template{
+		UserID:    sql.NullInt64{Int64: userID, Valid: true},
 		Name:      strings.TrimSpace(r.FormValue("name")),
 		Content:   strings.TrimSpace(r.FormValue("content")),
 		IsDefault: r.FormValue("is_default") == "on" || r.FormValue("is_default") == "1",
@@ -531,10 +830,12 @@ func (h *Handlers) CreateTemplateHandler(w http.ResponseWriter, r *http.Request)
 func (h *Handlers) UpdateTemplateHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, _ := strconv.ParseInt(idStr, 10, 64)
+	userID := h.getActiveUserID(r)
 
 	_ = r.ParseForm()
 	t := &store.Template{
 		ID:        id,
+		UserID:    sql.NullInt64{Int64: userID, Valid: true},
 		Name:      strings.TrimSpace(r.FormValue("name")),
 		Content:   strings.TrimSpace(r.FormValue("content")),
 		IsDefault: r.FormValue("is_default") == "on" || r.FormValue("is_default") == "1",
@@ -577,8 +878,9 @@ func (h *Handlers) PreviewTemplateHandler(w http.ResponseWriter, r *http.Request
 // ==========================================
 
 func (h *Handlers) HistoryHandler(w http.ResponseWriter, r *http.Request) {
+	userID := h.getActiveUserID(r)
 	status := r.URL.Query().Get("status")
-	messages, _ := h.store.ListQueueMessages(status, 100)
+	messages, _ := h.store.ListQueueMessages(userID, status, 100)
 
 	data := map[string]interface{}{
 		"Messages":       messages,
@@ -597,8 +899,9 @@ func (h *Handlers) HistoryHandler(w http.ResponseWriter, r *http.Request) {
 // ==========================================
 
 func (h *Handlers) QueueHandler(w http.ResponseWriter, r *http.Request) {
-	pending, _ := h.store.ListQueueMessages("pending", 50)
-	processing, _ := h.store.ListQueueMessages("processing", 10)
+	userID := h.getActiveUserID(r)
+	pending, _ := h.store.ListQueueMessages(userID, "pending", 50)
+	processing, _ := h.store.ListQueueMessages(userID, "processing", 10)
 
 	data := map[string]interface{}{
 		"Pending":    pending,
@@ -646,11 +949,15 @@ func (h *Handlers) SettingsHandler(w http.ResponseWriter, r *http.Request) {
 	settings, _ := h.store.GetSettings()
 	holidays, _ := h.store.ListHolidays()
 	users, _ := h.store.ListUsers()
+	currentUser := auth.GetUserFromContext(r.Context())
+	tunnelStatus := h.tunnelMgr.Status()
 
 	data := map[string]interface{}{
-		"Settings": settings,
-		"Holidays": holidays,
-		"Users":    users,
+		"Settings":    settings,
+		"Holidays":    holidays,
+		"Users":       users,
+		"CurrentUser": currentUser,
+		"Tunnel":      tunnelStatus,
 	}
 
 	h.renderer.Render(w, r, "pages/settings.html", PageData{
@@ -716,22 +1023,6 @@ func (h *Handlers) ToggleRegistrationHandler(w http.ResponseWriter, r *http.Requ
 	http.Redirect(w, r, "/settings", http.StatusSeeOther)
 }
 
-func (h *Handlers) DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, _ := strconv.ParseInt(idStr, 10, 64)
-
-	currentUser := auth.GetUserFromContext(r.Context())
-	if currentUser != nil && currentUser.ID == id {
-		h.hub.BroadcastToast("error", "Anda tidak dapat menghapus akun Anda sendiri.")
-		http.Redirect(w, r, "/settings", http.StatusSeeOther)
-		return
-	}
-
-	_ = h.store.DeleteUser(id)
-	h.hub.BroadcastToast("info", "Pengguna telah dihapus.")
-	http.Redirect(w, r, "/settings", http.StatusSeeOther)
-}
-
 func (h *Handlers) BackupDownloadHandler(w http.ResponseWriter, r *http.Request) {
 	dbFile, err := os.Open(h.cfg.DBPath)
 	if err != nil {
@@ -746,6 +1037,133 @@ func (h *Handlers) BackupDownloadHandler(w http.ResponseWriter, r *http.Request)
 
 	_, _ = io.Copy(w, dbFile)
 	h.store.AddActivityLog("system", "Download Backup Database", "File: "+filename)
+}
+
+// ==========================================
+// Cloudflare Tunnel Handlers
+// ==========================================
+
+func (h *Handlers) ToggleTunnelHandler(w http.ResponseWriter, r *http.Request) {
+	status := h.tunnelMgr.Status()
+	if status.State == tunnel.StateActive {
+		_ = h.tunnelMgr.Stop()
+		h.hub.BroadcastToast("info", "Cloudflare Tunnel telah dimatikan.")
+	} else {
+		go func() {
+			err := h.tunnelMgr.Start("")
+			if err != nil {
+				h.hub.BroadcastToast("error", "Gagal mengaktifkan Cloudflare Tunnel: "+err.Error())
+			} else {
+				h.hub.BroadcastToast("success", "Cloudflare Tunnel berhasil aktif!")
+			}
+		}()
+		h.hub.BroadcastToast("info", "Memulai Cloudflare Quick Tunnel...")
+	}
+	http.Redirect(w, r, "/settings", http.StatusSeeOther)
+}
+
+func (h *Handlers) TunnelStatusHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(h.tunnelMgr.Status())
+}
+
+// ==========================================
+// Public Academic Schedule Portal & iCalendar ICS
+// ==========================================
+
+func (h *Handlers) PublicScheduleHandler(w http.ResponseWriter, r *http.Request) {
+	schedules, err := h.store.ListPublicSchedules()
+	if err != nil {
+		schedules = []store.ScheduleDetail{}
+	}
+
+	h.renderer.RenderPlain(w, "pages/schedule_public.html", PageData{
+		Title: "Portal Jadwal Kuliah Publik — SiPenDosa",
+		Data: map[string]interface{}{
+			"Schedules": schedules,
+		},
+	})
+}
+
+func (h *Handlers) PublicCalendarICSHandler(w http.ResponseWriter, r *http.Request) {
+	schedules, err := h.store.ListPublicSchedules()
+	if err != nil {
+		http.Error(w, "Gagal mengambil jadwal publik", http.StatusInternalServerError)
+		return
+	}
+
+	// Build RFC 5545 iCalendar stream
+	var sb strings.Builder
+	sb.WriteString("BEGIN:VCALENDAR\r\n")
+	sb.WriteString("VERSION:2.0\r\n")
+	sb.WriteString("PRODID:-//SiPenDosa//Jadwal Kuliah Mahasiswa//ID\r\n")
+	sb.WriteString("CALSCALE:GREGORIAN\r\n")
+	sb.WriteString("METHOD:PUBLISH\r\n")
+	sb.WriteString("X-WR-CALNAME:Jadwal Kuliah SiPenDosa\r\n")
+	sb.WriteString("X-WR-TIMEZONE:Asia/Jakarta\r\n")
+
+	dayMap := map[int]string{
+		1: "MO", 2: "TU", 3: "WE", 4: "TH", 5: "FR", 6: "SA", 7: "SU",
+	}
+
+	nowStr := time.Now().UTC().Format("20060102T150405Z")
+
+	for _, sc := range schedules {
+		byDay, ok := dayMap[sc.DayOfWeek]
+		if !ok {
+			byDay = "MO"
+		}
+
+		now := time.Now()
+		weekday := int(now.Weekday())
+		if weekday == 0 {
+			weekday = 7
+		}
+		diff := sc.DayOfWeek - weekday
+		if diff < 0 {
+			diff += 7
+		}
+		targetDate := now.AddDate(0, 0, diff)
+
+		startParts := strings.Split(sc.StartTime, ":")
+		endParts := strings.Split(sc.EndTime, ":")
+		startH, startM := "08", "00"
+		endH, endM := "10", "00"
+		if len(startParts) >= 2 {
+			startH, startM = startParts[0], startParts[1]
+		}
+		if len(endParts) >= 2 {
+			endH, endM = endParts[0], endParts[1]
+		}
+
+		dtStart := fmt.Sprintf("%sT%s%s00", targetDate.Format("20060102"), startH, startM)
+		dtEnd := fmt.Sprintf("%sT%s%s00", targetDate.Format("20060102"), endH, endM)
+
+		sb.WriteString("BEGIN:VEVENT\r\n")
+		sb.WriteString(fmt.Sprintf("UID:sipen-sched-%d@sipendosa\r\n", sc.ID))
+		sb.WriteString(fmt.Sprintf("DTSTAMP:%s\r\n", nowStr))
+		sb.WriteString(fmt.Sprintf("DTSTART;TZID=Asia/Jakarta:%s\r\n", dtStart))
+		sb.WriteString(fmt.Sprintf("DTEND;TZID=Asia/Jakarta:%s\r\n", dtEnd))
+		sb.WriteString(fmt.Sprintf("RRULE:FREQ=WEEKLY;BYDAY=%s\r\n", byDay))
+		sb.WriteString(fmt.Sprintf("SUMMARY:%s\r\n", sc.Matkul))
+		if sc.DosenName != "" {
+			sb.WriteString(fmt.Sprintf("DESCRIPTION:Dosen: %s\\nRuang: %s\\nMode: %s\r\n", sc.DosenName, sc.Location, sc.Mode))
+		} else {
+			sb.WriteString(fmt.Sprintf("DESCRIPTION:Ruang: %s\\nMode: %s\r\n", sc.Location, sc.Mode))
+		}
+		if sc.Location != "" {
+			sb.WriteString(fmt.Sprintf("LOCATION:%s\r\n", sc.Location))
+		}
+		sb.WriteString("STATUS:CONFIRMED\r\n")
+		sb.WriteString("END:VEVENT\r\n")
+	}
+
+	sb.WriteString("END:VCALENDAR\r\n")
+
+	w.Header().Set("Content-Type", "text/calendar; charset=utf-8")
+	w.Header().Set("Content-Disposition", "attachment; filename=\"jadwal_kuliah.ics\"")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(sb.String()))
 }
 
 // ==========================================
@@ -770,17 +1188,26 @@ func (h *Handlers) LogsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // ==========================================
-// WhatsApp Actions API
+// WhatsApp Actions API (Scoped to User)
 // ==========================================
 
 func (h *Handlers) WhatsAppQRHandler(w http.ResponseWriter, r *http.Request) {
-	state, phone, pushName, qr := h.waClient.Status()
-	// Jika QR kosong dan belum terkoneksi, otomatis pemicu rekoneksi untuk mengambil QR baru
+	waClient := h.getActiveWAClient(r)
+	if waClient == nil {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"state": "disconnected",
+			"error": "WhatsApp client not initialized",
+		})
+		return
+	}
+
+	state, phone, pushName, qr := waClient.Status()
 	if qr == "" && state != whatsapp.StateConnected {
-		_ = h.waClient.Reconnect()
+		_ = waClient.Reconnect()
 		for i := 0; i < 20; i++ {
 			time.Sleep(100 * time.Millisecond)
-			state, phone, pushName, qr = h.waClient.Status()
+			state, phone, pushName, qr = waClient.Status()
 			if qr != "" || state == whatsapp.StateConnected {
 				break
 			}
@@ -793,23 +1220,29 @@ func (h *Handlers) WhatsAppQRHandler(w http.ResponseWriter, r *http.Request) {
 		"state":        string(state),
 		"phone":        phone,
 		"push_name":    pushName,
-		"pairing_code": h.waClient.GetPairingCode(),
+		"pairing_code": waClient.GetPairingCode(),
 	})
 }
 
 func (h *Handlers) WhatsAppReconnectHandler(w http.ResponseWriter, r *http.Request) {
-	err := h.waClient.Reconnect()
-	if err != nil {
-		h.hub.BroadcastToast("error", "Gagal menyambung ulang: "+err.Error())
-	} else {
-		h.hub.BroadcastToast("info", "Memulai proses rekoneksi WhatsApp...")
+	waClient := h.getActiveWAClient(r)
+	if waClient != nil {
+		err := waClient.Reconnect()
+		if err != nil {
+			h.hub.BroadcastToast("error", "Gagal menyambung ulang: "+err.Error())
+		} else {
+			h.hub.BroadcastToast("info", "Memulai proses rekoneksi WhatsApp...")
+		}
 	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (h *Handlers) WhatsAppDisconnectHandler(w http.ResponseWriter, r *http.Request) {
-	h.waClient.Disconnect()
-	h.hub.BroadcastToast("info", "WhatsApp telah diputus koneksinya.")
+	waClient := h.getActiveWAClient(r)
+	if waClient != nil {
+		waClient.Disconnect()
+		h.hub.BroadcastToast("info", "WhatsApp telah diputus koneksinya.")
+	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
@@ -838,7 +1271,18 @@ func (h *Handlers) WhatsAppPairPhoneHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	code, err := h.waClient.PairPhone(r.Context(), phone)
+	waClient := h.getActiveWAClient(r)
+	if waClient == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "WhatsApp client not available",
+		})
+		return
+	}
+
+	code, err := waClient.PairPhone(r.Context(), phone)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -864,6 +1308,7 @@ func (h *Handlers) WhatsAppTestSendHandler(w http.ResponseWriter, r *http.Reques
 	_ = r.ParseForm()
 	target := strings.TrimSpace(r.FormValue("target_phone"))
 	message := strings.TrimSpace(r.FormValue("message"))
+	userID := h.getActiveUserID(r)
 
 	if target == "" || message == "" {
 		h.hub.BroadcastToast("error", "Nomor tujuan dan pesan tes tidak boleh kosong.")
@@ -872,6 +1317,7 @@ func (h *Handlers) WhatsAppTestSendHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	qm := &store.QueueMessage{
+		UserID:        userID,
 		RecipientJID:  target,
 		RecipientName: "Uji Coba WhatsApp",
 		Message:       message,
@@ -889,12 +1335,80 @@ func (h *Handlers) WhatsAppTestSendHandler(w http.ResponseWriter, r *http.Reques
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
+// WhatsAppGroupsHandler returns WhatsApp groups the current account has joined (Issue #2)
+func (h *Handlers) WhatsAppGroupsHandler(w http.ResponseWriter, r *http.Request) {
+	waClient := h.getActiveWAClient(r)
+	if waClient == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "WhatsApp client not available",
+		})
+		return
+	}
+
+	groups, err := waClient.GetJoinedGroups(r.Context())
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"groups":  groups,
+	})
+}
+
+// WhatsAppContactsHandler returns contacts cached in the user's WhatsApp session (Issue #2)
+func (h *Handlers) WhatsAppContactsHandler(w http.ResponseWriter, r *http.Request) {
+	waClient := h.getActiveWAClient(r)
+	if waClient == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "WhatsApp client not available",
+		})
+		return
+	}
+
+	contacts, err := waClient.GetStoredContacts(r.Context())
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":  true,
+		"contacts": contacts,
+	})
+}
+
 // ==========================================
 // Health check
 // ==========================================
 
 func (h *Handlers) HealthzHandler(w http.ResponseWriter, r *http.Request) {
-	state, phone, _, _ := h.waClient.Status()
+	waClient := h.getActiveWAClient(r)
+	var state whatsapp.State = whatsapp.StateDisconnected
+	var phone string
+	if waClient != nil {
+		state, phone, _, _ = waClient.Status()
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":          "ok",
@@ -969,7 +1483,7 @@ func (h *Handlers) RobotsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
 		scheme = "https"
 	}
-	content := fmt.Sprintf("User-agent: *\nAllow: /\nAllow: /login\nAllow: /register\nAllow: /terms\nAllow: /privacy\nAllow: /about\nDisallow: /contacts/\nDisallow: /schedules/\nDisallow: /templates/\nDisallow: /queue/\nDisallow: /history/\nDisallow: /settings/\nDisallow: /logs/\n\nSitemap: %s://%s/sitemap.xml\n", scheme, host)
+	content := fmt.Sprintf("User-agent: *\nAllow: /\nAllow: /jadwal\nAllow: /login\nAllow: /register\nAllow: /terms\nAllow: /privacy\nAllow: /about\nDisallow: /contacts/\nDisallow: /schedules/\nDisallow: /templates/\nDisallow: /queue/\nDisallow: /history/\nDisallow: /settings/\nDisallow: /logs/\n\nSitemap: %s://%s/sitemap.xml\n", scheme, host)
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(content))
 }
@@ -990,6 +1504,12 @@ func (h *Handlers) SitemapHandler(w http.ResponseWriter, r *http.Request) {
     <lastmod>%s</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>%s://%s/jadwal</loc>
+    <lastmod>%s</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>%s://%s/login</loc>
@@ -1015,7 +1535,7 @@ func (h *Handlers) SitemapHandler(w http.ResponseWriter, r *http.Request) {
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
-</urlset>`, scheme, host, now, scheme, host, now, scheme, host, now, scheme, host, now, scheme, host, now)
+</urlset>`, scheme, host, now, scheme, host, now, scheme, host, now, scheme, host, now, scheme, host, now, scheme, host, now)
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(xmlContent))
 }
@@ -1053,7 +1573,6 @@ func (h *Handlers) CheckUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	res, err := h.updater.CheckUpdate(r.Context(), force)
 	if err != nil {
 		slog.Warn("Gagal memeriksa update GitHub", "err", err)
-		// Fallback graceful response if offline / rate limited
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"current_version": "v" + version.CurrentVersion,
 			"latest_version":  "v" + version.CurrentVersion,
@@ -1084,7 +1603,7 @@ func (h *Handlers) DownloadApkHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, res.ApkURL, http.StatusTemporaryRedirect)
 }
 
-// ApplyUpdateHandler performs hot self-update of the binary (desktop/server/termux)
+// ApplyUpdateHandler performs hot self-update of the binary
 func (h *Handlers) ApplyUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
@@ -1120,4 +1639,3 @@ func (h *Handlers) ApplyUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		"message": "Pembaruan sedang diunduh dan dipasang di latar belakang...",
 	})
 }
-

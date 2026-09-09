@@ -9,7 +9,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="${SCRIPT_DIR}/dist"
 APP_PATH="${DIST_DIR}/SiPenDosa.app"
-PKG_OUTPUT="${DIST_DIR}/SiPenDosa-1.1.2-Installer.pkg"
+PKG_OUTPUT="${DIST_DIR}/SiPenDosa-1.2.0-Installer.pkg"
 TMP_DIR="${DIST_DIR}/.pkg_build_tmp"
 SCRIPTS_DIR="${TMP_DIR}/scripts"
 RESOURCES_DIR="${TMP_DIR}/resources"

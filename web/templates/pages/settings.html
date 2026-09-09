@@ -5,17 +5,64 @@
     <div>
         <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold mb-2">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-            System Parameters & Governance
+            Sistem Tata Kelola & Keamanan Akun
         </div>
         <h1 class="text-2xl font-extrabold text-white tracking-tight">Pengaturan Sistem SiPenDosa</h1>
-        <p class="text-xs text-slate-400 mt-1">Konfigurasi zona waktu kampus, rentang window pengiriman, perlindungan anti-ban, libur akademik, dan pencadangan database.</p>
+        <p class="text-xs text-slate-400 mt-1">Konfigurasi otentikasi dua langkah (2FA), manajemen multi-akun, public tunnel Cloudflare, anti-ban, dan sovereign backup.</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        <!-- General System Settings (7 cols) -->
+        <!-- Left Column: Security & Core Operational (7 cols) -->
         <div class="lg:col-span-7 space-y-6">
             
+            <!-- Two-Factor Authentication (2FA) Security Card -->
+            <div class="bezel-outer p-1 rounded-2xl">
+                <div class="bezel-card rounded-xl p-6 space-y-5">
+                    <div class="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+                        <h2 class="text-sm font-bold text-white tracking-tight flex items-center gap-2">
+                            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                            Keamanan Akun: Two-Factor Authentication (2FA)
+                        </h2>
+                        {{if .Data.CurrentUser.TwoFactorEnabled}}
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Aktif (Terlindungi)
+                        </span>
+                        {{else}}
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/15 text-rose-300 border border-rose-500/30 flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                            Nonaktif
+                        </span>
+                        {{end}}
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-3">
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Amankan akun Anda dengan standar industri <strong>RFC 6238 Time-based One-Time Password (TOTP)</strong>. 
+                            Setiap kali login, Anda akan diminta memasukkan 6 digit kode dari aplikasi seperti <em>Google Authenticator</em>, <em>Microsoft Authenticator</em>, atau <em>Aegis</em>.
+                        </p>
+                        <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/[0.05]">
+                            <div class="text-[11px] text-slate-400">
+                                Status akun saat ini: <strong class="text-white">{{.Data.CurrentUser.Username}}</strong>
+                            </div>
+                            <div>
+                                {{if .Data.CurrentUser.TwoFactorEnabled}}
+                                <button type="button" onclick="open2FADisableModal()" class="px-3.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold transition">
+                                    Nonaktifkan 2FA
+                                </button>
+                                {{else}}
+                                <button type="button" onclick="open2FASetupModal()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-400 hover:to-rose-500 text-slate-950 font-extrabold text-xs shadow-lg shadow-amber-950/30 transition active:scale-95 flex items-center gap-2">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                                    Aktifkan 2FA Sekarang
+                                </button>
+                                {{end}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Core Operational Card -->
             <div class="bezel-outer p-1 rounded-2xl">
                 <div class="bezel-card rounded-xl p-6 space-y-5">
@@ -33,7 +80,7 @@
                         <div class="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between gap-4">
                             <div>
                                 <div class="text-xs font-bold text-white">Mode Global Dry-Run (Simulasi)</div>
-                                <div class="text-[11px] text-slate-400 mt-0.5">Jika aktif, seluruh pesan hanya dicatat ke database tanpa pernah dikirim ke nomor WhatsApp asli.</div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">Jika aktif, seluruh pesan hanya dicatat ke antrian/log tanpa pernah dikirim ke WhatsApp fisik.</div>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" name="global_dry_run" {{if .Data.Settings.GlobalDryRun}}checked{{end}} class="sr-only peer">
@@ -94,18 +141,6 @@
                             </div>
                         </div>
 
-                        <!-- Allow Registration -->
-                        <div class="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between gap-4">
-                            <div>
-                                <div class="text-xs font-bold text-white">Registrasi Pengguna Baru Terbuka</div>
-                                <div class="text-[11px] text-slate-400 mt-0.5">Buka rute pendaftaran /register untuk mengizinkan pembuatan akun admin tambahan.</div>
-                            </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" name="registration_open" {{if .Data.Settings.RegistrationOpen}}checked{{end}} class="sr-only peer">
-                                <div class="w-11 h-6 bg-white/[0.1] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600"></div>
-                            </label>
-                        </div>
-
                         <div class="flex justify-end pt-2">
                             <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/30 transition active:scale-95">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -127,7 +162,7 @@
                         <span class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Local-First</span>
                     </div>
                     <p class="text-xs text-slate-400 leading-relaxed">
-                        Unduh salinan biner penuh file database SQLite (`sipen.db`). Berisi seluruh data kontak, jadwal kuliah, riwayat versi template, dan konfigurasi tanpa bergantung pada cloud eksternal.
+                        Unduh salinan biner penuh file database SQLite (`sipen.db`). Berisi seluruh kontak, jadwal kuliah, riwayat template, dan konfigurasi tanpa bergantung pada cloud eksternal.
                     </p>
 
                     <div class="pt-1">
@@ -141,8 +176,141 @@
 
         </div>
 
-        <!-- Right Column: System Governance & Updates (5 cols) -->
+        <!-- Right Column: Cloudflare Tunnel, Admin Management, Holidays & Updates (5 cols) -->
         <div class="lg:col-span-5 space-y-6">
+
+            <!-- Issue #3: Cloudflare Quick Tunnel Card -->
+            <div class="bezel-outer p-1 rounded-2xl">
+                <div class="bezel-card rounded-xl p-5 space-y-4">
+                    <div class="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                        <h2 class="text-xs font-bold text-white tracking-tight flex items-center gap-2">
+                            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Public Tunnel (Cloudflare Quick Tunnel)
+                        </h2>
+                        {{if eq .Data.Tunnel.State "active"}}
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Online Publik
+                        </span>
+                        {{else if eq .Data.Tunnel.State "starting"}}
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 animate-pulse">
+                            Memulai...
+                        </span>
+                        {{else}}
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.05] text-slate-400 border border-white/[0.08]">
+                            Offline
+                        </span>
+                        {{end}}
+                    </div>
+
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Akses dashboard dan portal jadwal dari HP atau jaringan luar kampus secara instan tanpa port forwarding.
+                    </p>
+
+                    {{if eq .Data.Tunnel.State "active"}}
+                    <div class="p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-500/20 space-y-3">
+                        <div>
+                            <span class="text-[10px] font-mono uppercase text-emerald-400 font-bold block mb-1">Tautan Publik Aktif:</span>
+                            <a href="{{.Data.Tunnel.URL}}" target="_blank" rel="noopener noreferrer" class="text-xs font-mono font-bold text-white hover:text-emerald-300 break-all underline decoration-emerald-500/40">
+                                {{.Data.Tunnel.URL}} ↗
+                            </a>
+                        </div>
+
+                        {{if .Data.Tunnel.QRCode}}
+                        <div class="text-center pt-1">
+                            <div class="inline-block p-2 bg-white rounded-xl shadow-lg">
+                                <img src="{{.Data.Tunnel.QRCode}}" alt="Scan Tunnel QR" class="w-32 h-32" />
+                            </div>
+                            <div class="text-[10px] text-slate-400 mt-1">Scan kamera HP untuk membuka di smartphone</div>
+                        </div>
+                        {{end}}
+                    </div>
+                    {{end}}
+
+                    <form action="/settings/tunnel/toggle" method="POST">
+                        {{if eq .Data.Tunnel.State "active"}}
+                        <button type="submit" class="w-full py-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-bold transition flex items-center justify-center gap-2">
+                            Matikan Public Tunnel
+                        </button>
+                        {{else}}
+                        <button type="submit" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-400 hover:to-rose-500 text-slate-950 text-xs font-extrabold shadow-lg shadow-amber-950/30 transition active:scale-95 flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            Aktifkan Quick Tunnel Sekarang
+                        </button>
+                        {{end}}
+                    </form>
+                </div>
+            </div>
+
+            <!-- Multi-Account Management (Admin Only User Creation) -->
+            <div class="bezel-outer p-1 rounded-2xl">
+                <div class="bezel-card rounded-xl p-5 space-y-4">
+                    <div class="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                        <h2 class="text-xs font-bold text-white tracking-tight flex items-center gap-2">
+                            <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                            Manajemen Multi-Akun Pengguna
+                        </h2>
+                        <span class="text-[10px] font-mono text-slate-400">{{len .Data.Users}} Akun</span>
+                    </div>
+
+                    <p class="text-xs text-slate-400">Setiap akun memiliki sesi WhatsApp independen. Registrasi publik dimatikan; hanya administrator yang dapat membuat akun.</p>
+
+                    <!-- User Creation Form for Admins -->
+                    {{if or (eq .Data.CurrentUser.Role "admin") (eq .Data.CurrentUser.Role "superadmin")}}
+                    <form action="/settings/users/create" method="POST" class="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-2.5">
+                        <div class="text-[11px] font-bold text-white uppercase tracking-wider">Tambah Akun Baru</div>
+                        <div class="space-y-2">
+                            <input type="text" name="username" placeholder="Username baru" required 
+                                   class="w-full px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] focus:border-rose-500/50 text-xs text-white placeholder-slate-500 outline-none" />
+                            <input type="password" name="password" placeholder="Kata sandi (min. 6 karakter)" required minlength="6"
+                                   class="w-full px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] focus:border-rose-500/50 text-xs text-white placeholder-slate-500 outline-none" />
+                            <select name="role" class="w-full px-3 py-1.5 rounded-lg bg-[#090d16] border border-white/[0.08] focus:border-rose-500/50 text-xs text-white outline-none">
+                                <option value="user">Peran: User Biasa (Session WA Mandiri)</option>
+                                <option value="admin">Peran: Administrator</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow transition active:scale-95">
+                            + Buat Akun Pengguna
+                        </button>
+                    </form>
+                    {{end}}
+
+                    <!-- User List -->
+                    <div class="space-y-2 max-h-52 overflow-y-auto pr-1">
+                        {{range .Data.Users}}
+                        <div class="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.05] flex items-center justify-between text-xs">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-white/[0.05] border border-white/[0.08] text-slate-300 flex items-center justify-center font-bold text-xs">
+                                    {{slice .Username 0 1}}
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="font-bold text-white">{{.Username}}</span>
+                                        <span class="px-1.5 py-0.2 rounded text-[9px] font-mono uppercase {{if eq .Role "superadmin"}}bg-rose-500/20 text-rose-300 border border-rose-500/30{{else if eq .Role "admin"}}bg-amber-500/20 text-amber-300 border border-amber-500/30{{else}}bg-white/[0.05] text-slate-400 border border-white/[0.08]{{end}}">
+                                            {{.Role}}
+                                        </span>
+                                        {{if .TwoFactorEnabled}}
+                                        <span class="px-1 py-0.2 rounded text-[8px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">2FA</span>
+                                        {{end}}
+                                    </div>
+                                    <div class="text-[10px] text-slate-500 font-mono">Dibuat: {{formatDateIndo .CreatedAt}}</div>
+                                </div>
+                            </div>
+
+                            {{if eq $.User.Role "superadmin"}}
+                            {{if ne $.User.ID .ID}}
+                            <form action="/settings/users/{{.ID}}/delete" method="POST" onsubmit="return confirm('Hapus akun ini beserta sesi WhatsApp miliknya?')" class="inline">
+                                <button type="submit" class="p-1 rounded hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition" title="Cabut akses dan hapus sesi">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </form>
+                            {{end}}
+                            {{end}}
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
 
             <!-- Automatic System Updates & Firmware Card -->
             <div class="bezel-outer p-1 rounded-2xl">
@@ -158,15 +326,11 @@
                     <div class="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-2">
                         <div class="flex items-center justify-between">
                             <span class="text-[11px] text-slate-400">Versi Terpasang:</span>
-                            <span class="font-mono font-bold text-emerald-400 text-xs px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">v1.1.2 (Resmi)</span>
+                            <span class="font-mono font-bold text-emerald-400 text-xs px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">v1.2.0 (Resmi)</span>
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="text-[11px] text-slate-400">Kanal Pembaruan:</span>
                             <span class="font-mono text-slate-300 text-xs">Official GitHub Releases</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-[11px] text-slate-400">Fitur Auto-Install:</span>
-                            <span class="text-emerald-400 font-semibold text-xs">Aktif & Siap 1-Klik</span>
                         </div>
                     </div>
 
@@ -175,9 +339,6 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                             Periksa Pembaruan Sekarang
                         </button>
-                        <a href="https://github.com/fk0u/SiPenDosa/releases" target="_blank" rel="noopener noreferrer" class="w-full py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 text-center text-xs font-semibold border border-white/10 transition">
-                            Lihat Catatan Rilis di GitHub ↗
-                        </a>
                     </div>
                 </div>
             </div>
@@ -192,7 +353,6 @@
                         </h2>
                         <span class="text-[10px] font-mono text-slate-400">{{len .Data.Holidays}} Terdaftar</span>
                     </div>
-                    <p class="text-xs text-slate-400">Pengingat otomatis akan dilewati jika perkuliahan jatuh pada tanggal libur ini.</p>
 
                     <form action="/settings/holidays/create" method="POST" class="space-y-2">
                         <div class="space-y-1.5">
@@ -228,53 +388,70 @@
                 </div>
             </div>
 
-            <!-- Users & Permissions Card -->
-            <div class="bezel-outer p-1 rounded-2xl">
-                <div class="bezel-card rounded-xl p-5 space-y-4">
-                    <div class="flex items-center justify-between pb-2 border-b border-white/[0.06]">
-                        <h2 class="text-xs font-bold text-white tracking-tight flex items-center gap-2">
-                            <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                            Akun & Hak Akses Admin
-                        </h2>
-                        <span class="text-[10px] font-mono text-slate-400">{{len .Data.Users}} Pengguna</span>
-                    </div>
-
-                    <div class="space-y-2 max-h-52 overflow-y-auto pr-1">
-                        {{range .Data.Users}}
-                        <div class="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.05] flex items-center justify-between text-xs">
-                            <div class="flex items-center gap-2.5">
-                                <div class="w-7 h-7 rounded-lg bg-white/[0.05] border border-white/[0.08] text-slate-300 flex items-center justify-center font-bold text-xs">
-                                    {{slice .Username 0 1}}
-                                </div>
-                                <div>
-                                    <div class="flex items-center gap-1.5">
-                                        <span class="font-bold text-white">{{.Username}}</span>
-                                        <span class="px-1.5 py-0.2 rounded text-[9px] font-mono uppercase {{if eq .Role "superadmin"}}bg-rose-500/20 text-rose-300 border border-rose-500/30{{else}}bg-white/[0.05] text-slate-400 border border-white/[0.08]{{end}}">
-                                            {{.Role}}
-                                        </span>
-                                    </div>
-                                    <div class="text-[10px] text-slate-500 font-mono">Dibuat: {{formatDateIndo .CreatedAt}}</div>
-                                </div>
-                            </div>
-
-                            {{if eq $.User.Role "superadmin"}}
-                            {{if ne $.User.ID .ID}}
-                            <form action="/settings/users/{{.ID}}/delete" method="POST" onsubmit="return confirm('Hapus akses admin ini?')" class="inline">
-                                <button type="submit" class="p-1 rounded hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition" title="Cabut akses">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                </button>
-                            </form>
-                            {{end}}
-                            {{end}}
-                        </div>
-                        {{end}}
-                    </div>
-                </div>
-            </div>
-
         </div>
 
     </div>
 
 </div>
+
+<!-- Modal 2FA Setup -->
+<dialog id="modal_2fa_setup" class="modal">
+    <div class="modal-box bg-[#0c0e14] border border-white/10 max-w-md p-6 rounded-3xl shadow-2xl space-y-4">
+        <div class="text-center space-y-1">
+            <h3 class="font-extrabold text-lg text-white">Setup Two-Factor Authentication</h3>
+            <p class="text-xs text-slate-400">Pindai kode QR menggunakan aplikasi Authenticator Anda</p>
+        </div>
+
+        <div class="flex flex-col items-center justify-center p-4 bg-white/[0.02] rounded-2xl border border-white/[0.06]">
+            <div id="twofa-qr-container" class="p-2 bg-white rounded-xl shadow-inner mb-3">
+                <img id="twofa-qr-image" src="" alt="2FA QR Code" class="w-48 h-48" />
+            </div>
+            <div class="text-center space-y-1">
+                <span class="text-[10px] uppercase font-mono text-slate-500">Atau masukkan kunci rahasia manual:</span>
+                <div class="font-mono text-xs font-bold text-amber-400 select-all bg-black/40 px-3 py-1.5 rounded-lg border border-white/10" id="twofa-secret-text">
+                    MEMUAT...
+                </div>
+            </div>
+        </div>
+
+        <form id="form-enable-2fa" onsubmit="submit2FAEnable(event)" class="space-y-3">
+            <input type="hidden" id="twofa-secret-input" value="" />
+            <div class="space-y-1">
+                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Kode Verifikasi 6 Digit</label>
+                <input type="text" id="twofa-code-input" required maxlength="6" placeholder="123456" pattern="[0-9]{6}" autocomplete="one-time-code"
+                       class="w-full text-center tracking-[0.4em] font-mono text-xl py-2.5 rounded-xl bg-white/[0.03] border border-white/10 focus:border-amber-500 text-white outline-none" />
+            </div>
+            <div id="twofa-setup-error" class="hidden text-xs text-rose-400 text-center font-medium"></div>
+            <div class="modal-action justify-between pt-2">
+                <button type="button" onclick="modal_2fa_setup.close()" class="btn btn-xs btn-ghost rounded-full text-slate-400">Batal</button>
+                <button type="submit" id="btn-submit-enable-2fa" class="btn btn-xs rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5">Verifikasi & Aktifkan</button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<!-- Modal 2FA Disable -->
+<dialog id="modal_2fa_disable" class="modal">
+    <div class="modal-box bg-[#0c0e14] border border-white/10 max-w-sm p-6 rounded-3xl shadow-2xl space-y-4">
+        <div class="text-center space-y-1">
+            <h3 class="font-extrabold text-lg text-white">Nonaktifkan 2FA</h3>
+            <p class="text-xs text-slate-400">Masukkan kata sandi akun Anda untuk konfirmasi pencabutan 2FA</p>
+        </div>
+
+        <form id="form-disable-2fa" onsubmit="submit2FADisable(event)" class="space-y-3">
+            <div class="space-y-1">
+                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Kata Sandi Saat Ini</label>
+                <input type="password" id="twofa-disable-password" required placeholder="Kata sandi Anda"
+                       class="w-full px-3 py-2 rounded-xl bg-white/[0.03] border border-white/10 focus:border-rose-500 text-white text-xs outline-none" />
+            </div>
+            <div id="twofa-disable-error" class="hidden text-xs text-rose-400 text-center font-medium"></div>
+            <div class="modal-action justify-between pt-2">
+                <button type="button" onclick="modal_2fa_disable.close()" class="btn btn-xs btn-ghost rounded-full text-slate-400">Batal</button>
+                <button type="submit" id="btn-submit-disable-2fa" class="btn btn-xs rounded-full bg-rose-600 hover:bg-rose-500 text-white font-bold px-5">Nonaktifkan 2FA</button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
 {{end}}

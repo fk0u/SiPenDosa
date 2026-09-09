@@ -13,7 +13,7 @@
     <!-- Timeline Wrapper -->
     <div class="space-y-6">
 
-        <!-- RELEASE v1.1.2 (CURRENT) -->
+        <!-- RELEASE v1.2.0 (CURRENT) -->
         <div class="bezel-outer p-1 rounded-3xl relative overflow-hidden ring-1 ring-rose-500/30">
             <div class="bezel-card rounded-[1.4rem] p-6 md:p-8 space-y-5 bg-[#0a0c12]">
                 
@@ -21,14 +21,14 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-600 via-rose-500 to-amber-500 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-rose-600/30">
-                            1.1.2
+                            1.2.0
                         </div>
                         <div>
                             <div class="flex items-center gap-2">
-                                <h2 class="text-lg font-bold text-white tracking-tight">SiPenDosa v1.1.2</h2>
+                                <h2 class="text-lg font-bold text-white tracking-tight">SiPenDosa v1.2.0</h2>
                                 <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono font-bold uppercase">Versi Terpasang</span>
                             </div>
-                            <span class="text-xs text-slate-400">Rilis Resmi: 08 September 2026</span>
+                            <span class="text-xs text-slate-400">Rilis Resmi: 09 September 2026</span>
                         </div>
                     </div>
 
@@ -36,6 +36,82 @@
                         <button onclick="openUpdateModal()" class="btn btn-xs rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-bold border-none gap-1 shadow-md">
                             <span>⚡ Cek Update OTA</span>
                         </button>
+                        <a href="https://github.com/fk0u/SiPenDosa/releases/tag/v1.2.0" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-ghost text-slate-400 hover:text-white rounded-xl">
+                            GitHub ↗
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Release Items Bento -->
+                <div class="space-y-4 text-xs">
+                    
+                    <!-- Feature 1: Dynamic WhatsApp Group & Contact Picker -->
+                    <div class="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
+                        <div class="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider">
+                            <span>👥</span>
+                            <span>Dynamic WhatsApp Group & Contact Picker (Issue #2)</span>
+                        </div>
+                        <p class="text-slate-300 leading-relaxed">
+                            Otomatis memuat daftar grup WhatsApp dan kontak yang terhubung pada bot melalui WhatsMeow. Dilengkapi dropdown pemilih interaktif pada pembuatan jadwal sehingga pengguna tidak perlu lagi menyalin JID grup secara manual.
+                        </p>
+                    </div>
+
+                    <!-- Feature 2: Built-in Zero-Config Public Tunneling -->
+                    <div class="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
+                        <div class="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
+                            <span>🌐</span>
+                            <span>Zero-Config Public Tunneling (Issue #3)</span>
+                        </div>
+                        <p class="text-slate-300 leading-relaxed">
+                            Akses global remote instan via Cloudflare Quick Tunnel dengan tombol 1-klik di menu Pengaturan. Dilengkapi live status endpoint dan QR Code instan untuk membuka dashboard dari HP di jaringan internet mana pun tanpa port-forwarding.
+                        </p>
+                    </div>
+
+                    <!-- Feature 3: Public Academic Schedule Portal & iCalendar -->
+                    <div class="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
+                        <div class="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider">
+                            <span>📅</span>
+                            <span>Papan Jadwal Publik & Sinkronisasi Kalender (Issue #4)</span>
+                        </div>
+                        <p class="text-slate-300 leading-relaxed">
+                            Portal jadwal perkuliahan publik di <code class="text-rose-300">/jadwal</code> untuk mahasiswa tanpa login. Dilengkapi hitung mundur perkuliahan, filter hari, pencarian dosen/matkul, serta ekspor file <code class="text-amber-300">.ics</code> untuk Google Calendar & Apple Calendar.
+                        </p>
+                    </div>
+
+                    <!-- Feature 4: Two-Factor Authentication (2FA) & Multi-Tenant -->
+                    <div class="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
+                        <div class="flex items-center gap-2 text-cyan-400 font-bold text-xs uppercase tracking-wider">
+                            <span>🔐</span>
+                            <span>Autentikasi Dua Faktor (2FA / TOTP) & Multi-Tenant Session</span>
+                        </div>
+                        <p class="text-slate-300 leading-relaxed">
+                            Penguatan keamanan akun menggunakan TOTP Authenticator (Google Authenticator / 1Password) dengan kode pemulihan darurat, registrasi terkontrol oleh Admin, serta isolasi data kontak, jadwal, antrian, dan multi-sesi WhatsApp per pengguna.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- RELEASE v1.1.2 -->
+        <div class="bezel-outer p-1 rounded-3xl relative overflow-hidden border border-white/5 opacity-85">
+            <div class="bezel-card rounded-[1.4rem] p-6 md:p-8 space-y-5 bg-[#0a0c12]">
+                
+                <!-- Release Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 font-black text-sm">
+                            1.1.2
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h2 class="text-lg font-bold text-white tracking-tight">SiPenDosa v1.1.2</h2>
+                            </div>
+                            <span class="text-xs text-slate-400">Rilis Resmi: 08 September 2026</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
                         <a href="https://github.com/fk0u/SiPenDosa/releases/tag/v1.1.2" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-ghost text-slate-400 hover:text-white rounded-xl">
                             GitHub ↗
                         </a>

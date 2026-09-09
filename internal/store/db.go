@@ -53,17 +53,27 @@ func (s *Store) Close() error {
 }
 
 func (s *Store) migrate() error {
-	queries := []string{
+	tableQueries := []string{
 		`CREATE TABLE IF NOT EXISTS users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			username TEXT UNIQUE NOT NULL,
 			password_hash TEXT NOT NULL,
 			role TEXT NOT NULL DEFAULT 'admin',
+			two_factor_secret TEXT DEFAULT '',
+			two_factor_enabled INTEGER NOT NULL DEFAULT 0,
+			two_factor_backup_codes TEXT DEFAULT '',
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 		);`,
 
 		`CREATE TABLE IF NOT EXISTS sessions (
+			token TEXT PRIMARY KEY,
+			user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			expires_at DATETIME NOT NULL,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+		);`,
+
+		`CREATE TABLE IF NOT EXISTS two_factor_challenges (
 			token TEXT PRIMARY KEY,
 			user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 			expires_at DATETIME NOT NULL,
@@ -85,6 +95,7 @@ func (s *Store) migrate() error {
 
 		`CREATE TABLE IF NOT EXISTS contacts (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER NOT NULL DEFAULT 1 REFERENCES users(id) ON DELETE CASCADE,
 			name TEXT NOT NULL,
 			phone TEXT NOT NULL,
 			contact_type TEXT NOT NULL DEFAULT 'dosen',
@@ -97,6 +108,7 @@ func (s *Store) migrate() error {
 
 		`CREATE TABLE IF NOT EXISTS templates (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
 			name TEXT NOT NULL,
 			content TEXT NOT NULL,
 			is_default INTEGER NOT NULL DEFAULT 0,
@@ -114,6 +126,7 @@ func (s *Store) migrate() error {
 
 		`CREATE TABLE IF NOT EXISTS schedules (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER NOT NULL DEFAULT 1 REFERENCES users(id) ON DELETE CASCADE,
 			title TEXT NOT NULL,
 			matkul TEXT NOT NULL,
 			dosen_id INTEGER REFERENCES contacts(id) ON DELETE SET NULL,
@@ -128,6 +141,7 @@ func (s *Store) migrate() error {
 			mode TEXT NOT NULL DEFAULT 'H-1',
 			send_at_time TEXT NOT NULL DEFAULT '08:00',
 			is_active INTEGER NOT NULL DEFAULT 1,
+			is_public INTEGER NOT NULL DEFAULT 0,
 			dry_run INTEGER NOT NULL DEFAULT 0,
 			last_sent_at DATETIME,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -142,6 +156,7 @@ func (s *Store) migrate() error {
 
 		`CREATE TABLE IF NOT EXISTS queue_messages (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER NOT NULL DEFAULT 1 REFERENCES users(id) ON DELETE CASCADE,
 			schedule_id INTEGER REFERENCES schedules(id) ON DELETE SET NULL,
 			recipient_jid TEXT NOT NULL,
 			recipient_name TEXT NOT NULL,
@@ -158,21 +173,59 @@ func (s *Store) migrate() error {
 
 		`CREATE TABLE IF NOT EXISTS activity_logs (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
 			category TEXT NOT NULL,
 			message TEXT NOT NULL,
 			details TEXT DEFAULT '',
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 		);`,
-
-		`CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);`,
-		`CREATE INDEX IF NOT EXISTS idx_queue_status_time ON queue_messages(status, scheduled_for);`,
-		`CREATE INDEX IF NOT EXISTS idx_schedules_active ON schedules(is_active, day_of_week);`,
-		`CREATE INDEX IF NOT EXISTS idx_activity_created ON activity_logs(created_at DESC);`,
 	}
 
-	for _, query := range queries {
+	for _, query := range tableQueries {
 		if _, err := s.db.Exec(query); err != nil {
-			return fmt.Errorf("failed executing migration statement: %w\nQuery: %s", err, query)
+			return fmt.Errorf("failed executing table migration statement: %w\nQuery: %s", err, query)
+		}
+	}
+
+	// Dynamic column migrations for existing databases (MUST run before index creation)
+	columnMigrations := []struct {
+		table  string
+		column string
+		def    string
+	}{
+		{"users", "two_factor_secret", "TEXT DEFAULT ''"},
+		{"users", "two_factor_enabled", "INTEGER NOT NULL DEFAULT 0"},
+		{"users", "two_factor_backup_codes", "TEXT DEFAULT ''"},
+		{"contacts", "user_id", "INTEGER NOT NULL DEFAULT 1"},
+		{"templates", "user_id", "INTEGER DEFAULT NULL"},
+		{"schedules", "user_id", "INTEGER NOT NULL DEFAULT 1"},
+		{"schedules", "is_public", "INTEGER NOT NULL DEFAULT 0"},
+		{"queue_messages", "user_id", "INTEGER NOT NULL DEFAULT 1"},
+		{"activity_logs", "user_id", "INTEGER DEFAULT NULL"},
+	}
+
+	for _, col := range columnMigrations {
+		if err := s.addColumnIfNotExists(col.table, col.column, col.def); err != nil {
+			return err
+		}
+	}
+
+	// Index queries (created after ensuring all columns exist)
+	indexQueries := []string{
+		`CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);`,
+		`CREATE INDEX IF NOT EXISTS idx_2fa_challenges_expires ON two_factor_challenges(expires_at);`,
+		`CREATE INDEX IF NOT EXISTS idx_queue_status_time ON queue_messages(status, scheduled_for);`,
+		`CREATE INDEX IF NOT EXISTS idx_schedules_active ON schedules(is_active, day_of_week);`,
+		`CREATE INDEX IF NOT EXISTS idx_schedules_public ON schedules(is_public);`,
+		`CREATE INDEX IF NOT EXISTS idx_activity_created ON activity_logs(created_at DESC);`,
+		`CREATE INDEX IF NOT EXISTS idx_contacts_user ON contacts(user_id);`,
+		`CREATE INDEX IF NOT EXISTS idx_schedules_user ON schedules(user_id);`,
+		`CREATE INDEX IF NOT EXISTS idx_queue_user ON queue_messages(user_id);`,
+	}
+
+	for _, query := range indexQueries {
+		if _, err := s.db.Exec(query); err != nil {
+			return fmt.Errorf("failed executing index statement: %w\nQuery: %s", err, query)
 		}
 	}
 
@@ -213,5 +266,37 @@ Hormat kami,
 		}
 	}
 
+	return nil
+}
+
+func (s *Store) addColumnIfNotExists(table, column, colDef string) error {
+	rows, err := s.db.Query(fmt.Sprintf("PRAGMA table_info(%s)", table))
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	var cid int
+	var name, colType string
+	var notnull, pk int
+	var dfltValue sql.NullString
+	exists := false
+
+	for rows.Next() {
+		if err := rows.Scan(&cid, &name, &colType, &notnull, &dfltValue, &pk); err != nil {
+			return err
+		}
+		if name == column {
+			exists = true
+			break
+		}
+	}
+
+	if !exists {
+		query := fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s", table, column, colDef)
+		if _, err := s.db.Exec(query); err != nil {
+			return fmt.Errorf("failed adding column %s to %s: %w", column, table, err)
+		}
+	}
 	return nil
 }

@@ -5,14 +5,25 @@ import (
 	"time"
 )
 
-// User represents a system administrator
+// User represents a system user / administrator
 type User struct {
-	ID           int64     `json:"id"`
-	Username     string    `json:"username"`
-	PasswordHash string    `json:"-"`
-	Role         string    `json:"role"` // 'superadmin' or 'admin'
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID                  int64     `json:"id"`
+	Username            string    `json:"username"`
+	PasswordHash        string    `json:"-"`
+	Role                string    `json:"role"` // 'superadmin', 'admin', 'user'
+	TwoFactorSecret     string    `json:"-"`
+	TwoFactorEnabled    bool      `json:"two_factor_enabled"`
+	TwoFactorBackupCodes string   `json:"-"`
+	CreatedAt           time.Time `json:"created_at"`
+	UpdatedAt           time.Time `json:"updated_at"`
+}
+
+// TwoFactorChallenge represents a short-lived challenge during 2FA login
+type TwoFactorChallenge struct {
+	Token     string    `json:"token"`
+	UserID    int64     `json:"user_id"`
+	ExpiresAt time.Time `json:"expires_at"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 // Session represents an authenticated user session
@@ -39,6 +50,7 @@ type Settings struct {
 // Contact represents lecturers, class leaders, students, or WA groups
 type Contact struct {
 	ID          int64     `json:"id"`
+	UserID      int64     `json:"user_id"`
 	Name        string    `json:"name"`
 	Phone       string    `json:"phone"`        // e.g. "628123456789" or "1203630...@g.us"
 	ContactType string    `json:"contact_type"` // 'dosen', 'komti', 'mahasiswa', 'group'
@@ -51,12 +63,13 @@ type Contact struct {
 
 // Template represents a reusable message template
 type Template struct {
-	ID        int64     `json:"id"`
-	Name      string    `json:"name"`
-	Content   string    `json:"content"`
-	IsDefault bool      `json:"is_default"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        int64         `json:"id"`
+	UserID    sql.NullInt64 `json:"user_id"`
+	Name      string        `json:"name"`
+	Content   string        `json:"content"`
+	IsDefault bool          `json:"is_default"`
+	CreatedAt time.Time     `json:"created_at"`
+	UpdatedAt time.Time     `json:"updated_at"`
 }
 
 // TemplateVersion stores edit history of message templates
@@ -71,6 +84,7 @@ type TemplateVersion struct {
 // Schedule represents a course reminder schedule
 type Schedule struct {
 	ID          int64          `json:"id"`
+	UserID      int64          `json:"user_id"`
 	Title       string         `json:"title"`
 	Matkul      string         `json:"matkul"`
 	DosenID     sql.NullInt64  `json:"dosen_id"`
@@ -85,6 +99,7 @@ type Schedule struct {
 	Mode        string         `json:"mode"`         // 'H-1' (remind day before) or 'H-0' (same day)
 	SendAtTime  string         `json:"send_at_time"` // "08:00"
 	IsActive    bool           `json:"is_active"`
+	IsPublic    bool           `json:"is_public"`    // Portal Papan Jadwal Publik
 	DryRun      bool           `json:"dry_run"`
 	LastSentAt  *time.Time     `json:"last_sent_at"`
 	CreatedAt   time.Time      `json:"created_at"`
@@ -98,6 +113,7 @@ type ScheduleDetail struct {
 	RecipientName string `json:"recipient_name"`
 	RecipientType string `json:"recipient_type"`
 	TemplateName  string `json:"template_name"`
+	CreatorName   string `json:"creator_name,omitempty"`
 }
 
 // Holiday represents non-working / academic holidays
@@ -109,26 +125,28 @@ type Holiday struct {
 
 // QueueMessage represents a queued WhatsApp message
 type QueueMessage struct {
-	ID            int64      `json:"id"`
+	ID            int64         `json:"id"`
+	UserID        int64         `json:"user_id"`
 	ScheduleID    sql.NullInt64 `json:"schedule_id"`
-	RecipientJID  string     `json:"recipient_jid"`
-	RecipientName string     `json:"recipient_name"`
-	Message       string     `json:"message"`
-	Status        string     `json:"status"` // 'pending', 'processing', 'sent', 'failed', 'cancelled', 'dry_run'
-	RetryCount    int        `json:"retry_count"`
-	MaxRetries    int        `json:"max_retries"`
-	ErrorMessage  string     `json:"error_message"`
-	ScheduledFor  time.Time  `json:"scheduled_for"`
-	SentAt        *time.Time `json:"sent_at"`
-	CreatedAt     time.Time  `json:"created_at"`
-	UpdatedAt     time.Time  `json:"updated_at"`
+	RecipientJID  string        `json:"recipient_jid"`
+	RecipientName string        `json:"recipient_name"`
+	Message       string        `json:"message"`
+	Status        string        `json:"status"` // 'pending', 'processing', 'sent', 'failed', 'cancelled', 'dry_run'
+	RetryCount    int           `json:"retry_count"`
+	MaxRetries    int           `json:"max_retries"`
+	ErrorMessage  string        `json:"error_message"`
+	ScheduledFor  time.Time     `json:"scheduled_for"`
+	SentAt        *time.Time    `json:"sent_at"`
+	CreatedAt     time.Time     `json:"created_at"`
+	UpdatedAt     time.Time     `json:"updated_at"`
 }
 
 // ActivityLog records operations and security events
 type ActivityLog struct {
-	ID        int64     `json:"id"`
-	Category  string    `json:"category"` // 'auth', 'whatsapp', 'scheduler', 'system'
-	Message   string    `json:"message"`
+	ID        int64         `json:"id"`
+	UserID    sql.NullInt64 `json:"user_id"`
+	Category  string        `json:"category"` // 'auth', 'whatsapp', 'scheduler', 'system'
+	Message   string        `json:"message"`
 	Details   string    `json:"details"`
 	CreatedAt time.Time `json:"created_at"`
 }

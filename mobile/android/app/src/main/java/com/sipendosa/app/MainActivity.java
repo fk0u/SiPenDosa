@@ -346,7 +346,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
         splashOverlay.addView(tvTitle);
 
         TextView tvSub = new TextView(this);
-        tvSub.setText("Academic Assistant • v1.1.2");
+        tvSub.setText("Academic Assistant • v1.2.0");
         tvSub.setTextColor(COLOR_GOLD);
         tvSub.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         tvSub.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
@@ -641,7 +641,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
             URL url = new URL(targetUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setInstanceFollowRedirects(true);
-            conn.setRequestProperty("User-Agent", "SiPenDosa-Android/1.1.2");
+            conn.setRequestProperty("User-Agent", "SiPenDosa-Android/1.2.0");
             conn.connect();
 
             int status = conn.getResponseCode();
@@ -650,7 +650,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
                 conn.disconnect();
                 url = new URL(newUrl);
                 conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestProperty("User-Agent", "SiPenDosa-Android/1.1.2");
+                conn.setRequestProperty("User-Agent", "SiPenDosa-Android/1.2.0");
                 conn.connect();
             }
 

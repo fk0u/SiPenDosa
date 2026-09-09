@@ -547,6 +547,254 @@
             });
     };
 
+    // ==========================================
+    // Two-Factor Authentication (2FA) UI Helpers
+    // ==========================================
+    window.open2FASetupModal = function () {
+        const modal = document.getElementById('modal_2fa_setup');
+        const errDiv = document.getElementById('twofa-setup-error');
+        const secretText = document.getElementById('twofa-secret-text');
+        const secretInput = document.getElementById('twofa-secret-input');
+        const qrImg = document.getElementById('twofa-qr-image');
+        const codeInput = document.getElementById('twofa-code-input');
+
+        if (errDiv) { errDiv.classList.add('hidden'); errDiv.innerText = ''; }
+        if (codeInput) codeInput.value = '';
+        if (secretText) secretText.innerText = 'MEMBUAT KUNCI...';
+
+        if (modal) modal.showModal();
+
+        fetch('/api/2fa/setup')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (secretText) secretText.innerText = data.secret;
+                    if (secretInput) secretInput.value = data.secret;
+                    if (qrImg) qrImg.src = data.qr_code;
+                } else {
+                    if (errDiv) {
+                        errDiv.innerText = data.error || 'Gagal memuat rahasia 2FA.';
+                        errDiv.classList.remove('hidden');
+                    }
+                }
+            })
+            .catch(err => {
+                if (errDiv) {
+                    errDiv.innerText = 'Gagal terhubung ke server: ' + err;
+                    errDiv.classList.remove('hidden');
+                }
+            });
+    };
+
+    window.submit2FAEnable = function (e) {
+        e.preventDefault();
+        const secretInput = document.getElementById('twofa-secret-input');
+        const codeInput = document.getElementById('twofa-code-input');
+        const errDiv = document.getElementById('twofa-setup-error');
+        const submitBtn = document.getElementById('btn-submit-enable-2fa');
+
+        if (!secretInput || !codeInput) return;
+
+        if (submitBtn) submitBtn.disabled = true;
+        if (errDiv) errDiv.classList.add('hidden');
+
+        fetch('/api/2fa/enable', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                secret: secretInput.value,
+                code: codeInput.value.trim()
+            })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (submitBtn) submitBtn.disabled = false;
+                if (data.success) {
+                    showToast('success', 'Two-Factor Authentication berhasil diaktifkan!');
+                    const modal = document.getElementById('modal_2fa_setup');
+                    if (modal) modal.close();
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    if (errDiv) {
+                        errDiv.innerText = data.error || 'Kode verifikasi salah.';
+                        errDiv.classList.remove('hidden');
+                    }
+                }
+            })
+            .catch(err => {
+                if (submitBtn) submitBtn.disabled = false;
+                if (errDiv) {
+                    errDiv.innerText = 'Gagal menghubungi server: ' + err;
+                    errDiv.classList.remove('hidden');
+                }
+            });
+    };
+
+    window.open2FADisableModal = function () {
+        const modal = document.getElementById('modal_2fa_disable');
+        const errDiv = document.getElementById('twofa-disable-error');
+        const pwdInput = document.getElementById('twofa-disable-password');
+
+        if (errDiv) { errDiv.classList.add('hidden'); errDiv.innerText = ''; }
+        if (pwdInput) pwdInput.value = '';
+        if (modal) modal.showModal();
+    };
+
+    window.submit2FADisable = function (e) {
+        e.preventDefault();
+        const pwdInput = document.getElementById('twofa-disable-password');
+        const errDiv = document.getElementById('twofa-disable-error');
+        const submitBtn = document.getElementById('btn-submit-disable-2fa');
+
+        if (!pwdInput) return;
+
+        if (submitBtn) submitBtn.disabled = true;
+        if (errDiv) errDiv.classList.add('hidden');
+
+        fetch('/api/2fa/disable', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                password: pwdInput.value
+            })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (submitBtn) submitBtn.disabled = false;
+                if (data.success) {
+                    showToast('info', 'Two-Factor Authentication telah dinonaktifkan.');
+                    const modal = document.getElementById('modal_2fa_disable');
+                    if (modal) modal.close();
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    if (errDiv) {
+                        errDiv.innerText = data.error || 'Kata sandi tidak valid.';
+                        errDiv.classList.remove('hidden');
+                    }
+                }
+            })
+            .catch(err => {
+                if (submitBtn) submitBtn.disabled = false;
+                if (errDiv) {
+                    errDiv.innerText = 'Gagal menghubungi server: ' + err;
+                    errDiv.classList.remove('hidden');
+                }
+            });
+    };
+
+    // ==========================================
+    // Issue #2: WhatsApp Group & Contact Picker
+    // ==========================================
+    let cachedPickerItems = [];
+
+    window.openWAPicker = function (type) {
+        const modal = document.getElementById('modal_wa_picker');
+        const title = document.getElementById('wa-picker-title');
+        const subtitle = document.getElementById('wa-picker-subtitle');
+        const loading = document.getElementById('wa-picker-loading');
+        const list = document.getElementById('wa-picker-list');
+        const search = document.getElementById('wa-picker-search');
+
+        if (search) search.value = '';
+        if (loading) loading.classList.remove('hidden');
+        if (list) { list.classList.add('hidden'); list.innerHTML = ''; }
+
+        const isGroup = type === 'groups';
+        if (title) title.innerText = isGroup ? 'Pilih Grup WhatsApp' : 'Pilih Kontak WhatsApp';
+        if (subtitle) subtitle.innerText = isGroup ? 'Daftar grup yang diikuti oleh akun WhatsApp ini' : 'Daftar kontak tersimpan di akun WhatsApp ini';
+
+        if (modal) modal.showModal();
+
+        const endpoint = isGroup ? '/api/whatsapp/groups' : '/api/whatsapp/contacts';
+        fetch(endpoint)
+            .then(res => res.json())
+            .then(data => {
+                if (loading) loading.classList.add('hidden');
+                const rawItems = isGroup ? (data.groups || []) : (data.contacts || []);
+                cachedPickerItems = rawItems.map(item => ({
+                    jid: item.jid || '',
+                    name: item.name || item.push_name || (isGroup ? 'Grup WhatsApp' : item.phone || item.jid),
+                    desc: isGroup ? (item.topic || item.jid) : (item.phone || item.jid),
+                    isGroup: isGroup
+                }));
+                renderPickerList(cachedPickerItems);
+            })
+            .catch(err => {
+                if (loading) loading.classList.add('hidden');
+                if (list) {
+                    list.classList.remove('hidden');
+                    list.innerHTML = `<div class="p-4 text-center text-xs text-rose-400">Gagal memuat data WhatsApp: ${err.message}. Pastikan WhatsApp terhubung.</div>`;
+                }
+            });
+    };
+
+    function renderPickerList(items) {
+        const list = document.getElementById('wa-picker-list');
+        if (!list) return;
+        list.classList.remove('hidden');
+        list.innerHTML = '';
+
+        if (!items || items.length === 0) {
+            list.innerHTML = `<div class="p-4 text-center text-xs text-slate-500 italic">Tidak ada kontak atau grup yang ditemukan.</div>`;
+            return;
+        }
+
+        items.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'p-2.5 rounded-xl bg-white/[0.02] hover:bg-rose-500/10 border border-white/[0.05] hover:border-rose-500/30 cursor-pointer flex items-center justify-between transition group';
+            row.onclick = function () {
+                selectWAPickerItem(item);
+            };
+
+            row.innerHTML = `
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-8 h-8 rounded-lg ${item.isGroup ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25' : 'bg-amber-500/15 text-amber-300 border border-amber-500/25'} flex items-center justify-center font-bold text-xs shrink-0">
+                        ${item.isGroup ? '👥' : '👤'}
+                    </div>
+                    <div class="min-w-0">
+                        <div class="font-bold text-white text-xs truncate group-hover:text-rose-300">${escapeHtml(item.name)}</div>
+                        <div class="font-mono text-[10px] text-slate-400 truncate">${escapeHtml(item.desc)}</div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-xs rounded-lg bg-white/5 group-hover:bg-rose-600 text-slate-300 group-hover:text-white border-0 text-[10px]">
+                    Pilih
+                </button>
+            `;
+            list.appendChild(row);
+        });
+    }
+
+    function selectWAPickerItem(item) {
+        const phoneInput = document.getElementById('schedule-target-phone');
+        if (phoneInput) {
+            phoneInput.value = item.jid;
+        }
+        showToast('info', `Target dipilih: ${item.name}`);
+        const modal = document.getElementById('modal_wa_picker');
+        if (modal) modal.close();
+    }
+
+    window.filterWAPickerItems = function () {
+        const search = document.getElementById('wa-picker-search');
+        if (!search) return;
+        const q = search.value.toLowerCase().trim();
+        if (!q) {
+            renderPickerList(cachedPickerItems);
+            return;
+        }
+        const filtered = cachedPickerItems.filter(item => 
+            (item.name && item.name.toLowerCase().includes(q)) || 
+            (item.jid && item.jid.toLowerCase().includes(q)) ||
+            (item.desc && item.desc.toLowerCase().includes(q))
+        );
+        renderPickerList(filtered);
+    };
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
     // Initialize on DOM load or immediately if already loaded
     function bootstrapApp() {
         initWebSocket();
