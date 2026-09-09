@@ -19,7 +19,7 @@ var embeddedBinary []byte
 const (
 	AppName        = "SiPenDosa"
 	AppDescription = "Sistem Pengingat Dosen Saatnya"
-	AppVersion     = "1.0.0"
+	AppVersion     = "1.2.0"
 	DefaultPort    = "8473"
 )
 
