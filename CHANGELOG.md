@@ -4,7 +4,7 @@ Semua perubahan penting pada proyek **SiPenDosa** didokumentasikan di sini denga
 
 ---
 
-## [1.2.0] — 2026-09-25
+## [1.2.1] — 2026-09-25
 
 ### 🚀 Peningkatan Utama & Fitur Baru
 * **macOS 12+ Universal 2 Distribution:**

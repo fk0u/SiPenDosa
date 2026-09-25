@@ -130,7 +130,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusMenu.delegate = self
 
         // 1. Header Identitas
-        titleMenuItem = NSMenuItem(title: "⚡ SiPenDosa v1.2.0 (Universal)", action: nil, keyEquivalent: "")
+        titleMenuItem = NSMenuItem(title: "⚡ SiPenDosa v1.2.1 (Universal)", action: nil, keyEquivalent: "")
         titleMenuItem.isEnabled = false
         statusMenu.addItem(titleMenuItem)
 
