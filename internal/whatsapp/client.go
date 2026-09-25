@@ -54,9 +54,11 @@ type Client struct {
 	phoneJID    string
 	pushName    string
 	mu          sync.RWMutex
-	cancelFunc  context.CancelFunc
-	ctx         context.Context
-	stopChan    chan struct{}
+	cancelFunc       context.CancelFunc
+	ctx              context.Context
+	stopChan         chan struct{}
+	closeOnce        sync.Once
+	keepAliveRunning bool
 }
 
 // NewClient initializes the whatsmeow storage container and client wrapper
@@ -128,7 +130,13 @@ func (c *Client) Start() error {
 		}
 	}
 
-	go c.keepAliveLoop()
+	c.mu.Lock()
+	if !c.keepAliveRunning {
+		c.keepAliveRunning = true
+		go c.keepAliveLoop()
+	}
+	c.mu.Unlock()
+
 	return nil
 }
 
@@ -226,7 +234,11 @@ func (c *Client) keepAliveLoop() {
 				err := c.client.Connect()
 				if err != nil {
 					slog.Warn("Auto-reconnect failed", "err", err)
-					time.Sleep(backoff)
+					select {
+					case <-c.stopChan:
+						return
+					case <-time.After(backoff):
+					}
 					backoff *= 2
 					if backoff > maxBackoff {
 						backoff = maxBackoff
@@ -322,7 +334,9 @@ func (c *Client) Logout() error {
 
 // Close gracefully terminates client
 func (c *Client) Close() {
-	close(c.stopChan)
+	c.closeOnce.Do(func() {
+		close(c.stopChan)
+	})
 	c.cancelFunc()
 	c.Disconnect()
 	_ = c.container.Close()
@@ -517,9 +531,11 @@ func FormatJID(target string) (types.JID, error) {
 	re := regexp.MustCompile(`[^\d]`)
 	cleaned := re.ReplaceAllString(target, "")
 
-	// Handle Indonesian local prefix '08' -> '628'
+	// Handle Indonesian local prefix '08' -> '628' or '8...' -> '628...'
 	if strings.HasPrefix(cleaned, "08") {
 		cleaned = "62" + cleaned[1:]
+	} else if strings.HasPrefix(cleaned, "8") && len(cleaned) >= 9 && len(cleaned) <= 13 {
+		cleaned = "62" + cleaned
 	}
 
 	if len(cleaned) < 8 {

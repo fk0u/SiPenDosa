@@ -123,7 +123,9 @@ func (s *Scheduler) evaluateTick() {
 	}
 
 	for _, sc := range schedules {
-		if sc.SendAtTime != currentTimeStr {
+		// Evaluasi waktu: jika jam saat ini belum mencapai waktu kirim jadwal, lewati.
+		// Menggunakan perbandingan >= mencegah jadwal terlewat jika sistem sempat sleep/doze atau tick bergeser.
+		if currentTimeStr < sc.SendAtTime {
 			continue
 		}
 
@@ -324,13 +326,9 @@ func (s *Scheduler) TriggerScheduleManually(scheduleID int64, dryRun bool) (*sto
 		ScheduledFor:  now,
 	}
 
-	// If manual dry run requested, set temporary flag
+	// Jika manual dry run diminta, tandai agar worker queue tidak mengirim pesan fisik ke WhatsApp
 	if dryRun {
-		origDryRun := sc.DryRun
-		sc.DryRun = true
-		defer func() {
-			sc.DryRun = origDryRun
-		}()
+		qm.ErrorMessage = "[MANUAL_DRY_RUN]"
 	}
 
 	res, err := s.queueMgr.Enqueue(qm)
@@ -427,11 +425,14 @@ func (s *Scheduler) updateCountdown() {
 		recName = nearestSchedule.DosenName
 	}
 
+	zoneName, _ := nearestTime.Zone()
+	targetTimeStr := fmt.Sprintf("%s %s", nearestTime.Format("02 Jan 15:04"), zoneName)
+
 	info := &NextDeliveryInfo{
 		ScheduleID:     nearestSchedule.ID,
 		Matkul:         nearestSchedule.Matkul,
 		RecipientName:  recName,
-		TargetTime:     nearestTime.Format("02 Jan 15:04 WITA"),
+		TargetTime:     targetTimeStr,
 		RemainingSecs:  remSecs,
 		RemainingHuman: remHuman,
 		MessagePreview: previewMsg,
@@ -462,6 +463,20 @@ func (s *Scheduler) calculateNextFireTime(sc *store.ScheduleDetail, now time.Tim
 	fireTime := time.Date(now.Year(), now.Month(), now.Day(), sendHour, sendMinute, 0, 0, loc).AddDate(0, 0, daysUntil)
 	if fireTime.Before(now) {
 		fireTime = fireTime.AddDate(0, 0, 7)
+	}
+
+	// BUG-10 Fix: Advance if the target lecture date is a holiday (check up to 4 occurrences)
+	for i := 0; i < 4; i++ {
+		lectureDate := fireTime
+		if sc.Mode == "H-1" {
+			lectureDate = fireTime.AddDate(0, 0, 1)
+		}
+		isHoliday, _, err := s.store.IsHoliday(lectureDate.Format("2006-01-02"))
+		if err == nil && isHoliday {
+			fireTime = fireTime.AddDate(0, 0, 7)
+		} else {
+			break
+		}
 	}
 
 	return fireTime

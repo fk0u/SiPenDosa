@@ -62,17 +62,24 @@ find_binary() {
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     SRC_BIN=""
 
-    if [ -f "${SCRIPT_DIR}/bin/darwin_${TARGET_ARCH}/${APP_NAME}" ]; then
+    if [ -f "${SCRIPT_DIR}/bin/sipen_darwin_universal" ]; then
+        SRC_BIN="${SCRIPT_DIR}/bin/sipen_darwin_universal"
+    elif [ -f "${SCRIPT_DIR}/bin/sipen_darwin_${TARGET_ARCH}" ]; then
+        SRC_BIN="${SCRIPT_DIR}/bin/sipen_darwin_${TARGET_ARCH}"
+    elif [ -f "${SCRIPT_DIR}/bin/darwin_${TARGET_ARCH}/${APP_NAME}" ]; then
         SRC_BIN="${SCRIPT_DIR}/bin/darwin_${TARGET_ARCH}/${APP_NAME}"
     elif [ -f "${SCRIPT_DIR}/${APP_NAME}" ]; then
         SRC_BIN="${SCRIPT_DIR}/${APP_NAME}"
-    elif command -v go >/dev/null 2>&1; then
-        echo -e "${YELLOW}Binary macOS belum terkompilasi, mengompilasi dari sumber menggunakan Go lokal...${NC}"
-        (cd "$SCRIPT_DIR" && CGO_ENABLED=0 go build -ldflags="-s -w" -o "${APP_NAME}" ./cmd/sipen)
-        SRC_BIN="${SCRIPT_DIR}/${APP_NAME}"
     else
-        echo -e "${RED}[ERROR] Binary ${APP_NAME} tidak ditemukan di paket ini.${NC}"
-        exit 1
+        GO_BIN=$(command -v go 2>/dev/null || ([ -x "$HOME/go/bin/go" ] && echo "$HOME/go/bin/go") || echo "")
+        if [ -n "$GO_BIN" ]; then
+            echo -e "${YELLOW}Binary macOS belum terkompilasi, mengompilasi dari sumber menggunakan $GO_BIN...${NC}"
+            (cd "$SCRIPT_DIR" && CGO_ENABLED=0 "$GO_BIN" build -ldflags="-s -w" -o "${APP_NAME}" ./cmd/sipen)
+            SRC_BIN="${SCRIPT_DIR}/${APP_NAME}"
+        else
+            echo -e "${RED}[ERROR] Binary ${APP_NAME} tidak ditemukan di paket ini.${NC}"
+            exit 1
+        fi
     fi
 
     echo -e "${BYELLOW}[2/5]${NC} Menggunakan binary: ${BGREEN}${SRC_BIN}${NC}"

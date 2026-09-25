@@ -3,7 +3,7 @@
 APP_NAME = sipen
 DIST_DIR = dist
 BIN_DIR = $(DIST_DIR)/bin
-GO = go
+GO ?= $(shell command -v go 2>/dev/null || echo "$(HOME)/go/bin/go")
 LDFLAGS = -s -w
 
 # 1. Build Lokal (Native OS)
@@ -38,7 +38,8 @@ build-darwin:
 	@mkdir -p $(BIN_DIR)
 	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 $(GO) build -ldflags="$(LDFLAGS)" -o $(BIN_DIR)/$(APP_NAME)_darwin_arm64 ./cmd/sipen
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GO) build -ldflags="$(LDFLAGS)" -o $(BIN_DIR)/$(APP_NAME)_darwin_amd64 ./cmd/sipen
-	@echo "==> Selesai: $(BIN_DIR)/$(APP_NAME)_darwin_arm64 & amd64"
+	lipo -create -output $(BIN_DIR)/$(APP_NAME)_darwin_universal $(BIN_DIR)/$(APP_NAME)_darwin_arm64 $(BIN_DIR)/$(APP_NAME)_darwin_amd64
+	@echo "==> Selesai: $(BIN_DIR)/$(APP_NAME)_darwin_arm64, amd64 & universal"
 
 build-all: build-linux build-windows build-darwin
 	@echo "==> Seluruh binary lintas OS berhasil dikompilasi di $(BIN_DIR)!"
@@ -84,15 +85,15 @@ dmg: app-macos
 	@bash scripts/build-dmg.sh
 
 package-macos: build-darwin app-macos pkg dmg
-	@echo "==> Mengemas macOS distribution package..."
+	@echo "==> Mengemas macOS Universal distribution package (ARM64 + x86_64)..."
 	@mkdir -p $(DIST_DIR)/tmp_macos
-	@cp -f $(BIN_DIR)/$(APP_NAME)_darwin_arm64 $(DIST_DIR)/tmp_macos/$(APP_NAME)
+	@cp -f $(BIN_DIR)/$(APP_NAME)_darwin_universal $(DIST_DIR)/tmp_macos/$(APP_NAME)
 	@cp -f install-macos.sh $(DIST_DIR)/tmp_macos/
 	@cp -f .env.example $(DIST_DIR)/tmp_macos/
 	@chmod +x $(DIST_DIR)/tmp_macos/install-macos.sh
 	@tar -czf $(DIST_DIR)/sipendosa_macos_universal.tar.gz -C $(DIST_DIR)/tmp_macos .
 	@rm -rf $(DIST_DIR)/tmp_macos
-	@echo "==> Selesai paket macOS (App, PKG, DMG, Tarball) di $(DIST_DIR)/"
+	@echo "==> Selesai paket macOS Universal (App, PKG, DMG, Tarball) di $(DIST_DIR)/"
 
 # 7. Packaging Android (Universal APK, Google App Bundle AAB & Termux Script)
 build-android:

@@ -53,6 +53,16 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 	r.Get("/healthz", h.HealthzHandler)
 	r.Get("/api/health", h.HealthzHandler) // Alias for Android MainActivity health check
 	r.Get("/ws", h.hub.HandleWS)
+	r.Get("/api/ws", h.hub.HandleWS)       // Alias for Mobile & Companion WebSocket telemetry
+
+	// Mobile Companion & IoT REST JSON API (BUG-05 Fix)
+	r.Get("/api/stats", h.APIStatsHandler)
+	r.Get("/api/whatsapp/status", h.APIWhatsAppStatusHandler)
+	r.Get("/api/contacts", h.APIContactsHandler)
+	r.Get("/api/schedules", h.APISchedulesHandler)
+	r.Get("/api/queue", h.APIQueueHandler)
+	r.Post("/api/queue/process", h.APIQueueProcessHandler)
+	r.Post("/api/queue/{id}/process", h.APIQueueProcessHandler)
 
 	// Issue #4: Public Academic Schedule Portal & iCalendar .ics download
 	r.Get("/jadwal", h.PublicScheduleHandler)

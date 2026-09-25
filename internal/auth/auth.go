@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"sipen/internal/store"
@@ -171,15 +172,38 @@ func ClearSessionCookie(w http.ResponseWriter) {
 // RequireAuth middleware protects routes from unauthenticated access
 func (s *Service) RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie(CookieName)
-		if err != nil || cookie.Value == "" {
+		token := ""
+		if cookie, err := r.Cookie(CookieName); err == nil && cookie.Value != "" {
+			token = cookie.Value
+		} else {
+			authHeader := r.Header.Get("Authorization")
+			if strings.HasPrefix(authHeader, "Bearer ") {
+				token = strings.TrimPrefix(authHeader, "Bearer ")
+			}
+		}
+
+		isAPIRequest := strings.HasPrefix(r.URL.Path, "/api/") || strings.Contains(r.Header.Get("Accept"), "application/json")
+
+		if token == "" {
+			if isAPIRequest {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusUnauthorized)
+				_, _ = w.Write([]byte(`{"error":"unauthorized","message":"Autentikasi diperlukan. Silakan login atau sertakan token."}`))
+				return
+			}
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
 
-		user, err := s.ValidateSession(cookie.Value)
+		user, err := s.ValidateSession(token)
 		if err != nil {
 			ClearSessionCookie(w)
+			if isAPIRequest {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusUnauthorized)
+				_, _ = w.Write([]byte(`{"error":"unauthorized","message":"Sesi autentikasi telah kedaluwarsa atau tidak valid."}`))
+				return
+			}
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}

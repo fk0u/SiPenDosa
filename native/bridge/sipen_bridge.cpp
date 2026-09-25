@@ -4,6 +4,7 @@
 
 #include "sipen_bridge.h"
 
+#include <cerrno>
 #include <chrono>
 #include <cstring>
 #include <arpa/inet.h>

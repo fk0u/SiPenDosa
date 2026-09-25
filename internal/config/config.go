@@ -62,6 +62,24 @@ func Load() (*Config, error) {
 		}
 	}
 
+	// 4. Cek .env di direktori instalasi standar macOS / XDG data
+	if envDir == "" {
+		if home, err := os.UserHomeDir(); err == nil {
+			candidates := []string{
+				filepath.Join(home, ".local", "share", "sipendosa", ".env"),
+				filepath.Join(home, "Library", "Application Support", "SiPenDosa", ".env"),
+				filepath.Join(home, "Applications", "SiPenDosa", ".env"),
+			}
+			for _, candidate := range candidates {
+				if _, err := os.Stat(candidate); err == nil {
+					_ = godotenv.Load(candidate)
+					envDir = filepath.Dir(candidate)
+					break
+				}
+			}
+		}
+	}
+
 	rawDBPath := getEnv("DB_PATH", "data/sipen.db")
 	rawWASessionPath := getEnv("WA_SESSION_PATH", "session/whatsapp.db")
 
@@ -105,11 +123,16 @@ func resolvePath(p, baseDir string) string {
 	if baseDir != "" {
 		return filepath.Join(baseDir, p)
 	}
-	// Fallback ke ~/.sipendosa jika folder ~/.sipendosa ada
+	// Fallback ke direktori pengguna jika ada
 	if home, err := os.UserHomeDir(); err == nil {
-		sipenDir := filepath.Join(home, ".sipendosa")
-		if fi, err := os.Stat(sipenDir); err == nil && fi.IsDir() {
-			return filepath.Join(sipenDir, p)
+		for _, dirCandidate := range []string{
+			filepath.Join(home, ".local", "share", "sipendosa"),
+			filepath.Join(home, "Library", "Application Support", "SiPenDosa"),
+			filepath.Join(home, ".sipendosa"),
+		} {
+			if fi, err := os.Stat(dirCandidate); err == nil && fi.IsDir() {
+				return filepath.Join(dirCandidate, p)
+			}
 		}
 	}
 	return p

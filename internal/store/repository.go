@@ -880,6 +880,19 @@ func (s *Store) GetQueueMessageByID(id int64) (*QueueMessage, error) {
 	return &qm, nil
 }
 
+// ClaimPendingQueueMessage atomically transitions status from 'pending' to 'processing'
+// Returns true only if the message was successfully claimed by this caller.
+func (s *Store) ClaimPendingQueueMessage(id int64) (bool, error) {
+	now := time.Now()
+	res, err := s.db.Exec(`UPDATE queue_messages SET status = 'processing', updated_at = ? WHERE id = ? AND status = 'pending'`,
+		now, id)
+	if err != nil {
+		return false, err
+	}
+	rows, err := res.RowsAffected()
+	return rows > 0, err
+}
+
 func (s *Store) UpdateQueueStatus(id int64, status, errorMsg string, sentAt *time.Time) error {
 	now := time.Now()
 	_, err := s.db.Exec(`UPDATE queue_messages SET status = ?, error_message = ?, sent_at = ?, updated_at = ? WHERE id = ?`,

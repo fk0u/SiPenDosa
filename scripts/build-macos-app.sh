@@ -40,63 +40,81 @@ if [ ! -f "${ASSETS_DIR}/AppIcon.icns" ]; then
     rm -rf "${ASSETS_DIR}/AppIcon.iconset"
 fi
 
+# Pastikan Go tersedia di PATH
+if [ -x "/Users/kou/go/bin/go" ]; then
+    export PATH="/Users/kou/go/bin:${PATH}"
+fi
+
 # 2. Pastikan Go binary untuk macOS tersedia
 mkdir -p "${DIST_DIR}/bin"
 GO_ARM64="${DIST_DIR}/bin/sipen_darwin_arm64"
 GO_AMD64="${DIST_DIR}/bin/sipen_darwin_amd64"
 GO_UNIVERSAL="${DIST_DIR}/bin/sipen_darwin_universal"
 
-if [ ! -f "$GO_ARM64" ]; then
-    echo "==> Mengompilasi Go backend untuk darwin/arm64..."
-    CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o "$GO_ARM64" ./cmd/sipen
-fi
+echo "==> Mengompilasi Go backend untuk darwin/arm64 (Apple Silicon M1-M4)..."
+CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o "$GO_ARM64" ./cmd/sipen
 
-if [ ! -f "$GO_AMD64" ]; then
-    echo "==> Mengompilasi Go backend untuk darwin/amd64..."
-    CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o "$GO_AMD64" ./cmd/sipen
-fi
+echo "==> Mengompilasi Go backend untuk darwin/amd64 (Intel 64-bit)..."
+CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o "$GO_AMD64" ./cmd/sipen
 
-# Gabungkan menjadi Universal Mach-O Binary menggunakan lipo
-if [ -f "$GO_ARM64" ] && [ -f "$GO_AMD64" ]; then
-    echo "==> Menggabungkan binary Go menjadi Universal Mach-O (arm64 + amd64)..."
-    lipo -create -output "$GO_UNIVERSAL" "$GO_ARM64" "$GO_AMD64"
-else
-    cp -f "$GO_AMD64" "$GO_UNIVERSAL"
-fi
+echo "==> Menggabungkan binary Go menjadi Universal Mach-O (arm64 + x86_64)..."
+lipo -create -output "$GO_UNIVERSAL" "$GO_ARM64" "$GO_AMD64"
 
-# 3. Kompilasi C++17 Bridge
-echo "==> Mengompilasi C++17 High-Performance Bridge..."
-clang++ -std=c++17 -O2 -c "${SCRIPT_DIR}/native/bridge/sipen_bridge.cpp" -o "${SCRIPT_DIR}/native/bridge/sipen_bridge.o"
+# 3. Kompilasi C++17 Bridge untuk macOS 12+ (Dual Architecture: arm64 & x86_64)
+echo "==> Mengompilasi C++17 High-Performance Bridge untuk macOS 12+ (arm64 & x86_64)..."
+clang++ -std=c++17 -target arm64-apple-macos12.0 -mmacosx-version-min=12.0 -O2 \
+    -c "${SCRIPT_DIR}/native/bridge/sipen_bridge.cpp" -o "${SCRIPT_DIR}/native/bridge/sipen_bridge_arm64.o"
 
-# 4. Kompilasi Swift Companion App
-echo "==> Mengompilasi Swift Native Controller..."
-SWIFT_BIN="${DIST_DIR}/SiPenDosa_swift_bin"
+clang++ -std=c++17 -target x86_64-apple-macos12.0 -mmacosx-version-min=12.0 -O2 \
+    -c "${SCRIPT_DIR}/native/bridge/sipen_bridge.cpp" -o "${SCRIPT_DIR}/native/bridge/sipen_bridge_x86_64.o"
+
+# 4. Kompilasi Swift Companion App untuk macOS 12+ (Dual Architecture: arm64 & x86_64)
+echo "==> Mengompilasi Swift Native Controller untuk Apple Silicon (arm64)..."
+SWIFT_BIN_ARM64="${DIST_DIR}/SiPenDosa_swift_arm64"
 swiftc \
+    -target arm64-apple-macos12.0 \
     -import-objc-header "${SCRIPT_DIR}/native/macos/SiPenDosa-Bridging-Header.h" \
-    "${SCRIPT_DIR}/native/bridge/sipen_bridge.o" \
+    "${SCRIPT_DIR}/native/bridge/sipen_bridge_arm64.o" \
     "${SCRIPT_DIR}/native/macos/SiPenDosaApp.swift" \
     -Xlinker -lc++ \
     -O \
-    -o "$SWIFT_BIN"
+    -o "$SWIFT_BIN_ARM64"
+
+echo "==> Mengompilasi Swift Native Controller untuk Intel x64 (x86_64)..."
+SWIFT_BIN_X86_64="${DIST_DIR}/SiPenDosa_swift_x86_64"
+swiftc \
+    -target x86_64-apple-macos12.0 \
+    -import-objc-header "${SCRIPT_DIR}/native/macos/SiPenDosa-Bridging-Header.h" \
+    "${SCRIPT_DIR}/native/bridge/sipen_bridge_x86_64.o" \
+    "${SCRIPT_DIR}/native/macos/SiPenDosaApp.swift" \
+    -Xlinker -lc++ \
+    -O \
+    -o "$SWIFT_BIN_X86_64"
+
+echo "==> Menggabungkan Swift controller menjadi Universal Mach-O (arm64 + x86_64)..."
+SWIFT_BIN="${DIST_DIR}/SiPenDosa_swift_universal"
+lipo -create -output "$SWIFT_BIN" "$SWIFT_BIN_ARM64" "$SWIFT_BIN_X86_64"
+rm -f "$SWIFT_BIN_ARM64" "$SWIFT_BIN_X86_64"
+rm -f "${SCRIPT_DIR}/native/bridge/sipen_bridge_arm64.o" "${SCRIPT_DIR}/native/bridge/sipen_bridge_x86_64.o"
 
 # 5. Susun struktur bundle SiPenDosa.app
 echo "==> Menyusun struktur direktori SiPenDosa.app..."
 rm -rf "$APP_DIR"
 mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
 
-# Salin binary controller
+# Salin binary controller Universal
 cp -f "$SWIFT_BIN" "${MACOS_DIR}/SiPenDosa"
 chmod 755 "${MACOS_DIR}/SiPenDosa"
 rm -f "$SWIFT_BIN"
 
-# Salin binary backend Go core ke Resources
+# Salin binary backend Go core Universal ke Resources
 cp -f "$GO_UNIVERSAL" "${RESOURCES_DIR}/sipen"
 chmod 755 "${RESOURCES_DIR}/sipen"
 
 # Salin Icon
 cp -f "${ASSETS_DIR}/AppIcon.icns" "${RESOURCES_DIR}/AppIcon.icns"
 
-# Buat Info.plist
+# Buat Info.plist resmi macOS 12+ Universal
 cat <<EOF > "${CONTENTS_DIR}/Info.plist"
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -119,11 +137,16 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.1.1</string>
+    <string>1.2.0</string>
     <key>CFBundleVersion</key>
-    <string>3</string>
+    <string>5</string>
     <key>LSMinimumSystemVersion</key>
-    <string>10.15</string>
+    <string>12.0</string>
+    <key>LSArchitecturePriority</key>
+    <array>
+        <string>arm64</string>
+        <string>x86_64</string>
+    </array>
     <key>LSUIElement</key>
     <true/>
     <key>NSHighResolutionCapable</key>
@@ -134,4 +157,4 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
 </plist>
 EOF
 
-echo "✓ Native macOS App berhasil dibuat: ${APP_DIR}"
+echo "✓ Native macOS 12+ Universal App berhasil dibuat: ${APP_DIR}"

@@ -20,6 +20,10 @@ echo "========================================================================"
 echo "💿 MEMBANGUN APPLE DISK IMAGE: SiPenDosa.dmg"
 echo "========================================================================"
 
+if [ -x "/Users/kou/go/bin/go" ]; then
+    export PATH="/Users/kou/go/bin:${PATH}"
+fi
+
 # 1. Pastikan SiPenDosa.app sudah terbangun
 if [ ! -d "$APP_PATH" ]; then
     "${SCRIPT_DIR}/scripts/build-macos-app.sh"

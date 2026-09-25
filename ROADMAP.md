@@ -50,4 +50,21 @@ Dokumen ini merangkum rencana pengembangan fitur masa depan untuk **SiPenDosa** 
 
 ---
 
-*Tertarik berkontribusi atau memberi masukan? Silakan buka [Issue](https://github.com/fk0u/SiPenDosa/issues) atau diskusikan di repositori resmi.*
+### 4. 🍎 macOS 12+ Universal Edition (Apple Silicon M1-M4 & Intel x64)
+* **Status**: ✅ Selesai & Dirilis (Shipped in v1.2.0)
+* **Peningkatan**:
+  - Dukungan native macOS 12.0+ Monterey, Ventura, Sonoma, Sequoia.
+  - Kompilasi Dual-Architecture Universal 2 Mach-O (`lipo`) untuk Go Core, C++17 Socket Bridge, dan Swift Companion AppKit.
+  - Opsi rilis lengkap: Apple Disk Image (`.dmg`), Apple Installer Wizard (`.pkg`) dengan LaunchAgent 24/7, dan tarball Universal.
+
+---
+
+### 5. 📱 Mobile 24/7 Background Execution & Realtime Messaging
+* **Status**: ✅ Selesai & Dirilis (Shipped in v1.2.0)
+* **Peningkatan**:
+  - **Android**: Foreground service dengan tipe `dataSync`, dual lock (CPU WakeLock + High-Performance WifiLock), perlindungan Doze Mode via Battery Optimization Exemption, Boot Completed persistence (`BootCompletedReceiver`), dan Watchdog Auto-Respawn Loop.
+  - **iOS**: Integrasi `BGTaskScheduler` (`BGAppRefreshTask` & `BGProcessingTask`), extended background task execution saat diminimalkan, live WebSocket telemetry hub, dan notifikasi lokal realtime (`UNUserNotificationCenter`).
+
+---
+
+*Tertarik berkontribusi atau memberi masukan? Silakan baca [Panduan Kontribusi](CONTRIBUTING.md), buka [Issue](https://github.com/fk0u/SiPenDosa/issues), atau diskusikan di repositori resmi.*

@@ -36,3 +36,7 @@ cmd/installer/*.syso
 # Android Keystore
 mobile/android/keystore/
 *.keystore
+
+# macOS metadata
+.DS_Store
+*.DS_Store

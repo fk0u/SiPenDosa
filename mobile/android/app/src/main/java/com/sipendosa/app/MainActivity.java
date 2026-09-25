@@ -47,7 +47,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.URL;
+import java.util.Enumeration;
 
 public class MainActivity extends Activity implements View.OnClickListener, Runnable {
     public static final String SERVER_URL = "http://127.0.0.1:8473";
@@ -104,9 +108,25 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
             }
         }
 
-        // 3. Start Background Server Daemon Service
+        // 3. Start Background Server Daemon Service (Foreground on Android O+)
         Intent serviceIntent = new Intent(this, SiPenDosaServerService.class);
-        startService(serviceIntent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent);
+        } else {
+            startService(serviceIntent);
+        }
+
+        // 4. Request Battery Optimization Exemption (Crucial for 24/7 background real-time messaging)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                if (pm != null && !pm.isIgnoringBatteryOptimizations(getPackageName())) {
+                    Intent batteryIntent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                    batteryIntent.setData(Uri.parse("package:" + getPackageName()));
+                    startActivity(batteryIntent);
+                }
+            } catch (Exception ignored) {}
+        }
 
         handler = new Handler(Looper.getMainLooper());
         lanIp = getLanIpAddress();
@@ -717,7 +737,24 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
             WifiManager wm = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
             if (wm != null) {
                 int ip = wm.getConnectionInfo().getIpAddress();
-                return Formatter.formatIpAddress(ip);
+                String formatted = Formatter.formatIpAddress(ip);
+                if (formatted != null && !formatted.equals("0.0.0.0")) {
+                    return formatted;
+                }
+            }
+        } catch (Exception ignored) {}
+
+        // Fallback for Android 11+ (API 30+) where WifiManager returns 0.0.0.0 without fine location
+        try {
+            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+                NetworkInterface intf = en.nextElement();
+                if (intf.isLoopback() || !intf.isUp()) continue;
+                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+                    InetAddress inetAddress = enumIpAddr.nextElement();
+                    if (!inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address) {
+                        return inetAddress.getHostAddress();
+                    }
+                }
             }
         } catch (Exception ignored) {}
         return "127.0.0.1";

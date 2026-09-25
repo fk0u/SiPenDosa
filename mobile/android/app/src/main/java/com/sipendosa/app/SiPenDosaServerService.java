@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -20,14 +21,22 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * SiPenDosaServerService
+ * Layanan latar belakang 24/7 untuk menjalankan core engine Go & whatsmeow
+ * Dilengkapi dengan WakeLock, WifiLock (anti-deep-sleep), dan Auto-Respawn Watchdog
+ * agar pengiriman pesan jadwal perkuliahan selalu tepat waktu secara real-time.
+ */
 public class SiPenDosaServerService extends Service implements Runnable {
     private static final String TAG = "SiPenDosaService";
     private static final String CHANNEL_ID = "sipendosa_service_channel";
     private static final int NOTIFICATION_ID = 8473;
 
     private PowerManager.WakeLock wakeLock;
+    private WifiManager.WifiLock wifiLock;
     private Process serverProcess;
-    private boolean isRunning = false;
+    private volatile boolean isRunning = false;
+    private Thread serverThread;
     private static final List<String> logBuffer = new ArrayList<>();
 
     @Override
@@ -38,27 +47,71 @@ public class SiPenDosaServerService extends Service implements Runnable {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (!isRunning) {
-            startForegroundServiceNotification();
-            acquireWakeLock();
-            Thread serverThread = new Thread(this);
-            serverThread.start();
+        startForegroundServiceNotification();
+        acquireLocks();
+
+        if (!isRunning || serverThread == null || !serverThread.isAlive()) {
             isRunning = true;
+            serverThread = new Thread(this, "SiPenDosa-Engine-Thread");
+            serverThread.start();
         }
         return START_STICKY;
     }
 
-    private void acquireWakeLock() {
+    private void acquireLocks() {
+        // 1. Acquire Partial WakeLock agar CPU tidak ditidurkan oleh Doze Mode
         try {
-            PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-            if (powerManager != null) {
-                wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SiPenDosa:ServerWakeLock");
+            if (wakeLock == null) {
+                PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                if (powerManager != null) {
+                    wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SiPenDosa:ServerWakeLock");
+                    wakeLock.setReferenceCounted(false);
+                }
+            }
+            if (wakeLock != null && !wakeLock.isHeld()) {
                 wakeLock.acquire();
-                Log.i(TAG, "WakeLock acquired successfully");
+                Log.i(TAG, "WakeLock berhasil diaktifkan.");
             }
         } catch (Exception e) {
-            Log.e(TAG, "Failed to acquire WakeLock", e);
+            Log.e(TAG, "Gagal mengaktifkan WakeLock: " + e.getMessage(), e);
         }
+
+        // 2. Acquire High-Performance WifiLock agar koneksi WhatsApp WebSocket tidak terputus saat layar mati
+        try {
+            if (wifiLock == null) {
+                WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                if (wifiManager != null) {
+                    int lockMode = WifiManager.WIFI_MODE_FULL;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
+                        lockMode = WifiManager.WIFI_MODE_FULL_HIGH_PERF;
+                    }
+                    wifiLock = wifiManager.createWifiLock(lockMode, "SiPenDosa:ServerWifiLock");
+                    wifiLock.setReferenceCounted(false);
+                }
+            }
+            if (wifiLock != null && !wifiLock.isHeld()) {
+                wifiLock.acquire();
+                Log.i(TAG, "WifiLock (High-Perf) berhasil diaktifkan.");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Gagal mengaktifkan WifiLock: " + e.getMessage(), e);
+        }
+    }
+
+    private void releaseLocks() {
+        try {
+            if (wakeLock != null && wakeLock.isHeld()) {
+                wakeLock.release();
+                Log.i(TAG, "WakeLock dilepaskan.");
+            }
+        } catch (Exception ignored) {}
+
+        try {
+            if (wifiLock != null && wifiLock.isHeld()) {
+                wifiLock.release();
+                Log.i(TAG, "WifiLock dilepaskan.");
+            }
+        } catch (Exception ignored) {}
     }
 
     private void createNotificationChannel() {
@@ -68,7 +121,8 @@ public class SiPenDosaServerService extends Service implements Runnable {
                     "SiPenDosa Background Server",
                     NotificationManager.IMPORTANCE_LOW
             );
-            channel.setDescription("Menjaga server pengingat SiPenDosa tetap aktif di latar belakang");
+            channel.setDescription("Menjaga server pengingat SiPenDosa tetap aktif di latar belakang 24/7");
+            channel.setShowBadge(false);
             NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             if (manager != null) {
                 manager.createNotificationChannel(channel);
@@ -92,7 +146,7 @@ public class SiPenDosaServerService extends Service implements Runnable {
 
         Notification notification = builder
                 .setContentTitle("SiPenDosa Server Active")
-                .setContentText("Port 8473 • Engine Online • 24/7 Otomasi")
+                .setContentText("Port 8473 • Engine Online • 24/7 Otomasi Realtime")
                 .setSmallIcon(android.R.drawable.stat_notify_sync)
                 .setContentIntent(pendingIntent)
                 .setOngoing(true)
@@ -103,6 +157,31 @@ public class SiPenDosaServerService extends Service implements Runnable {
 
     @Override
     public void run() {
+        Log.i(TAG, "Server daemon runner dimulai dengan fitur auto-respawn watchdog.");
+
+        while (isRunning) {
+            try {
+                runServerProcessOnce();
+            } catch (Exception e) {
+                Log.e(TAG, "Exception saat menjalankan server process: " + e.getMessage(), e);
+            }
+
+            // Jika masih running tetapi server process berhenti (crash/killed),
+            // lakukan auto-respawn setelah jeda singkat (watchdog).
+            if (isRunning) {
+                Log.w(TAG, "Server Go berhenti tidak terduga. Respawning dalam 3 detik...");
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    Log.i(TAG, "Thread runner interrupted, keluar dari loop.");
+                    break;
+                }
+            }
+        }
+        Log.i(TAG, "Server daemon runner selesai.");
+    }
+
+    private void runServerProcessOnce() {
         try {
             File filesDir = getFilesDir();
             File binFile = null;
@@ -112,7 +191,7 @@ public class SiPenDosaServerService extends Service implements Runnable {
             File nativeBin = new File(nativeDir, "libsipen.so");
             if (nativeBin.exists() && nativeBin.canExecute()) {
                 binFile = nativeBin;
-                Log.i(TAG, "Using native library binary: " + binFile.getAbsolutePath());
+                Log.i(TAG, "Menggunakan native library binary: " + binFile.getAbsolutePath());
             }
 
             // 2. Fallback jika nativeLibraryDir belum terisi
@@ -122,7 +201,7 @@ public class SiPenDosaServerService extends Service implements Runnable {
                 fallbackBin.setExecutable(true, false);
                 fallbackBin.setReadable(true, false);
                 binFile = fallbackBin;
-                Log.i(TAG, "Using fallback asset binary: " + binFile.getAbsolutePath());
+                Log.i(TAG, "Menggunakan fallback asset binary: " + binFile.getAbsolutePath());
             }
 
             File dataDir = new File(filesDir, "data");
@@ -142,14 +221,14 @@ public class SiPenDosaServerService extends Service implements Runnable {
 
             pb.redirectErrorStream(true);
             serverProcess = pb.start();
-            Log.i(TAG, "Server process started: " + binFile.getAbsolutePath());
+            Log.i(TAG, "Server Go process berhasil dijalankan: " + binFile.getAbsolutePath());
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(serverProcess.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {
                 Log.d(TAG, "[SIPEN] " + line);
                 synchronized (logBuffer) {
-                    if (logBuffer.size() > 100) {
+                    if (logBuffer.size() > 150) {
                         logBuffer.remove(0);
                     }
                     logBuffer.add(line);
@@ -157,9 +236,9 @@ public class SiPenDosaServerService extends Service implements Runnable {
             }
 
             int exitCode = serverProcess.waitFor();
-            Log.w(TAG, "Server process exited with code: " + exitCode);
+            Log.w(TAG, "Server process keluar dengan kode: " + exitCode);
         } catch (Exception e) {
-            Log.e(TAG, "Error starting server process", e);
+            Log.e(TAG, "Error saat menjalankan proses server Go: " + e.getMessage(), e);
         }
     }
 
@@ -179,7 +258,7 @@ public class SiPenDosaServerService extends Service implements Runnable {
             out.close();
             in.close();
         } catch (Exception e) {
-            Log.w(TAG, "Asset " + assetName + " not found or cannot extract: " + e.getMessage());
+            Log.w(TAG, "Asset " + assetName + " tidak ditemukan atau gagal diekstrak: " + e.getMessage());
         }
     }
 
@@ -191,19 +270,18 @@ public class SiPenDosaServerService extends Service implements Runnable {
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
+        isRunning = false;
+        if (serverThread != null) {
+            serverThread.interrupt();
+        }
         if (serverProcess != null) {
             try {
                 serverProcess.destroy();
             } catch (Exception ignored) {}
         }
-        if (wakeLock != null && wakeLock.isHeld()) {
-            try {
-                wakeLock.release();
-            } catch (Exception ignored) {}
-        }
-        isRunning = false;
-        Log.i(TAG, "Service destroyed");
+        releaseLocks();
+        super.onDestroy();
+        Log.i(TAG, "SiPenDosaServerService dihentikan.");
     }
 
     @Override

@@ -1639,3 +1639,118 @@ func (h *Handlers) ApplyUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		"message": "Pembaruan sedang diunduh dan dipasang di latar belakang...",
 	})
 }
+
+// ==========================================
+// Mobile & External REST JSON API Handlers
+// ==========================================
+
+// APIStatsHandler provides JSON overview metrics for Flutter & iOS companion apps
+func (h *Handlers) APIStatsHandler(w http.ResponseWriter, r *http.Request) {
+	userID := h.getActiveUserID(r)
+	stats, err := h.store.GetDashboardStats(userID)
+	if err != nil || stats == nil {
+		stats = &store.DashboardStats{
+			SuccessRate: 100.0,
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	_ = json.NewEncoder(w).Encode(stats)
+}
+
+// APIWhatsAppStatusHandler provides real-time WhatsApp connection status in JSON
+func (h *Handlers) APIWhatsAppStatusHandler(w http.ResponseWriter, r *http.Request) {
+	waClient := h.getActiveWAClient(r)
+	var waState whatsapp.State = whatsapp.StateDisconnected
+	var waPhone, waPushName, waQR string
+	if waClient != nil {
+		waState, waPhone, waPushName, waQR = waClient.Status()
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"state":     string(waState),
+		"phone":     waPhone,
+		"push_name": waPushName,
+		"qr":        waQR,
+	})
+}
+
+// APIContactsHandler returns contacts list in JSON
+func (h *Handlers) APIContactsHandler(w http.ResponseWriter, r *http.Request) {
+	userID := h.getActiveUserID(r)
+	filterType := r.URL.Query().Get("type")
+	contacts, err := h.store.ListContacts(userID, filterType)
+	if err != nil || contacts == nil {
+		contacts = []store.Contact{}
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	_ = json.NewEncoder(w).Encode(contacts)
+}
+
+// APISchedulesHandler returns schedules list in JSON
+func (h *Handlers) APISchedulesHandler(w http.ResponseWriter, r *http.Request) {
+	userID := h.getActiveUserID(r)
+	schedules, err := h.store.ListSchedules(userID)
+	if err != nil || schedules == nil {
+		schedules = []store.ScheduleDetail{}
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	_ = json.NewEncoder(w).Encode(schedules)
+}
+
+// APIQueueHandler returns queue messages list in JSON with pending counter
+func (h *Handlers) APIQueueHandler(w http.ResponseWriter, r *http.Request) {
+	userID := h.getActiveUserID(r)
+	status := r.URL.Query().Get("status")
+	messages, err := h.store.ListQueueMessages(userID, status, 100)
+	if err != nil || messages == nil {
+		messages = []store.QueueMessage{}
+	}
+
+	pendingCount := 0
+	for _, m := range messages {
+		if m.Status == "pending" {
+			pendingCount++
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":        "success",
+		"data":          messages,
+		"pending_count": pendingCount,
+	})
+}
+
+// APIQueueProcessHandler forces immediate sending of a queued message
+func (h *Handlers) APIQueueProcessHandler(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	if idStr == "" {
+		idStr = r.FormValue("id")
+	}
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "ID antrian tidak valid"})
+		return
+	}
+
+	if err := h.queueMgr.ProcessImmediate(id); err != nil {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Pesan antrian sedang diproses untuk dikirim langsung",
+		"id":      id,
+	})
+}
+

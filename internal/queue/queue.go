@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math/rand"
+	"strings"
 	"sync"
 	"time"
 
@@ -128,16 +129,27 @@ func (m *Manager) processPending() {
 }
 
 func (m *Manager) processSingleMessage(msg store.QueueMessage, settings *store.Settings) {
-	// Mark processing
-	_ = m.store.UpdateQueueStatus(msg.ID, "processing", "", nil)
+	// BUG-01 Fix: Atomic claim transition from 'pending' to 'processing'.
+	// Only proceed if this worker successfully claimed the message lock.
+	claimed, err := m.store.ClaimPendingQueueMessage(msg.ID)
+	if err != nil {
+		slog.Error("Failed to claim pending queue message", "id", msg.ID, "err", err)
+		return
+	}
+	if !claimed {
+		slog.Debug("Queue message already claimed or not pending, skipping duplicate processing", "id", msg.ID)
+		return
+	}
+
 	m.hub.Broadcast("queue_update", map[string]interface{}{
 		"action": "processing",
 		"id":     msg.ID,
 		"status": "processing",
 	})
 
-	// Check Dry Run: Global or Per-Schedule
-	isDryRun := settings.GlobalDryRun
+	// Check Dry Run: Global, Per-Schedule, atau Manual Simulation Trigger
+	isManualDryRun := strings.HasPrefix(msg.ErrorMessage, "[MANUAL_DRY_RUN]")
+	isDryRun := settings.GlobalDryRun || isManualDryRun
 	if !isDryRun && msg.ScheduleID.Valid {
 		sc, err := m.store.GetScheduleByID(msg.ScheduleID.Int64)
 		if err == nil && sc.DryRun {
@@ -147,7 +159,11 @@ func (m *Manager) processSingleMessage(msg store.QueueMessage, settings *store.S
 
 	if isDryRun {
 		now := time.Now()
-		_ = m.store.UpdateQueueStatus(msg.ID, "dry_run", "[DRY RUN] Pesan disimulasikan tanpa pengiriman fisik", &now)
+		dryRunReason := "[DRY RUN] Pesan disimulasikan tanpa pengiriman fisik"
+		if isManualDryRun {
+			dryRunReason = "[DRY RUN] Pesan disimulasikan melalui Manual Test Kirim tanpa pengiriman fisik"
+		}
+		_ = m.store.UpdateQueueStatus(msg.ID, "dry_run", dryRunReason, &now)
 		m.store.AddActivityLog("queue", "Pesan Disimulasikan (Dry Run)",
 			fmt.Sprintf("Tujuan: %s (%s)", msg.RecipientName, msg.RecipientJID))
 
@@ -216,7 +232,7 @@ func (m *Manager) processSingleMessage(msg store.QueueMessage, settings *store.S
 	})
 	m.hub.BroadcastToast("success", fmt.Sprintf("Pesan berhasil terkirim ke %s", msg.RecipientName))
 
-	// Anti-ban rate limiting jitter delay before next message
+	// BUG-02 Fix: Non-blocking jitter delay that respects graceful shutdown
 	minDelay := settings.RateLimitMinSec
 	maxDelay := settings.RateLimitMaxSec
 	if maxDelay <= minDelay {
@@ -224,7 +240,11 @@ func (m *Manager) processSingleMessage(msg store.QueueMessage, settings *store.S
 	}
 	delaySec := minDelay + rand.Intn(maxDelay-minDelay+1)
 	slog.Debug("Anti-ban rate limit delay", "sec", delaySec)
-	time.Sleep(time.Duration(delaySec) * time.Second)
+	select {
+	case <-m.stopChan:
+		return
+	case <-time.After(time.Duration(delaySec) * time.Second):
+	}
 }
 
 // ProcessImmediate forces sending of a specific queue message immediately
@@ -232,6 +252,11 @@ func (m *Manager) ProcessImmediate(id int64) error {
 	msg, err := m.store.GetQueueMessageByID(id)
 	if err != nil {
 		return err
+	}
+
+	// BUG-12 Fix: Validate status before launching goroutine
+	if msg.Status != "pending" {
+		return fmt.Errorf("pesan berstatus '%s', hanya pesan 'pending' yang dapat diproses langsung", msg.Status)
 	}
 
 	settings, err := m.store.GetSettings()

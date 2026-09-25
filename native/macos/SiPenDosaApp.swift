@@ -17,6 +17,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var dataDir: URL!
     private var logFileURL: URL!
     private var envFileURL: URL!
+    private var configuredPort: Int = 8473
 
     // Menu Items
     private var titleMenuItem: NSMenuItem!
@@ -84,6 +85,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             """
             try? defaultEnv.write(to: envFileURL, atomically: true, encoding: .utf8)
         }
+
+        loadPortFromEnv()
+    }
+
+    private func loadPortFromEnv() {
+        guard let content = try? String(contentsOf: envFileURL, encoding: .utf8) else { return }
+        for line in content.components(separatedBy: .newlines) {
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.hasPrefix("PORT=") {
+                let val = trimmed.replacingOccurrences(of: "PORT=", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+                if let p = Int(val), p > 0 && p < 65536 {
+                    self.configuredPort = p
+                }
+            }
+        }
     }
 
     private func setupNotificationPermissions() {
@@ -114,7 +130,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusMenu.delegate = self
 
         // 1. Header Identitas
-        titleMenuItem = NSMenuItem(title: "⚡ SiPenDosa v1.0.0", action: nil, keyEquivalent: "")
+        titleMenuItem = NSMenuItem(title: "⚡ SiPenDosa v1.2.0 (Universal)", action: nil, keyEquivalent: "")
         titleMenuItem.isEnabled = false
         statusMenu.addItem(titleMenuItem)
 
@@ -175,8 +191,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func startBackendIfNeeded() {
-        // Periksa apakah port 8473 sudah dijawab oleh backend yang ada
-        let latency = sipen_check_socket_latency_us("127.0.0.1", 8473, 300)
+        // Periksa apakah port sudah dijawab oleh backend yang ada
+        let latency = sipen_check_socket_latency_us("127.0.0.1", Int32(configuredPort), 300)
         if latency >= 0 {
             // Sudah berjalan (misal via launchagent atau terminal)
             isEngineOnline = true
@@ -227,7 +243,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             guard let self = self else { return }
 
             // Panggil C++ High-Performance Socket Latency Bridge
-            let latencyUs = sipen_check_socket_latency_us("127.0.0.1", 8473, 500)
+            let latencyUs = sipen_check_socket_latency_us("127.0.0.1", Int32(self.configuredPort), 500)
             let online = (latencyUs >= 0)
 
             var rss: Int64 = -1
@@ -243,7 +259,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 if statusChanged && online {
                     self.showNativeNotification(
                         title: "⚡ SiPenDosa Aktif!",
-                        body: "Asisten pengingat dosen siap beroperasi di http://localhost:8473"
+                        body: "Asisten pengingat dosen siap beroperasi di http://localhost:\(self.configuredPort)"
                     )
                 }
             }
@@ -273,13 +289,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // MARK: - Actions
 
     @objc private func openDashboard() {
-        if let url = URL(string: "http://localhost:8473") {
+        if let url = URL(string: "http://localhost:\(configuredPort)") {
             NSWorkspace.shared.open(url)
         }
     }
 
     @objc private func openScanQR() {
-        if let url = URL(string: "http://localhost:8473#scan-qr") {
+        if let url = URL(string: "http://localhost:\(configuredPort)#scan-qr") {
             NSWorkspace.shared.open(url)
         }
     }

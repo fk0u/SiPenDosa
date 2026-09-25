@@ -47,13 +47,25 @@ func CSRFOriginMiddleware(next http.Handler) http.Handler {
 			origin := r.Header.Get("Origin")
 			referer := r.Header.Get("Referer")
 
-			// If both are missing, check if it's an internal API/CLI request or loopback
-			host := r.Host
+			// BUG-06 Fix: Support X-Forwarded-Host for reverse proxies (Caddy, Nginx, Cloudflare Tunnels)
+			host := r.Header.Get("X-Forwarded-Host")
+			if host == "" {
+				host = r.Host
+			}
+			// Handle comma-separated X-Forwarded-Host
+			if commaIdx := strings.Index(host, ","); commaIdx != -1 {
+				host = strings.TrimSpace(host[:commaIdx])
+			}
+
 			if origin != "" {
 				// Strip protocol
 				originHost := origin
 				if idx := strings.Index(originHost, "://"); idx != -1 {
 					originHost = originHost[idx+3:]
+				}
+				// Strip path if any
+				if slashIdx := strings.Index(originHost, "/"); slashIdx != -1 {
+					originHost = originHost[:slashIdx]
 				}
 				if !strings.EqualFold(originHost, host) && !isAllowedHost(originHost, host) {
 					http.Error(w, "Forbidden: CSRF Origin validation failed", http.StatusForbidden)
@@ -79,7 +91,6 @@ func CSRFOriginMiddleware(next http.Handler) http.Handler {
 }
 
 func isAllowedHost(clientHost, serverHost string) bool {
-	// Allow loopback alias matches (localhost, 127.0.0.1)
 	cBase, _, _ := net.SplitHostPort(clientHost)
 	if cBase == "" {
 		cBase = clientHost
@@ -89,7 +100,16 @@ func isAllowedHost(clientHost, serverHost string) bool {
 		sBase = serverHost
 	}
 
-	if (cBase == "localhost" || cBase == "127.0.0.1") && (sBase == "localhost" || sBase == "127.0.0.1") {
+	// Direct match of hostnames (disregarding port differences from reverse proxy)
+	if strings.EqualFold(cBase, sBase) {
+		return true
+	}
+
+	// Allow loopback alias matches (localhost, 127.0.0.1, ::1)
+	isLoopback := func(h string) bool {
+		return h == "localhost" || h == "127.0.0.1" || h == "::1" || strings.HasPrefix(h, "127.")
+	}
+	if isLoopback(cBase) && isLoopback(sBase) {
 		return true
 	}
 	return false

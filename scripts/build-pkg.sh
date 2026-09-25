@@ -18,6 +18,10 @@ echo "========================================================================"
 echo "📦 MEMBANGUN APPLE INSTALLER PACKAGE: SiPenDosa.pkg"
 echo "========================================================================"
 
+if [ -x "/Users/kou/go/bin/go" ]; then
+    export PATH="/Users/kou/go/bin:${PATH}"
+fi
+
 # 1. Pastikan SiPenDosa.app sudah terbangun
 if [ ! -d "$APP_PATH" ]; then
     "${SCRIPT_DIR}/scripts/build-macos-app.sh"
@@ -185,7 +189,7 @@ pkgbuild \
     --install-location "/Applications" \
     --scripts "$SCRIPTS_DIR" \
     --identifier "com.sipendosa.app.pkg" \
-    --version "1.1.1" \
+    --version "1.2.0" \
     "$COMPONENT_PKG"
 
 # 5. Buat Distribution.xml
@@ -193,9 +197,14 @@ DISTRIBUTION_XML="${TMP_DIR}/Distribution.xml"
 cat <<EOF > "$DISTRIBUTION_XML"
 <?xml version="1.0" encoding="utf-8"?>
 <installer-gui-script minSpecVersion="1">
-    <title>SiPenDosa Universal Edition</title>
+    <title>SiPenDosa Universal Edition (macOS 12+)</title>
     <welcome file="welcome.html" mime-type="text/html"/>
     <options customize="never" require-scripts="false" hostArchitectures="x86_64,arm64"/>
+    <volume-check>
+        <allowed-os-versions>
+            <os-version min="12.0"/>
+        </allowed-os-versions>
+    </volume-check>
     <domains enable_anywhere="false" enable_currentUserHome="false" enable_localSystem="true"/>
     <choices-outline>
         <line choice="default">
@@ -206,7 +215,7 @@ cat <<EOF > "$DISTRIBUTION_XML"
     <choice id="com.sipendosa.app.pkg" visible="false">
         <pkg-ref id="com.sipendosa.app.pkg"/>
     </choice>
-    <pkg-ref id="com.sipendosa.app.pkg" version="1.1.1" onConclusion="none">SiPenDosaComponent.pkg</pkg-ref>
+    <pkg-ref id="com.sipendosa.app.pkg" version="1.2.0" onConclusion="none">SiPenDosaComponent.pkg</pkg-ref>
 </installer-gui-script>
 EOF
 
