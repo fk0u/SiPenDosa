@@ -40,17 +40,20 @@
     <link rel="icon" type="image/png" sizes="64x64" href="/static/img/favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png">
 
-    <!-- Terapkan tema sebelum paint pertama (anti-FOUC); ikuti preferensi sistem bila belum dipilih -->
+    <!-- Terapkan tema & aksen sebelum paint pertama (anti-FOUC); ikuti preferensi sistem bila belum dipilih -->
     <script>
         (function () {
             var saved = localStorage.getItem('md-theme');
             var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
             document.documentElement.dataset.theme = theme;
+            var accent = localStorage.getItem('md-accent');
+            if (accent) document.documentElement.dataset.accent = accent;
         })();
     </script>
 
     <!-- Material Design 3 Design System (self-hosted, local-first) -->
     <link rel="stylesheet" href="/static/css/m3.css">
+    <link rel="stylesheet" href="/static/css/m3-accents.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -169,6 +172,18 @@
                             <a href="/logs" class="md-list-item">Log aktivitas & audit</a>
                             <a href="/about" class="md-list-item">Tentang & filosofi</a>
                             <a href="/changelog" class="md-list-item md-row-between">Catatan rilis <span class="md-badge md-badge-success">v1.3.0</span></a>
+                            <hr class="md-divider">
+                            <div class="md-row md-gap-sm" style="padding:10px 12px;justify-content:space-between;">
+                                <span class="md-label-medium md-muted">Warna aksen</span>
+                                <div class="md-row" style="gap:6px;" id="md-accent-picker">
+                                    <button type="button" class="md-accent-dot" data-accent="rose" title="Rose" style="background:#8E2447;"></button>
+                                    <button type="button" class="md-accent-dot" data-accent="amber" title="Amber" style="background:#8A5A00;"></button>
+                                    <button type="button" class="md-accent-dot" data-accent="green" title="Hijau" style="background:#2E6B33;"></button>
+                                    <button type="button" class="md-accent-dot" data-accent="teal" title="Teal" style="background:#00706E;"></button>
+                                    <button type="button" class="md-accent-dot" data-accent="blue" title="Biru" style="background:#28618F;"></button>
+                                    <button type="button" class="md-accent-dot" data-accent="purple" title="Ungu" style="background:#744B96;"></button>
+                                </div>
+                            </div>
                             <hr class="md-divider">
                             <form action="/logout" method="POST">
                                 <button type="submit" class="md-list-item" style="width:100%;border:none;background:none;font:inherit;color:var(--md-sys-color-error);cursor:pointer;text-align:left;">Keluar dari sesi</button>
@@ -500,6 +515,15 @@
         }
         .md-menu-sheet .md-list-item { padding: 10px 12px; border-radius: var(--md-shape-sm); font-size: 14px; }
 
+        .md-accent-dot {
+            width: 22px; height: 22px; border-radius: 50%;
+            border: 2px solid transparent; cursor: pointer; padding: 0;
+            box-shadow: inset 0 0 0 2px var(--md-sys-color-surface-container-high);
+            transition: transform var(--md-dur-short) var(--md-ease-standard);
+        }
+        .md-accent-dot:hover { transform: scale(1.15); }
+        .md-accent-dot.md-accent-active { border-color: var(--md-sys-color-on-surface); }
+
         .md-spinner {
             width: 20px; height: 20px;
             border-radius: 50%;
@@ -535,13 +559,39 @@
             });
         }
 
+        // Peta warna surface per aksen untuk sinkronisasi meta theme-color
+        var ACCENT_SURFACES = {
+            rose:   { light: '#FFF8F7', dark: '#1A1112' },
+            amber:  { light: '#FDF7F0', dark: '#1B150D' },
+            green:  { light: '#F4FBF4', dark: '#0D150E' },
+            teal:   { light: '#F0FBFB', dark: '#0C1515' },
+            blue:   { light: '#F5F9FD', dark: '#10151B' },
+            purple: { light: '#FBF6FF', dark: '#171218' }
+        };
+        // Fallback surface gelap untuk aksen yang tidak ada di peta
+        function currentAccent() { return document.documentElement.dataset.accent || 'rose'; }
+        function syncThemeColorMeta() {
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (!meta) return;
+            var scheme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+            var acc = ACCENT_SURFACES[currentAccent()] || ACCENT_SURFACES.rose;
+            meta.setAttribute('content', acc[scheme]);
+        }
+        window.setAccent = function (name) {
+            if (name) { document.documentElement.dataset.accent = name; localStorage.setItem('md-accent', name); }
+            else { delete document.documentElement.dataset.accent; localStorage.removeItem('md-accent'); }
+            document.querySelectorAll('.md-accent-dot').forEach(function (dot) {
+                dot.classList.toggle('md-accent-active', dot.dataset.accent === currentAccent());
+            });
+            syncThemeColorMeta();
+        };
+
         function toggleTheme() {
             var root = document.documentElement;
             var next = root.dataset.theme === 'dark' ? 'light' : 'dark';
             root.dataset.theme = next;
             localStorage.setItem('md-theme', next);
-            var meta = document.querySelector('meta[name="theme-color"]');
-            if (meta) meta.setAttribute('content', next === 'dark' ? '#1A1112' : '#FFF8F7');
+            syncThemeColorMeta();
         }
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -554,9 +604,12 @@
                 if (topbar) topbar.classList.toggle('md-topbar-scrolled', window.scrollY > 4);
             }, { passive: true });
 
-            // Sinkronkan theme-color meta dengan skema awal
-            var meta = document.querySelector('meta[name="theme-color"]');
-            if (meta) meta.setAttribute('content', document.documentElement.dataset.theme === 'dark' ? '#1A1112' : '#FFF8F7');
+            // Sinkronkan theme-color meta dengan skema awal + tandai aksen aktif
+            syncThemeColorMeta();
+            document.querySelectorAll('.md-accent-dot').forEach(function (dot) {
+                dot.classList.toggle('md-accent-active', dot.dataset.accent === currentAccent());
+                dot.addEventListener('click', function () { setAccent(dot.dataset.accent); });
+            });
         });
     </script>
 

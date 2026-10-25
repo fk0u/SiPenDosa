@@ -4,8 +4,8 @@
   "description": "Sistem Pengingat Dosen Saatnya — Asisten yang rela 'berdosa' demi mengingatkan dosen agar mahasiswa tidak perlu merasa sungkan.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#090a0f",
-  "theme_color": "#090a0f",
+  "background_color": "#FFF8F7",
+  "theme_color": "#8E2447",
   "orientation": "portrait-primary",
   "icons": [
     {
@@ -26,5 +26,9 @@
       "type": "image/png"
     }
   ],
-  "categories": ["education", "utilities", "productivity"]
+  "categories": [
+    "education",
+    "utilities",
+    "productivity"
+  ]
 }

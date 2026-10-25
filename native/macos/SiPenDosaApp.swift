@@ -130,7 +130,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusMenu.delegate = self
 
         // 1. Header Identitas
-        titleMenuItem = NSMenuItem(title: "⚡ SiPenDosa v1.2.1 (Universal)", action: nil, keyEquivalent: "")
+        titleMenuItem = NSMenuItem(title: "⚡ SiPenDosa v1.3.0 (Universal)", action: nil, keyEquivalent: "")
         titleMenuItem.isEnabled = false
         statusMenu.addItem(titleMenuItem)
 
@@ -346,7 +346,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         "Asisten yang rela 'berdosa' demi mengingatkan dosen agar mahasiswa tidak perlu merasa sungkan."
 
         ⚡ Native Engine: Go Core + C++17 Socket Bridge + Swift AppKit
-        🎨 Persona: Scarlet Rose & Burnished Gold (Tanpa kompromi)
+        🎨 Persona: Material Design 3 — Rose Seed Tonal Palette
         """
         alert.alertStyle = .informational
         alert.addButton(withTitle: "Buka Dashboard")

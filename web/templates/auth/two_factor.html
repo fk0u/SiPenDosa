@@ -13,10 +13,13 @@
             var saved = localStorage.getItem('md-theme');
             var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
             document.documentElement.dataset.theme = theme;
+            var accent = localStorage.getItem('md-accent');
+            if (accent) document.documentElement.dataset.accent = accent;
         })();
     </script>
 
     <link rel="stylesheet" href="/static/css/m3.css">
+    <link rel="stylesheet" href="/static/css/m3-accents.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">

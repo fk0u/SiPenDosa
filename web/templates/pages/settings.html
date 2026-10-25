@@ -17,6 +17,56 @@
         <p class="md-body-small md-muted md-balance">Konfigurasi otentikasi dua langkah (2FA), manajemen multi-akun, public tunnel Cloudflare, anti-ban, dan sovereign backup.</p>
     </div>
 
+    <!-- Tampilan & warna (Material You dynamic color) -->
+    <section class="md-card-outlined md-col" style="gap:12px;">
+        <div class="md-row-between md-wrap">
+            <div class="md-stack" style="gap:2px;">
+                <h2 class="md-section-title md-row md-gap-sm">
+                    <svg style="width:18px;height:18px;color:var(--md-sys-color-primary);" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4.000 4.000 0 01-3.78-2.86m3.78 2.86a2 2 0 004.000 0m-4.000 0a2 2 0 01-2-2 2 2 0 012-2h2a2 2 0 002 2m-6.31-8.1A6.002 6.002 0 0013.3 6.69L8.9 2.29a6.002 6.002 0 00-6.61 9.61m0 0A5.98 5.98 0 007 21h10a5 5 0 004.95-5.68M2.29 11.9l4.4 4.4m0-4.4l4.4 4.4M16 3h5v5m0-5L13.5 10.5"/></svg>
+                    Tampilan &amp; warna aksen
+                </h2>
+                <p class="md-section-sub">Pilih warna aksen ala Material You — seluruh sistem akan mengikuti palet tonal dari warna yang dipilih, tersimpan di perangkat ini.</p>
+            </div>
+            <button type="button" class="md-btn-text md-btn-sm" onclick="setAccent(null)">Kembali ke bawaan</button>
+        </div>
+        <div class="md-row md-wrap" style="gap:12px;" id="md-accent-grid">
+            <button type="button" class="md-accent-swatch" data-accent="rose" onclick="setAccent('rose')">
+                <span style="background:#8E2447;"></span>Rose
+            </button>
+            <button type="button" class="md-accent-swatch" data-accent="amber" onclick="setAccent('amber')">
+                <span style="background:#F0B04F;"></span>Amber
+            </button>
+            <button type="button" class="md-accent-swatch" data-accent="green" onclick="setAccent('green')">
+                <span style="background:#83D586;"></span>Hijau
+            </button>
+            <button type="button" class="md-accent-swatch" data-accent="teal" onclick="setAccent('teal')">
+                <span style="background:#10D8D8;"></span>Teal
+            </button>
+            <button type="button" class="md-accent-swatch" data-accent="blue" onclick="setAccent('blue')">
+                <span style="background:#92C1FD;"></span>Biru
+            </button>
+            <button type="button" class="md-accent-swatch" data-accent="purple" onclick="setAccent('purple')">
+                <span style="background:#D8A4FF;"></span>Ungu
+            </button>
+        </div>
+    </section>
+    <style>
+        .md-accent-swatch {
+            display:flex; flex-direction:column; align-items:center; gap:8px;
+            padding:12px 16px; min-width:88px;
+            border-radius:var(--md-shape-md);
+            border:1px solid var(--md-sys-color-outline-variant);
+            background:var(--md-sys-color-surface);
+            color:var(--md-sys-color-on-surface);
+            font:500 12px/1 var(--md-font);
+            cursor:pointer;
+            transition:border-color var(--md-dur-short) var(--md-ease-standard), background-color var(--md-dur-short) var(--md-ease-standard);
+        }
+        .md-accent-swatch span { width:32px; height:32px; border-radius:50%; box-shadow:var(--md-elev-1); }
+        .md-accent-swatch:hover { background:var(--md-sys-color-surface-container-low); }
+        .md-accent-swatch.md-accent-active { border-color:var(--md-sys-color-primary); box-shadow:inset 0 0 0 1px var(--md-sys-color-primary); }
+    </style>
+
     <div class="settings-grid">
 
         <!-- Left Column: Security & Core Operational -->
@@ -476,3 +526,12 @@
     </div>
 </dialog>
 {{end}}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var current = document.documentElement.dataset.accent || 'rose';
+        document.querySelectorAll('.md-accent-swatch').forEach(function (sw) {
+            sw.classList.toggle('md-accent-active', sw.dataset.accent === current);
+        });
+    });
+</script>
