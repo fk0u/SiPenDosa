@@ -601,6 +601,28 @@ func (s *Store) GetScheduleByID(id int64) (*Schedule, error) {
 	return &sc, nil
 }
 
+// GetScheduleByIDForUser mengambil jadwal hanya jika milik user tersebut
+func (s *Store) GetScheduleByIDForUser(id, userID int64) (*Schedule, error) {
+	var sc Schedule
+	var lastSent sql.NullTime
+	err := s.db.QueryRow(`SELECT id, user_id, title, matkul, dosen_id, recipient_id, target_phone, template_id,
+		day_of_week, start_time, end_time, location, link_group, mode, send_at_time,
+		is_active, is_public, dry_run, last_sent_at, created_at, updated_at
+		FROM schedules WHERE id = ? AND user_id = ?`, id, userID).
+		Scan(
+			&sc.ID, &sc.UserID, &sc.Title, &sc.Matkul, &sc.DosenID, &sc.RecipientID, &sc.TargetPhone, &sc.TemplateID,
+			&sc.DayOfWeek, &sc.StartTime, &sc.EndTime, &sc.Location, &sc.LinkGroup, &sc.Mode, &sc.SendAtTime,
+			&sc.IsActive, &sc.IsPublic, &sc.DryRun, &lastSent, &sc.CreatedAt, &sc.UpdatedAt,
+		)
+	if err != nil {
+		return nil, err
+	}
+	if lastSent.Valid {
+		sc.LastSentAt = &lastSent.Time
+	}
+	return &sc, nil
+}
+
 func (s *Store) GetScheduleDetailByID(id int64) (*ScheduleDetail, error) {
 	query := `SELECT 
 		s.id, s.user_id, s.title, s.matkul, s.dosen_id, s.recipient_id, s.target_phone, s.template_id,

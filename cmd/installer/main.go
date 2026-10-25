@@ -113,6 +113,26 @@ func main() {
 		secretBytes := make([]byte, 32)
 		_, _ = rand.Read(secretBytes)
 		sessionSecret := hex.EncodeToString(secretBytes)
+
+		// Tanya mode akses: terminal / web / desktop
+		uiMode := "desktop"
+		if !isSilent {
+			fmt.Println()
+			fmt.Printf("%s      Pilih mode akses SiPenDosa:%s\n", BrightYellow, Reset)
+			fmt.Printf("        %s1)%s Terminal saja   - konsol interaktif, tanpa web\n", Bold, Reset)
+			fmt.Printf("        %s2)%s Web             - dashboard browser di jaringan lokal\n", Bold, Reset)
+			fmt.Printf("        %s3)%s Desktop + Web   - dashboard + jendela aplikasi desktop (disarankan)\n", Bold, Reset)
+			fmt.Printf("      Mode akses [1-3] (default 3): ")
+			var uiChoice string
+			fmt.Scanln(&uiChoice)
+			switch strings.TrimSpace(uiChoice) {
+			case "1":
+				uiMode = "terminal"
+			case "2":
+				uiMode = "web"
+			}
+		}
+
 		envContent := fmt.Sprintf(`# SiPenDosa Production Configuration
 PORT=%s
 HOST=0.0.0.0
@@ -131,7 +151,8 @@ RATE_LIMIT_MAX_SEC=15
 MAX_RETRIES=3
 
 GLOBAL_DRY_RUN=false
-`, DefaultPort, sessionSecret)
+SIPEN_UI=%s
+`, DefaultPort, sessionSecret, uiMode)
 
 		if err := os.WriteFile(targetEnv, []byte(envContent), 0644); err != nil {
 			fmt.Printf("%s[WARN] Gagal menulis .env otomatis: %v%s\n", Yellow, err, Reset)

@@ -4,6 +4,19 @@ Semua perubahan penting pada proyek **SiPenDosa** didokumentasikan di sini denga
 
 ---
 
+## [Unreleased]
+
+### 🌟 Fitur Baru
+* **Mode Akses First-Class — `SIPEN_UI=terminal|web|desktop`:**
+  * **Terminal (default)**: konsol interaktif penuh tanpa server HTTP — status engine live, countdown, daftar jadwal & antrian, trigger pengiriman, pairing WhatsApp, dan daftar akun kelas langsung dari konsol (`internal/termui`).
+  * **Web**: daemon + dashboard browser (perilaku lama).
+  * **Desktop**: web + jendela aplikasi desktop — di macOS berupa jendela native WKWebView pada companion app; di Windows/Linux jendela app-mode Edge/Chrome.
+* **First-Run Wizard**: instalasi baru yang dijalankan interaktif ditanya mode aksesnya (tertulis ke `.env`); subcommand baru `sipen mode [terminal|web|desktop]`, `sipen web`, `sipen terminal`, `sipen desktop`.
+* **Installer Bertanya Mode Akses**: `install-macos.sh`, `install-linux.sh`, `install-android-termux.sh`, `install.ps1`, dan Windows exe installer kini menanyakan terminal/web/desktop saat instalasi; PKG macOS menulis `SIPEN_UI=web` (companion app terpasang), instalasi lama non-interaktif dimigrasi otomatis ke mode web.
+* **Desktop Companion macOS**: jendela aplikasi native (WKWebView) dengan menu "Buka Aplikasi Desktop" dan auto-terbuka saat engine dimulai oleh aplikasi.
+
+---
+
 ## [1.3.0] — 2026-10-25
 
 ### 🌟 Fitur Baru

@@ -158,6 +158,18 @@ echo -e "      ${GREEN}✓ Binary server terpasang di: $INSTALL_DIR/$APP_NAME${N
 # 5. Generate .env jika belum ada
 echo -e "${BYELLOW}[4/5] Menyiapkan file konfigurasi (.env)...${NC}"
 ENV_FILE="$INSTALL_DIR/.env"
+
+# Tanya mode akses (Android/Termux: terminal atau web)
+echo ""
+echo -e "      ${BYELLOW}Pilih mode akses SiPenDosa:${NC}"
+echo -e "        ${BOLD}1)${NC} Terminal — konsol interaktif langsung di Termux (disarankan)"
+echo -e "        ${BOLD}2)${NC} Web      — dashboard browser di HP/jaringan lokal"
+printf "      Mode akses [1-2] (default 1): "
+read -r UI_CHOICE
+case "$UI_CHOICE" in
+    2) SIPEN_UI_VAL="web" ;;
+    *) SIPEN_UI_VAL="terminal" ;;
+esac
 if [ ! -f "$ENV_FILE" ]; then
     SECRET=$(head -c 32 /dev/urandom | od -A n -t x1 | tr -d ' \n' 2>/dev/null || echo "android-secret-sipendosa-key-32chars")
     cat <<ENV > "$ENV_FILE"

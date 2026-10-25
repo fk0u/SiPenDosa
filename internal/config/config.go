@@ -10,11 +10,20 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// Mode akses antarmuka aplikasi
+const (
+	UITerminal = "terminal" // default: konsol interaktif tanpa web
+	UIWeb      = "web"      // daemon + dashboard web
+	UIDesktop  = "desktop"  // web + jendela aplikasi desktop
+)
+
 // Config represents the application configuration
 type Config struct {
 	Port            string
 	Host            string
 	AppEnv          string
+	UIMode          string // "terminal" | "web" | "desktop" (dari SIPEN_UI)
+	EnvFile         string // path absolut .env yang terload (untuk wizard first-run)
 	CookieSecure    bool
 	DBPath          string
 	WASessionPath   string
@@ -83,10 +92,17 @@ func Load() (*Config, error) {
 	rawDBPath := getEnv("DB_PATH", "data/sipen.db")
 	rawWASessionPath := getEnv("WA_SESSION_PATH", "session/whatsapp.db")
 
+	envFile := ""
+	if envDir != "" {
+		envFile = filepath.Join(envDir, ".env")
+	}
+
 	cfg := &Config{
 		Port:            getEnv("PORT", "8473"),
 		Host:            getEnv("HOST", "0.0.0.0"),
 		AppEnv:          getEnv("APP_ENV", "production"),
+		UIMode:          strings.ToLower(getEnv("SIPEN_UI", "")),
+		EnvFile:         envFile,
 		CookieSecure:    getEnvBool("COOKIE_SECURE", false),
 		DBPath:          resolvePath(rawDBPath, envDir),
 		WASessionPath:   resolvePath(rawWASessionPath, envDir),

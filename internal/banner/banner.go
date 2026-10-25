@@ -26,6 +26,30 @@ const (
 )
 
 // PrintBanner prints an ember & burnished gold ASCII banner and telemetry box for SiPenDosa
+// PrintCompact mencetak identitas ringkas untuk mode terminal (tanpa box web telemetry)
+func PrintCompact(cfg *config.Config) {
+	logo := []string{
+		`  ███████╗██╗██████╗ ███████╗███╗   ██╗██████╗  ██████╗ ███████╗ █████╗ `,
+		`  ██╔════╝██║██╔══██╗██╔════╝████╗  ██║██╔══██╗██╔═══██╗██╔════╝██╔══██╗`,
+		`  ███████╗██║██████╔╝█████╗  ██╔██╗ ██║██║   ██║██║   ██║███████╗███████║`,
+		`  ╚════██║██║██╔═══╝ ██╔══╝  ██║╚██╗██║██║  ██║██║   ██║╚════██║██╔══██║`,
+		`  ███████║██║██║     ███████╗██║ ╚████║██████╔╝╚██████╔╝███████║██║  ██║`,
+		`  ╚══════╝╚═╝╚═╝     ╚══════╝╚═╝  ╚═══╝╚═════╝  ╚═════╝ ╚══════╝╚═╝  ╚═╝`,
+	}
+
+	fmt.Println()
+	colors := []string{BrightRed, Red, BrightYellow, Yellow, BrightRed, Red}
+	for i, line := range logo {
+		c := colors[i%len(colors)]
+		fmt.Printf("%s%s%s%s\n", Bold, c, line, Reset)
+	}
+
+	fmt.Printf("  %s%s⚡ SIPENDOSA — SISTEM PENGINGAT DOSEN SAATNYA ⚡%s\n", Bold, BrightYellow, Reset)
+	fmt.Printf("  %s%s\"Asisten yang rela 'berdosa' demi mengingatkan dosen agar mahasiswa tidak sungkan\"%s\n", Dim, Gray, Reset)
+	fmt.Printf("  %s%sEngine v%s · Mode Terminal · Zona waktu %s%s\n", Dim, Gray, version.CurrentVersion, cfg.DefaultTimezone, Reset)
+	fmt.Println()
+}
+
 func PrintBanner(cfg *config.Config) {
 	logo := []string{
 		`  ███████╗██╗██████╗ ███████╗███╗   ██╗██████╗  ██████╗ ███████╗ █████╗ `,

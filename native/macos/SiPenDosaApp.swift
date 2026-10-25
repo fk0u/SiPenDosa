@@ -6,6 +6,7 @@
 import Cocoa
 import Foundation
 import UserNotifications
+import WebKit
 
 class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem!
@@ -14,6 +15,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var backendProcess: Process?
     private var backendPid: Int32 = 0
     private var isEngineOnline = false
+    private var desktopWindow: NSWindow?
+    private var launchedBackendOurselves = false
     private var dataDir: URL!
     private var logFileURL: URL!
     private var envFileURL: URL!
@@ -45,6 +48,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             self?.checkBackendStatus()
         }
         checkBackendStatus()
+
+        // Mode desktop: bila engine dimulai oleh aplikasi ini, tampilkan
+        // jendela desktop begitu engine siap melayani.
+        if launchedBackendOurselves {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                self?.openDesktopApp()
+            }
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -145,8 +156,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         statusMenu.addItem(NSMenuItem.separator())
 
-        // 3. Aksi Cepat Web Dashboard & WhatsApp
-        openDashboardItem = NSMenuItem(title: "🌐 Buka Web Dashboard", action: #selector(openDashboard), keyEquivalent: "d")
+        // 3. Aksi Cepat: Aplikasi Desktop, Web Dashboard & WhatsApp
+        let desktopAppItem = NSMenuItem(title: "🖥 Buka Aplikasi Desktop", action: #selector(openDesktopApp), keyEquivalent: "a")
+        desktopAppItem.target = self
+        statusMenu.addItem(desktopAppItem)
+
+        openDashboardItem = NSMenuItem(title: "🌐 Buka Web Dashboard (Browser)", action: #selector(openDashboard), keyEquivalent: "d")
         openDashboardItem.target = self
         statusMenu.addItem(openDashboardItem)
 
@@ -233,9 +248,40 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             try proc.run()
             backendProcess = proc
             backendPid = proc.processIdentifier
+            launchedBackendOurselves = true
         } catch {
             print("Gagal menjalankan backend binary: \(error)")
         }
+    }
+
+    // MARK: - Jendela Aplikasi Desktop (WKWebView native)
+    @objc private func openDesktopApp() {
+        if let win = desktopWindow {
+            win.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let win = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 1280, height: 820),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        win.title = "SiPenDosa — Sistem Pengingat Dosen Saatnya"
+        win.titlebarAppearsTransparent = false
+        win.center()
+
+        let config = WKWebViewConfiguration()
+        config.preferences.setValue(true, forKey: "developerExtrasEnabled")
+        let webView = WKWebView(frame: .zero, configuration: config)
+        if let url = URL(string: "http://localhost:\(configuredPort)") {
+            webView.load(URLRequest(url: url))
+        }
+        win.contentView = webView
+        desktopWindow = win
+        win.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     private func checkBackendStatus() {

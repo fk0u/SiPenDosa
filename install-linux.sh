@@ -125,6 +125,20 @@ setup_env() {
             SECRET=$(head -c 32 /dev/urandom | od -A n -t x1 | tr -d ' \n')
         fi
 
+        # Tanya mode akses: terminal / web / desktop
+        echo ""
+        echo -e "      ${BYELLOW}Pilih mode akses SiPenDosa:${NC}"
+        echo -e "        ${BOLD}1)${NC} Terminal saja   — konsol interaktif, tanpa web"
+        echo -e "        ${BOLD}2)${NC} Web             — dashboard browser di jaringan lokal (disarankan untuk server)"
+        echo -e "        ${BOLD}3)${NC} Desktop + Web   — dashboard + jendela aplikasi desktop"
+        printf "      Mode akses [1-3] (default 2): "
+        read -r UI_CHOICE
+        case "$UI_CHOICE" in
+            1) SIPEN_UI_VAL="terminal" ;;
+            3) SIPEN_UI_VAL="desktop" ;;
+            *) SIPEN_UI_VAL="web" ;;
+        esac
+
         cat <<EOF > "$ENV_FILE"
 # ==============================================================================
 # SiPenDosa — Sistem Pengingat Dosen Saatnya (Production Configuration)
@@ -146,10 +160,11 @@ RATE_LIMIT_MAX_SEC=15
 MAX_RETRIES=3
 
 GLOBAL_DRY_RUN=false
+SIPEN_UI=${SIPEN_UI_VAL}
 EOF
         chmod 600 "$ENV_FILE"
         chown sipen:sipen "$ENV_FILE" 2>/dev/null || true
-        echo -e "      ${BGREEN}✓ File .env produksi berhasil dibuat dengan secret acak 32 karakter.${NC}"
+        echo -e "      ${BGREEN}✓ File .env produksi berhasil dibuat (mode akses: ${SIPEN_UI_VAL}).${NC}"
     else
         echo -e "      ${YELLOW}✓ Konfigurasi .env yang sudah ada dipertahankan.${NC}"
     fi

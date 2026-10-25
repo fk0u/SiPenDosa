@@ -68,6 +68,7 @@ RATE_LIMIT_MAX_SEC=15
 MAX_RETRIES=3
 
 GLOBAL_DRY_RUN=false
+SIPEN_UI=web
 ENV
     chmod 600 "${SIPEN_DATA_DIR}/.env"
 fi

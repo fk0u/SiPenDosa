@@ -73,6 +73,22 @@ if (-not (Test-Path $envFile)) {
     $rng.GetBytes($secretBytes)
     $sessionSecret = ($secretBytes | ForEach-Object { "{0:x2}" -f $_ }) -join ""
 
+    # Tanya mode akses: terminal / web / desktop
+    $uiMode = "desktop"
+    if (-not $Silent) {
+        Write-Host ""
+        Write-Host "      Pilih mode akses SiPenDosa:" -ForegroundColor Yellow
+        Write-Host "        1) Terminal saja   - konsol interaktif, tanpa web"
+        Write-Host "        2) Web             - dashboard browser di jaringan lokal"
+        Write-Host "        3) Desktop + Web   - dashboard + jendela aplikasi desktop (disarankan)"
+        $uiChoice = Read-Host "      Mode akses [1-3] (default 3)"
+        switch ($uiChoice) {
+            "1" { $uiMode = "terminal" }
+            "2" { $uiMode = "web" }
+            default { $uiMode = "desktop" }
+        }
+    }
+
     $envContent = @"
 # ==========================================
 # SiPenDosa — Sistem Pengingat Dosen Saatnya
@@ -96,8 +112,10 @@ RATE_LIMIT_MAX_SEC=15
 MAX_RETRIES=3
 
 GLOBAL_DRY_RUN=false
+SIPEN_UI=$uiMode
 "@
     Set-Content -Path $envFile -Value $envContent -Encoding UTF8
+    if (-not $Silent) { Write-Host "      Konfigurasi .env dibuat (mode akses: $uiMode)." -ForegroundColor Green }
 } else {
     if (-not $Silent) { Write-Host "[4/6] Mempertahankan konfigurasi .env yang sudah ada..." -ForegroundColor Yellow }
 }
@@ -214,6 +232,34 @@ $s5.Save()
 # Web Dashboard URL Shortcut
 $urlContent = "[InternetShortcut]`nURL=http://localhost:8473`n"
 Set-Content -Path (Join-Path $startMenuDir "Buka Web Dashboard.url") -Value $urlContent -Encoding ASCII
+
+# Mode Desktop: shortcut jendela aplikasi (Edge/Chrome --app tanpa UI browser)
+if ($uiMode -eq "desktop") {
+    $appShell = $null
+    foreach ($browser in @(
+        "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe",
+        "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe",
+        "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
+        "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe"
+    )) {
+        if (Test-Path $browser) { $appShell = $browser; break }
+    }
+    if ($appShell) {
+        $sApp = $wsh.CreateShortcut((Join-Path $desktopPath "SiPenDosa App.lnk"))
+        $sApp.TargetPath = $appShell
+        $sApp.Arguments = "--app=http://localhost:8473"
+        $sApp.Description = "SiPenDosa — Aplikasi Desktop"
+        $sApp.Save()
+        $sApp2 = $wsh.CreateShortcut((Join-Path $startMenuDir "SiPenDosa App.lnk"))
+        $sApp2.TargetPath = $appShell
+        $sApp2.Arguments = "--app=http://localhost:8473"
+        $sApp2.Description = "SiPenDosa — Aplikasi Desktop"
+        $sApp2.Save()
+        Write-Host "      Shortcut SiPenDosa App dibuat (mode desktop)." -ForegroundColor Green
+    } else {
+        Write-Host "      Edge/Chrome tidak ditemukan - mode desktop memakai browser biasa." -ForegroundColor DarkYellow
+    }
+}
 
 # Registrasi Registry
 $regKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\SiPenDosa'

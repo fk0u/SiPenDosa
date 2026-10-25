@@ -99,6 +99,21 @@ setup_app_files() {
     ENV_FILE="${INSTALL_DIR}/.env"
     if [ ! -f "$ENV_FILE" ]; then
         SECRET=$(head -c 32 /dev/urandom | od -A n -t x1 | tr -d ' \n' 2>/dev/null || echo "mac-sipen-secure-random-token-32")
+
+        # Tanya mode akses: terminal / web / desktop
+        echo ""
+        echo -e "      ${BYELLOW}Pilih mode akses SiPenDosa:${NC}"
+        echo -e "        ${BOLD}1)${NC} Terminal saja   — konsol interaktif, tanpa web"
+        echo -e "        ${BOLD}2)${NC} Web             — dashboard browser di jaringan lokal"
+        echo -e "        ${BOLD}3)${NC} Desktop + Web   — dashboard + jendela aplikasi desktop (disarankan)"
+        printf "      Mode akses [1-3] (default 3): "
+        read -r UI_CHOICE
+        case "$UI_CHOICE" in
+            1) SIPEN_UI_VAL="terminal" ;;
+            2) SIPEN_UI_VAL="web" ;;
+            *) SIPEN_UI_VAL="desktop" ;;
+        esac
+
         cat <<EOF > "$ENV_FILE"
 PORT=${DEFAULT_PORT}
 HOST=127.0.0.1
@@ -117,8 +132,9 @@ RATE_LIMIT_MAX_SEC=15
 MAX_RETRIES=3
 
 GLOBAL_DRY_RUN=false
+SIPEN_UI=${SIPEN_UI_VAL}
 EOF
-        echo -e "      ${BGREEN}✓ Konfigurasi .env produksi berhasil dibuat.${NC}"
+        echo -e "      ${BGREEN}✓ Konfigurasi .env produksi berhasil dibuat (mode akses: ${SIPEN_UI_VAL}).${NC}"
     else
         echo -e "      ${YELLOW}✓ Konfigurasi .env yang sudah ada dipertahankan.${NC}"
     fi

@@ -95,6 +95,14 @@ func (m *Manager) GetClient(userID int64) (*Client, error) {
 	return c, nil
 }
 
+// GetClientIfExists returns the running client for a user without
+// initializing a new session — dipakai UI terminal untuk inspeksi pasif.
+func (m *Manager) GetClientIfExists(userID int64) *Client {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.clients[userID]
+}
+
 // CloseClient disconnects and closes the client for a given user
 func (m *Manager) CloseClient(userID int64) {
 	m.mu.Lock()

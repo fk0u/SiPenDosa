@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -9,7 +10,9 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -23,10 +26,17 @@ import (
 	"sipen/internal/scheduler"
 	"sipen/internal/store"
 	"sipen/internal/template"
+	"sipen/internal/termui"
 	"sipen/internal/tunnel"
 	"sipen/internal/web"
 	"sipen/internal/whatsapp"
 	webassets "sipen/web"
+)
+
+// ANSI codes untuk output CLI
+const (
+	bold  = "\033[1m"
+	reset = "\033[0m"
 )
 
 func main() {
@@ -41,6 +51,7 @@ func main() {
 	}
 
 	// Tangani Perintah CLI Khusus (seperti 'sipen pair <nomor>')
+	forcedMode := ""
 	if len(os.Args) > 1 {
 		cmd := strings.ToLower(os.Args[1])
 		switch cmd {
@@ -52,11 +63,23 @@ func main() {
 			}
 			runPairCli(cfg, os.Args[2])
 			return
+		case "web", "serve":
+			forcedMode = config.UIWeb
+		case "desktop":
+			forcedMode = config.UIDesktop
+		case "mode":
+			// sipen mode [terminal|web|desktop] — lihat/mengubah mode akses
+			runModeCli(cfg, os.Args[2:])
+			return
 		case "help", "--help", "-h":
 			printCliHelp()
 			return
 		}
 	}
+
+	// Resolusi mode akses: argumen CLI > SIPEN_UI (.env) > wizard first-run
+	mode := resolveUIMode(cfg, forcedMode)
+	cfg.UIMode = mode
 
 	// 1. Inisialisasi Logger Terstruktur
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
@@ -64,8 +87,12 @@ func main() {
 	}))
 	slog.SetDefault(logger)
 
-	// 2. Tampilkan Banner Terminal Khas SiPenDosa (Ember & Gold)
-	banner.PrintBanner(cfg)
+	// 2. Tampilkan Banner — penuh untuk web/desktop, ringkas untuk terminal
+	if forcedMode == "" && (cfg.UIMode == config.UITerminal || cfg.UIMode == "") {
+		banner.PrintCompact(cfg)
+	} else {
+		banner.PrintBanner(cfg)
+	}
 	banner.LogStep("DAEMON", "Memulai inisialisasi subsistem SiPenDosa...")
 
 	// 4. Inisialisasi SQLite Database Store (Zero-CGO Pure-Go WAL)
@@ -106,6 +133,43 @@ func main() {
 	sch.Start()
 	defer sch.Stop()
 
+	// 14. Sambungkan WhatsApp Superadmin Default (User ID 1) Secara Latar Belakang
+	go func() {
+		banner.LogStep("WHATSAPP", "Memulai koneksi sesi WhatsApp akun utama...")
+		client1, err := waManager.GetClient(1)
+		if err != nil {
+			slog.Warn("Gagal memuat sesi WhatsApp akun utama", "detail", err)
+			return
+		}
+		if err := client1.Start(); err != nil {
+			slog.Warn("WhatsApp belum tertaut atau sesi terputus. Silakan scan QR via terminal atau web.", "detail", err)
+		}
+	}()
+
+	// ===== MODE TERMINAL: tanpa HTTP sama sekali =====
+	if mode == config.UITerminal {
+		banner.LogStep("MODE", "Mode akses: TERMINAL — dashboard web dimatikan (jalankan 'sipen web' bila diperlukan).")
+		ui := termui.New(cfg, appStore, waManager, queueMgr, sch)
+
+		// Tetap tanggapi sinyal agar shutdown rapi saat Ctrl+C di tengah prompt
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+		go func() {
+			<-sigChan
+			fmt.Println()
+			banner.LogStep("DAEMON", "Menerima sinyal terminasi. Mematikan subsistem...")
+			queueMgr.Stop()
+			sch.Stop()
+			waManager.CloseAll()
+			appStore.Close()
+			os.Exit(0)
+		}()
+
+		ui.Run()
+		return
+	}
+
+	// ===== MODE WEB / DESKTOP: HTTP dashboard aktif =====
 	// 12. Inisialisasi View Renderer & HTTP Handlers
 	viewRenderer := web.NewViewRenderer(webassets.Templates(), "web/templates")
 	handlers := web.NewHandlers(cfg, appStore, authSvc, waManager, tunnelMgr, queueMgr, sch, tmplEngine, hub, viewRenderer)
@@ -123,19 +187,6 @@ func main() {
 		IdleTimeout:       120 * time.Second,
 	}
 
-	// 14. Sambungkan WhatsApp Superadmin Default (User ID 1) Secara Latar Belakang
-	go func() {
-		banner.LogStep("WHATSAPP", "Memulai koneksi sesi WhatsApp akun utama...")
-		client1, err := waManager.GetClient(1)
-		if err != nil {
-			slog.Warn("Gagal memuat sesi WhatsApp akun utama", "detail", err)
-			return
-		}
-		if err := client1.Start(); err != nil {
-			slog.Warn("WhatsApp belum tertaut atau sesi terputus. Silakan scan QR via terminal atau web.", "detail", err)
-		}
-	}()
-
 	// 15. Jalankan Server HTTP di Goroutine Terpisah
 	go func() {
 		banner.LogStep("SYSTEM", fmt.Sprintf("HTTP Web Dashboard aktif melayani di http://%s", serverAddr))
@@ -144,6 +195,14 @@ func main() {
 			os.Exit(1)
 		}
 	}()
+
+	// 15a. Mode desktop: buka jendela aplikasi desktop (opsional)
+	if mode == config.UIDesktop {
+		go func() {
+			time.Sleep(800 * time.Millisecond) // beri waktu server siap
+			openDesktopApp(serverAddr)
+		}()
+	}
 
 	// 15b. Bersihkan sesi & tantangan 2FA kedaluwarsa setiap 24 jam
 	ctx, stopCleanup := context.WithCancel(context.Background())
@@ -243,11 +302,192 @@ func runPairCli(cfg *config.Config, phone string) {
 }
 
 func printCliHelp() {
-	fmt.Println("SiPenDosa — Advanced Automated WhatsApp Reminder Daemon")
+	fmt.Println("SiPenDosa — Sistem Pengingat Dosen Saatnya (Advanced WhatsApp Reminder Daemon)")
 	fmt.Println("\nPenggunaan:")
-	fmt.Println("  sipen                   Menjalankan server daemon utama")
-	fmt.Println("  sipen pair <nomor_hp>   Minta kode pairing login WhatsApp via nomor HP")
-	fmt.Println("  sipen help              Menampilkan bantuan ini")
+	fmt.Println("  sipen                     Jalankan sesuai mode akses tersimpan (SIPEN_UI; default terminal)")
+	fmt.Println("  sipen terminal            Paksa mode terminal interaktif (tanpa web)")
+	fmt.Println("  sipen web                 Paksa mode web (daemon + dashboard)")
+	fmt.Println("  sipen desktop             Mode web + buka jendela aplikasi desktop")
+	fmt.Println("  sipen mode [terminal|web|desktop]  Lihat atau ubah mode akses tersimpan")
+	fmt.Println("  sipen pair <nomor_hp>     Minta kode pairing WhatsApp via nomor HP (butuh mode web)")
+	fmt.Println("  sipen help                Tampilkan bantuan ini")
 	fmt.Println("\nContoh:")
 	fmt.Println("  sipen pair 08123456789")
+	fmt.Println("  SIPEN_UI=desktop sipen")
+}
+
+// isTTY melaporkan apakah stdin adalah terminal interaktif
+func isTTY() bool {
+	fi, err := os.Stdin.Stat()
+	if err != nil {
+		return false
+	}
+	return (fi.Mode() & os.ModeCharDevice) != 0
+}
+
+// resolveUIMode menentukan mode akses efektif:
+// argumen CLI > SIPEN_UI di .env > wizard first-run (TTY) > migrasi instalasi lama (web) > terminal
+func resolveUIMode(cfg *config.Config, forced string) string {
+	switch forced {
+	case config.UITerminal, config.UIWeb, config.UIDesktop:
+		return forced
+	}
+	switch cfg.UIMode {
+	case config.UITerminal, config.UIWeb, config.UIDesktop:
+		return cfg.UIMode
+	}
+
+	// Nilai SIPEN_UI belum tersimpan.
+	if isTTY() {
+		return runFirstRunWizard(cfg)
+	}
+
+	// Non-interaktif: instalasi lama (sudah punya .env) dipertahankan di mode web;
+	// instalasi fresh tanpa TTY jatuh ke terminal sesuai desain produk.
+	if cfg.EnvFile != "" {
+		if _, err := os.Stat(cfg.EnvFile); err == nil {
+			banner.LogStep("MODE", "SIPEN_UI belum diatur — instalasi lama dipertahankan di mode WEB. Jalankan 'sipen mode' untuk mengubah.")
+			return config.UIWeb
+		}
+	}
+	banner.LogStep("MODE", "SIPEN_UI belum diatur & tanpa terminal interaktif — memakai mode TERMINAL.")
+	return config.UITerminal
+}
+
+// runFirstRunWizard menanyakan mode akses pada jalankan pertama dan menyimpannya ke .env
+func runFirstRunWizard(cfg *config.Config) string {
+	fmt.Println()
+	fmt.Println("  ┌─────────────────────────────────────────────────────────────┐")
+	fmt.Printf("  │  %sSELAMAT DATANG DI SIPENDOSA%s — pilih mode akses Anda:        │\n", bold, reset)
+	fmt.Println("  │                                                             │")
+	fmt.Printf("  │  %s[1]%s Terminal saja   — konsol interaktif, tanpa web         │\n", bold, reset)
+	fmt.Printf("  │  %s[2]%s Web           — dashboard browser di jaringan lokal    │\n", bold, reset)
+	fmt.Printf("  │  %s[3]%s Desktop + Web  — dashboard + jendela aplikasi desktop  │\n", bold, reset)
+	fmt.Println("  │                                                             │")
+	fmt.Println("  └─────────────────────────────────────────────────────────────┘")
+	fmt.Printf("  Pilihan %s[1-3]%s (default 1): ", bold, reset)
+
+	reader := bufio.NewReader(os.Stdin)
+	choice, _ := reader.ReadString('\n')
+	choice = strings.TrimSpace(choice)
+
+	mode := config.UITerminal
+	switch choice {
+	case "2":
+		mode = config.UIWeb
+	case "3":
+		mode = config.UIDesktop
+	}
+
+	// Simpan pilihan ke .env agar tidak ditanya lagi
+	if err := persistUIMode(cfg, mode); err != nil {
+		banner.LogStep("MODE", fmt.Sprintf("Mode %s dipakai untuk sesi ini (gagal menyimpan ke .env: %v).", mode, err))
+	} else {
+		banner.LogStep("MODE", fmt.Sprintf("Mode akses %s%s%s tersimpan di .env — ubah kapan saja lewat 'sipen mode'.", bold, mode, reset))
+	}
+	return mode
+}
+
+// persistUIMode menulis/memperbarui baris SIPEN_UI pada file .env
+func persistUIMode(cfg *config.Config, mode string) error {
+	if cfg.EnvFile == "" {
+		return fmt.Errorf("lokasi .env tidak diketahui")
+	}
+	content, err := os.ReadFile(cfg.EnvFile)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+		content = []byte("")
+	}
+
+	lines := strings.Split(string(content), "\n")
+	found := false
+	for i, l := range lines {
+		if strings.HasPrefix(strings.TrimSpace(l), "SIPEN_UI=") {
+			lines[i] = "SIPEN_UI=" + mode
+			found = true
+			break
+		}
+	}
+	if !found {
+		lines = append(lines, "", "# Mode akses antarmuka: terminal | web | desktop", "SIPEN_UI="+mode)
+	}
+	if err := os.WriteFile(cfg.EnvFile, []byte(strings.Join(lines, "\n")), 0600); err != nil {
+		return err
+	}
+	cfg.UIMode = mode
+	return nil
+}
+
+// runModeCli: 'sipen mode' — tampilkan, atau ubah mode akses tersimpan
+func runModeCli(cfg *config.Config, args []string) {
+	if len(args) == 0 {
+		fmt.Printf("Mode akses saat ini: %s%s%s\n", bold, cfg.UIMode+" (belum tersimpan — akan ditanya saat first-run)", reset)
+		fmt.Println("Ubah dengan: sipen mode <terminal|web|desktop>")
+		return
+	}
+	mode := strings.ToLower(args[0])
+	switch mode {
+	case config.UITerminal, config.UIWeb, config.UIDesktop:
+	default:
+		fmt.Printf("Mode tidak dikenal: %q (pilihan: terminal, web, desktop)\n", mode)
+		os.Exit(1)
+	}
+	if err := persistUIMode(cfg, mode); err != nil {
+		fmt.Printf("Gagal menyimpan mode: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("✓ Mode akses tersimpan: %s%s%s — berlaku pada jalankan berikutnya.\n", bold, mode, reset)
+}
+
+// openDesktopApp membuka jendela aplikasi desktop sesuai platform.
+// macOS: aplikasi companion SiPenDosa.app (jendela WKWebView native).
+// Platform lain: jendela app-mode Edge/Chrome (tanpa chrome browser UI).
+func openDesktopApp(serverAddr string) {
+	url := "http://" + serverAddr
+	switch runtime.GOOS {
+	case "darwin":
+		// Buka aplikasi companion bila terpasang; ia mendeteksi daemon yang
+		// sudah berjalan dan menampilkan jendela desktopnya sendiri.
+		for _, app := range []string{"SiPenDosa", "SiPenDosa.app"} {
+			if err := exec.Command("open", "-a", app).Start(); err == nil {
+				return
+			}
+		}
+		openBrowserAppMode(url)
+	case "windows":
+		openBrowserAppMode(url)
+	default:
+		openBrowserAppMode(url)
+	}
+}
+
+// openBrowserAppMode mencoba Edge/Chrome dalam mode --app (jendela mandiri);
+// bila tidak ada, buka browser default biasa.
+func openBrowserAppMode(url string) {
+	candidates := [][]string{
+		{"msedge", "--app=" + url},
+		{"microsoft-edge", "--app=" + url},
+		{"google-chrome", "--app=" + url},
+		{"chromium", "--app=" + url},
+		{"/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge", "--app=" + url},
+		{"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "--app=" + url},
+	}
+	for _, c := range candidates {
+		if _, err := exec.LookPath(c[0]); err == nil {
+			if err := exec.Command(c[0], c[1:]...).Start(); err == nil {
+				return
+			}
+		}
+	}
+	// Fallback: browser default
+	switch runtime.GOOS {
+	case "darwin":
+		_ = exec.Command("open", url).Start()
+	case "windows":
+		_ = exec.Command("cmd", "/c", "start", url).Start()
+	default:
+		_ = exec.Command("xdg-open", url).Start()
+	}
 }
