@@ -7,7 +7,7 @@ import (
 
 // CurrentVersion is the official version of SiPenDosa
 const (
-	CurrentVersion = "1.4.0"
+	CurrentVersion = "1.4.1"
 	GitRepoOwner   = "fk0u"
 	GitRepoName    = "SiPenDosa"
 )

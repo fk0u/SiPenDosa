@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/fk0u/SiPenDosa/releases"><img src="https://img.shields.io/badge/Release-v1.4.0-e11d48?style=for-the-badge&logo=github&logoColor=white" alt="Release v1.4.0" /></a>
+  <a href="https://github.com/fk0u/SiPenDosa/releases"><img src="https://img.shields.io/badge/Release-v1.4.1-e11d48?style=for-the-badge&logo=github&logoColor=white" alt="Release v1.4.1" /></a>
   <a href="https://golang.org"><img src="https://img.shields.io/badge/Go-1.26.4_Core-be123c?style=for-the-badge&logo=go&logoColor=white" alt="Go 1.26" /></a>
   <a href="https://isocpp.org"><img src="https://img.shields.io/badge/C%2B%2B-17_Socket_Bridge-9f1239?style=for-the-badge&logo=c%2B%2B&logoColor=white" alt="C++17" /></a>
   <a href="https://developer.apple.com/swift/"><img src="https://img.shields.io/badge/Swift-6.3_AppKit-f59e0b?style=for-the-badge&logo=swift&logoColor=white" alt="Swift AppKit" /></a>

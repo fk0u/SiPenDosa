@@ -4,6 +4,19 @@ Semua perubahan penting pada proyek **SiPenDosa** didokumentasikan di sini denga
 
 ---
 
+## [1.4.1] — 2026-10-25
+
+### 🐛 Perbaikan Bug
+* **Dialog update berulang (loop)**: self-update kini **me-restart proses otomatis** setelah binary baru terpasang (re-exec pada Unix, peluncuran proses baru pada Windows) — sebelumnya binary diganti di disk tapi proses lama tetap berjalan sehingga dialog update muncul terus.
+* **Tampilan tidak berubah setelah update**: dashboard kini selalu menyajikan **aset embedded** yang tertanam di binary — direktori `web/templates` & `web/static` peninggalan instalasi lama tidak lagi menimpa frontend baru. File disk hanya dipakai di mode pengembangan (`SIPEN_DEV_ASSETS=1`).
+* `manifest.json` & `favicon.ico` kini disajikan dari aset embedded (sebelumnya path relatif CWD yang bisa hilang tergantung direktori kerja).
+* Toast sukses/gagal update kini muncul melalui WebSocket sebelum proses restart.
+
+### ⚠️ Catatan Migrasi
+* Pengguna v1.2.0 atau lebih lama: logika restart baru ada di binary ini. Setelah memasang v1.4.1, **restart SiPenDosa satu kali secara manual** (macOS: menu bar "Mulai Ulang Engine"; lainnya: hentikan dan jalankan ulang `sipen`). Update berikutnya akan me-restart otomatis.
+
+---
+
 ## [1.4.0] — 2026-10-25
 
 ### 🌟 Fitur Baru

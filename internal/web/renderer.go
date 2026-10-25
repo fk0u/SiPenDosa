@@ -148,7 +148,7 @@ func (v *ViewRenderer) RenderWithStatus(w http.ResponseWriter, r *http.Request, 
 	var tmpl *template.Template
 	var err error
 
-	if v.diskDir != "" {
+	if v.diskDir != "" && devAssetsEnabled() {
 		diskLayout := filepath.Join(v.diskDir, "layouts", "base.html")
 		diskPage := filepath.Join(v.diskDir, pageTemplate)
 		if _, statErr := os.Stat(diskLayout); statErr == nil {

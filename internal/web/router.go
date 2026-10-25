@@ -16,8 +16,16 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
+// devAssetsEnabled melaporkan apakah aset dari disk dipakai menimpa aset
+// embedded — hanya untuk pengembangan. Instalasi produksi selalu memakai
+// aset embedded agar frontend ikut terbarui setelah self-update.
+func devAssetsEnabled() bool {
+	return os.Getenv("SIPEN_DEV_ASSETS") == "1"
+}
+
 // SetupRouter initializes Chi router with middlewares and route handlers
 func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler {
+	h.SetStaticFS(staticFS)
 	r := chi.NewRouter()
 
 	// Standard middlewares
@@ -34,9 +42,11 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 	r.Use(MaxBodyBytesMiddleware(2 << 20)) // Max 2MB payload protection
 	r.Use(CSRFOriginMiddleware)
 
-	// Static files server with disk and embedded fallback
+	// Static files server: embedded adalah sumber kebenaran (selalu segar
+	// sesuai binary). File disk hanya dipakai di mode dev (SIPEN_DEV_ASSETS=1)
+	// supaya instalasi lama tidak menimpa aset baru setelah self-update.
 	var filesDir http.FileSystem
-	if staticDiskDir != "" {
+	if staticDiskDir != "" && devAssetsEnabled() {
 		if fi, err := os.Stat(staticDiskDir); err == nil && fi.IsDir() {
 			workDir, _ := filepath.Abs(staticDiskDir)
 			filesDir = http.Dir(workDir)

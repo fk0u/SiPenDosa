@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"html"
 	"io"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -46,6 +47,7 @@ type Handlers struct {
 	hub        *realtime.Hub
 	renderer   *ViewRenderer
 	updater    *updater.Manager
+	staticFS   fs.FS
 }
 
 // NewHandlers creates an instance of application HTTP handlers
@@ -74,6 +76,11 @@ func NewHandlers(
 		renderer:   r,
 		updater:    updater.NewManager(),
 	}
+}
+
+// SetStaticFS menyimpan FS embedded untuk penyajian manifest/favicon
+func (h *Handlers) SetStaticFS(fsys fs.FS) {
+	h.staticFS = fsys
 }
 
 // Helper to retrieve the isolated WhatsApp client for the authenticated user.
@@ -1838,12 +1845,27 @@ func (h *Handlers) SitemapHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) ManifestHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/manifest+json; charset=utf-8")
 	w.Header().Set("Cache-Control", "public, max-age=86400")
-	http.ServeFile(w, r, "web/static/manifest.json")
+	h.serveEmbedded(w, r, "static/manifest.json")
 }
 
 func (h *Handlers) FaviconHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "public, max-age=604800")
-	http.ServeFile(w, r, "web/static/favicon.ico")
+	h.serveEmbedded(w, r, "static/favicon.ico")
+}
+
+// serveEmbedded menyajikan berkas dari FS embedded — bekerja dari direktori
+// mana pun dan selalu sinkron dengan binary yang berjalan.
+func (h *Handlers) serveEmbedded(w http.ResponseWriter, r *http.Request, name string) {
+	if h.staticFS != nil {
+		if f, err := h.staticFS.Open(name); err == nil {
+			defer f.Close()
+			if stat, err := f.Stat(); err == nil && !stat.IsDir() {
+				http.ServeContent(w, r, stat.Name(), stat.ModTime(), f.(io.ReadSeeker))
+				return
+			}
+		}
+	}
+	http.NotFound(w, r)
 }
 
 // SystemVersionHandler returns current version and environment info
@@ -1925,20 +1947,26 @@ func (h *Handlers) ApplyUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go func(dlURL string) {
-		time.Sleep(500 * time.Millisecond)
-		err := h.updater.ApplyBinarySelfUpdate(context.Background(), dlURL)
-		if err != nil {
-			slog.Error("Gagal memasang self-update binary", "err", err)
-		} else {
-			slog.Info("Self-update binary berhasil dipasang")
-		}
-	}(req.DownloadURL)
-
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
-		"message": "Pembaruan sedang diunduh dan dipasang di latar belakang...",
+		"message": "Pembaruan sedang diunduh, dipasang, dan sistem akan me-restart otomatis...",
 	})
+
+	go func(dlURL string) {
+		time.Sleep(800 * time.Millisecond) // beri waktu respons terkirim
+		if err := h.updater.ApplyBinarySelfUpdate(context.Background(), dlURL); err != nil {
+			slog.Error("Gagal memasang self-update binary", "err", err)
+			h.hub.BroadcastToast("error", "Pembaruan gagal dipasang: "+err.Error())
+			return
+		}
+		slog.Info("Self-update binary terpasang — me-restart proses dengan versi baru...")
+		h.hub.BroadcastToast("success", "Pembaruan terpasang. SiPenDosa me-restart otomatis — tunggu beberapa detik lalu muat ulang halaman.")
+		time.Sleep(1200 * time.Millisecond) // beri waktu toast ter-broadcast
+		if err := updater.RestartSelf(); err != nil {
+			slog.Error("Gagal me-restart setelah update", "err", err)
+			h.hub.BroadcastToast("warning", "Update terpasang — silakan jalankan ulang SiPenDosa manual untuk mengaktifkannya.")
+		}
+	}(req.DownloadURL)
 }
 
 // isTrustedUpdateHost membatasi sumber binary update ke GitHub resmi proyek
