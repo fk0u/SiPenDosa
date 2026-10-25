@@ -1,246 +1,235 @@
 {{define "content"}}
-<div class="space-y-6">
+<div class="md-col md-enter" style="gap:24px;">
 
     <!-- Header Section -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold mb-2">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                Template Engine & Live Preview
-            </div>
-            <h1 class="text-2xl font-extrabold text-white tracking-tight">Template Pesan WhatsApp</h1>
-            <p class="text-xs text-slate-400 mt-1">Rancang format pesan pengingat kuliah dinamis dengan variabel otomatis dan pratinjau real-time.</p>
+    <div class="md-row-between md-wrap" style="align-items:flex-start; gap:16px;">
+        <div class="md-col" style="gap:4px; max-width:640px;">
+            <span class="md-badge md-badge-tertiary md-row md-gap-sm" style="align-self:flex-start;">
+                <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                Template engine &amp; live preview
+            </span>
+            <h2 class="md-headline-small md-balance" style="margin-top:8px;">Template pesan WhatsApp</h2>
+            <p class="md-body-small md-muted md-balance">Rancang format pesan pengingat kuliah dinamis dengan variabel otomatis dan pratinjau real-time.</p>
         </div>
-        <div>
-            <button onclick="modal_add_template.showModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/30 transition-all active:scale-95">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                Buat Template Baru
-            </button>
-        </div>
+        <button onclick="modal_add_template.showModal()" class="md-btn">
+            <svg style="width:18px;height:18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            Buat template baru
+        </button>
     </div>
 
-    <!-- Template Selector Tabs -->
-    <div class="flex flex-wrap items-center gap-2 pb-1 border-b border-white/[0.06]">
+    <!-- Template Selector Chips -->
+    <div class="md-row md-wrap" style="padding-bottom:12px; border-bottom:1px solid var(--md-sys-color-outline-variant);">
         {{range .Data.Templates}}
-        <a href="/templates?id={{.ID}}" class="group inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all {{if and $.Data.Selected (eq $.Data.Selected.ID .ID)}}bg-rose-600/20 text-rose-300 border border-rose-500/40 shadow-sm{{else}}bg-white/[0.02] text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] border border-white/[0.06]{{end}}">
-            <span class="w-1.5 h-1.5 rounded-full {{if and $.Data.Selected (eq $.Data.Selected.ID .ID)}}bg-rose-400{{else}}bg-slate-600 group-hover:bg-slate-400{{end}}"></span>
+        <a href="/templates?id={{.ID}}" class="md-chip {{if and $.Data.Selected (eq $.Data.Selected.ID .ID)}}md-chip-active{{end}}">
+            <span class="md-dot {{if and $.Data.Selected (eq $.Data.Selected.ID .ID)}}md-dot-primary{{else}}md-dot-neutral{{end}}"></span>
             <span>{{.Name}}</span>
             {{if .IsDefault}}
-            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">Default</span>
+            <span class="md-badge md-badge-success">Default</span>
             {{end}}
         </a>
         {{end}}
     </div>
 
     {{if .Data.Selected}}
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        <!-- Editor Column (7 cols) -->
-        <div class="lg:col-span-7 space-y-4">
-            <div class="bezel-outer p-1 rounded-2xl">
-                <div class="bezel-card rounded-xl p-6 space-y-5">
-                    
-                    <div class="flex items-center justify-between pb-4 border-b border-white/[0.06]">
-                        <div>
-                            <span class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Active Template</span>
-                            <h2 class="text-base font-bold text-white tracking-tight">{{.Data.Selected.Name}}</h2>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <form action="/templates/{{.Data.Selected.ID}}/delete" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus template ini?')" class="inline">
-                                <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-medium transition">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                    Hapus
-                                </button>
-                            </form>
-                        </div>
+    <div class="md-grid tpl-grid" style="align-items:start;">
+
+        <!-- Editor Column -->
+        <div class="md-col" style="gap:16px;">
+            <section class="md-card-outlined md-col" style="gap:20px;">
+
+                <div class="md-row-between md-wrap" style="padding-bottom:16px; border-bottom:1px solid var(--md-sys-color-outline-variant);">
+                    <div class="md-stack" style="gap:0;">
+                        <span class="md-label-small md-mono md-muted" style="text-transform:uppercase; letter-spacing:1px;">Template aktif</span>
+                        <h3 class="md-title-medium" style="margin-top:2px;">{{.Data.Selected.Name}}</h3>
                     </div>
-
-                    <!-- Variable Quick Chips -->
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
-                                Sisipkan Variabel Otomatis:
-                            </span>
-                            <span class="text-[10px] text-slate-500 font-mono">Klik untuk menyematkan ke kursor</span>
-                        </div>
-                        <div class="flex flex-wrap gap-1.5">
-                            <button type="button" onclick="insertVariable('NamaDosen')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono transition">NamaDosen</button>
-                            <button type="button" onclick="insertVariable('Matkul')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono transition">Matkul</button>
-                            <button type="button" onclick="insertVariable('Hari')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono transition">Hari</button>
-                            <button type="button" onclick="insertVariable('Tanggal')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono transition">Tanggal</button>
-                            <button type="button" onclick="insertVariable('JamMulai')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono transition">JamMulai</button>
-                            <button type="button" onclick="insertVariable('JamSelesai')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono transition">JamSelesai</button>
-                            <button type="button" onclick="insertVariable('Lokasi')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono transition">Lokasi</button>
-                            <button type="button" onclick="insertVariable('LinkGroup')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono transition">LinkGroup</button>
-                            <button type="button" onclick="insertVariable('NamaMahasiswa')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono transition">NamaMahasiswa</button>
-                            <button type="button" onclick="insertVariable('NIM')" class="px-2 py-1 rounded-md bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono transition">NIM</button>
-                        </div>
-                    </div>
-
-                    <!-- Form Editor -->
-                    <form action="/templates/{{.Data.Selected.ID}}/update" method="POST" class="space-y-4">
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-semibold text-slate-300">Nama Template</label>
-                            <input type="text" name="name" value="{{.Data.Selected.Name}}" required
-                                   class="w-full px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/50 text-xs text-white placeholder-slate-500 transition outline-none" />
-                        </div>
-
-                        <div class="space-y-1.5">
-                            <div class="flex items-center justify-between">
-                                <label class="text-xs font-semibold text-slate-300">Konten Pesan (Go Template Syntax)</label>
-                                <span class="text-[10px] font-mono text-amber-400">Auto-preview enabled</span>
-                            </div>
-                            <div class="relative rounded-xl overflow-hidden border border-white/[0.08] focus-within:border-rose-500/50 transition">
-                                <textarea id="template-editor" name="content" rows="13" required
-                                          hx-post="/templates/preview"
-                                          hx-trigger="keyup changed delay:250ms"
-                                          hx-target="#live-preview-box"
-                                          class="w-full p-4 bg-[#0a0d16] font-mono text-xs text-slate-200 leading-relaxed outline-none resize-y">{{.Data.Selected.Content}}</textarea>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
-                            <label class="cursor-pointer inline-flex items-center gap-2.5 select-none">
-                                <input type="checkbox" name="is_default" {{if .Data.Selected.IsDefault}}checked{{end}} class="w-4 h-4 rounded bg-white/[0.05] border border-white/[0.1] text-rose-600 focus:ring-0 focus:ring-offset-0 transition cursor-pointer" />
-                                <span class="text-xs text-slate-300">Jadikan Template Utama (Default)</span>
-                            </label>
-                            <button type="submit" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/30 transition-all active:scale-95">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-                                Simpan & Catat Versi
+                    <div class="md-row md-gap-sm">
+                        <form action="/templates/{{.Data.Selected.ID}}/delete" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus template ini?')" class="inline">
+                            <button type="submit" class="md-btn-text md-btn-sm" style="color:var(--md-sys-color-error);">
+                                <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                Hapus
                             </button>
-                        </div>
-                    </form>
-
+                        </form>
+                    </div>
                 </div>
-            </div>
+
+                <!-- Variable Quick Chips -->
+                <div class="md-stack" style="gap:8px;">
+                    <div class="md-row-between md-wrap" style="gap:8px;">
+                        <span class="md-label-large md-row md-gap-sm">
+                            <svg style="width:16px;height:16px;color:var(--md-sys-color-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
+                            Sisipkan variabel otomatis:
+                        </span>
+                        <span class="md-label-small md-mono md-muted">Klik untuk menyematkan ke kursor</span>
+                    </div>
+                    <div class="md-row md-wrap" style="gap:8px;">
+                        <button type="button" onclick="insertVariable('NamaDosen')" class="md-chip md-mono" style="font-size:12px;">NamaDosen</button>
+                        <button type="button" onclick="insertVariable('Matkul')" class="md-chip md-mono" style="font-size:12px;">Matkul</button>
+                        <button type="button" onclick="insertVariable('Hari')" class="md-chip md-mono" style="font-size:12px;">Hari</button>
+                        <button type="button" onclick="insertVariable('Tanggal')" class="md-chip md-mono" style="font-size:12px;">Tanggal</button>
+                        <button type="button" onclick="insertVariable('JamMulai')" class="md-chip md-mono" style="font-size:12px;">JamMulai</button>
+                        <button type="button" onclick="insertVariable('JamSelesai')" class="md-chip md-mono" style="font-size:12px;">JamSelesai</button>
+                        <button type="button" onclick="insertVariable('Lokasi')" class="md-chip md-mono" style="font-size:12px;">Lokasi</button>
+                        <button type="button" onclick="insertVariable('LinkGroup')" class="md-chip md-mono" style="font-size:12px;">LinkGroup</button>
+                        <button type="button" onclick="insertVariable('NamaMahasiswa')" class="md-chip md-mono" style="font-size:12px;">NamaMahasiswa</button>
+                        <button type="button" onclick="insertVariable('NIM')" class="md-chip md-mono" style="font-size:12px;">NIM</button>
+                    </div>
+                </div>
+
+                <!-- Form Editor -->
+                <form action="/templates/{{.Data.Selected.ID}}/update" method="POST" class="md-col" style="gap:16px;">
+                    <div class="md-field">
+                        <div class="md-field-box">
+                            <input type="text" name="name" value="{{.Data.Selected.Name}}" required placeholder=" " />
+                            <label>Nama template</label>
+                        </div>
+                    </div>
+
+                    <div class="md-field">
+                        <div class="md-row-between md-wrap" style="gap:8px; padding:0 4px;">
+                            <label class="md-label-large" style="color:var(--md-sys-color-on-surface);">Konten pesan (Go template syntax)</label>
+                            <span class="md-label-small md-mono" style="color:var(--md-sys-color-warning);">Auto-preview enabled</span>
+                        </div>
+                        <div class="md-field-box">
+                            <textarea id="template-editor" name="content" rows="13" required placeholder=" " class="md-mono"
+                                      style="min-height:260px; line-height:1.6;"
+                                      hx-post="/templates/preview"
+                                      hx-trigger="keyup changed delay:250ms"
+                                      hx-target="#live-preview-box"></textarea>
+                            <label>Naskah pesan</label>
+                        </div>
+                    </div>
+
+                    <div class="md-row-between md-wrap" style="padding-top:4px;">
+                        <label class="md-check">
+                            <input type="checkbox" name="is_default" {{if .Data.Selected.IsDefault}}checked{{end}} />
+                            <span>Jadikan template utama (default)</span>
+                        </label>
+                        <button type="submit" class="md-btn">
+                            <svg style="width:18px;height:18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                            Simpan &amp; catat versi
+                        </button>
+                    </div>
+                </form>
+
+            </section>
         </div>
 
-        <!-- Live Preview & Version History Column (5 cols) -->
-        <div class="lg:col-span-5 space-y-6">
-            
-            <!-- WhatsApp Live Preview Mockup Card -->
-            <div class="bezel-outer p-1 rounded-2xl">
-                <div class="bezel-card rounded-xl p-5 space-y-4">
-                    <div class="flex items-center justify-between pb-3 border-b border-white/[0.06]">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-                            <span class="text-xs font-bold text-white tracking-tight">Pratinjau Live WhatsApp</span>
-                        </div>
-                        <span class="text-[10px] font-mono uppercase tracking-wider text-slate-500 bg-white/[0.03] px-2 py-0.5 rounded border border-white/[0.05]">Sandbox Data</span>
-                    </div>
+        <!-- Live Preview & Version History Column -->
+        <div class="md-col" style="gap:24px;">
 
-                    <!-- Mockup Chat Bubble View -->
-                    <div class="bg-[#0b141a] rounded-xl p-4 border border-white/[0.06] space-y-3 relative overflow-hidden">
-                        <div class="text-[10px] text-center text-slate-400 py-1">
-                            <span class="bg-[#182229] px-2.5 py-0.5 rounded-md border border-white/[0.05]">HARI INI</span>
-                        </div>
-
-                        <!-- Chat Message Bubble -->
-                        <div class="flex justify-start">
-                            <div class="max-w-[90%] bg-[#202c33] rounded-2xl rounded-tl-none p-3.5 border border-white/[0.05] shadow-md space-y-2">
-                                <div id="live-preview-box">
-                                    <div class="whitespace-pre-wrap font-sans text-xs leading-relaxed text-slate-200">
-                                        {{.Data.PreviewText}}
-                                    </div>
-                                </div>
-                                <div class="flex items-center justify-end gap-1 text-[10px] text-slate-400 font-mono">
-                                    <span>07:00</span>
-                                    <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7m-9 7l4 4L22 7"></path></svg>
-                                </div>
-                            </div>
-                        </div>
+            <!-- Live Preview Card -->
+            <section class="md-card-elevated md-col" style="gap:16px;">
+                <div class="md-row-between md-wrap" style="padding-bottom:12px; border-bottom:1px solid var(--md-sys-color-outline-variant);">
+                    <div class="md-row md-gap-sm">
+                        <span class="md-dot md-dot-success"></span>
+                        <span class="md-title-small">Pratinjau live WhatsApp</span>
                     </div>
-                    <p class="text-[11px] text-slate-500 text-center">Variabel dalam kurung kurawal akan otomatis digantikan dengan data real perkuliahan saat pengiriman.</p>
+                    <span class="md-badge md-badge-neutral">Sandbox data</span>
                 </div>
-            </div>
+
+                <div id="live-preview-box" class="md-code" style="min-height:140px; max-height:320px; overflow-y:auto; white-space:pre-wrap;">
+                    <div style="white-space:pre-wrap;">{{.Data.PreviewText}}</div>
+                </div>
+                <p class="md-body-small md-muted md-text-center">Variabel dalam kurung kurawal akan otomatis digantikan dengan data real perkuliahan saat pengiriman.</p>
+            </section>
 
             <!-- Version History (Audit Checkpoint) Card -->
-            <div class="bezel-outer p-1 rounded-2xl">
-                <div class="bezel-card rounded-xl p-5 space-y-3">
-                    <div class="flex items-center justify-between pb-2 border-b border-white/[0.06]">
-                        <span class="text-xs font-bold text-white tracking-tight">Riwayat Versi Edit</span>
-                        <span class="text-[10px] font-mono text-slate-400">{{len .Data.Versions}} Checkpoint</span>
-                    </div>
-                    <p class="text-xs text-slate-400">Setiap pembaruan template disimpan otomatis untuk mencegah kehilangan naskah.</p>
-
-                    <div class="space-y-2 max-h-52 overflow-y-auto pr-1">
-                        {{if .Data.Versions}}
-                        {{range .Data.Versions}}
-                        <div class="p-3 bg-white/[0.02] hover:bg-white/[0.04] rounded-xl border border-white/[0.06] flex items-center justify-between text-xs transition">
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold text-amber-400 font-mono">v{{.Version}}</span>
-                                    <span class="text-[10px] text-slate-500 font-mono">{{formatTime .CreatedAt "02 Jan 15:04"}}</span>
-                                </div>
-                                <div class="text-[11px] text-slate-400 truncate max-w-[180px] mt-0.5">{{truncate .Content 40}}</div>
-                            </div>
-                            <button type="button" onclick="loadVersionContent(`{{.Content}}`)" class="px-2.5 py-1 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 text-xs font-medium border border-white/[0.08] transition">
-                                Muat
-                            </button>
-                        </div>
-                        {{end}}
-                        {{else}}
-                        <div class="text-xs text-slate-500 italic py-3 text-center">Belum ada riwayat versi sebelumnya.</div>
-                        {{end}}
-                    </div>
+            <section class="md-card-elevated md-col" style="gap:12px;">
+                <div class="md-row-between" style="padding-bottom:8px; border-bottom:1px solid var(--md-sys-color-outline-variant);">
+                    <span class="md-title-small">Riwayat versi edit</span>
+                    <span class="md-label-small md-mono md-muted">{{len .Data.Versions}} checkpoint</span>
                 </div>
-            </div>
+                <p class="md-body-small md-muted">Setiap pembaruan template disimpan otomatis untuk mencegah kehilangan naskah.</p>
+
+                <div class="md-col" style="gap:8px; max-height:208px; overflow-y:auto;">
+                    {{if .Data.Versions}}
+                    {{range .Data.Versions}}
+                    <div class="md-card-outlined md-row-between md-wrap" style="padding:12px; gap:8px;">
+                        <div class="md-grow" style="min-width:0;">
+                            <div class="md-row md-gap-sm">
+                                <span class="md-mono" style="color:var(--md-sys-color-tertiary); font-weight:600;">v{{.Version}}</span>
+                                <span class="md-label-small md-mono md-muted">{{formatTime .CreatedAt "02 Jan 15:04"}}</span>
+                            </div>
+                            <div class="md-body-small md-muted md-truncate" style="max-width:200px; margin-top:2px;">{{truncate .Content 40}}</div>
+                        </div>
+                        <button type="button" onclick="loadVersionContent(`{{.Content}}`)" class="md-btn-outlined md-btn-sm">
+                            Muat
+                        </button>
+                    </div>
+                    {{end}}
+                    {{else}}
+                    <div class="md-empty md-body-small" style="padding:24px 16px;">Belum ada riwayat versi sebelumnya.</div>
+                    {{end}}
+                </div>
+            </section>
 
         </div>
 
     </div>
     {{else}}
-    <div class="bezel-outer p-1 rounded-2xl">
-        <div class="bezel-card rounded-xl p-12 text-center text-slate-500 text-xs italic">
+    <section class="md-card-outlined">
+        <div class="md-empty md-body-small">
+            <svg fill="none" stroke="currentColor" stroke-width="1.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             Belum ada template yang dipilih atau dibuat.
         </div>
-    </div>
+    </section>
     {{end}}
 
 </div>
 
 <!-- Modal Tambah Template Baru -->
-<dialog id="modal_add_template" class="modal">
-    <div class="modal-box bg-[#090d16] border border-white/[0.1] rounded-2xl max-w-lg p-6 space-y-4 shadow-2xl">
-        <div class="flex items-center justify-between pb-3 border-b border-white/[0.06]">
-            <div>
-                <h3 class="font-bold text-base text-white tracking-tight">Buat Template Pesan Baru</h3>
-                <p class="text-xs text-slate-400">Tambahkan format pesan baru untuk keperluan jadwal kuliah spesifik.</p>
-            </div>
-            <button type="button" onclick="modal_add_template.close()" class="p-1 rounded-lg hover:bg-white/[0.05] text-slate-400 hover:text-white transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
+<dialog id="modal_add_template" class="md-dialog" style="width:min(92vw, 512px);">
+    <div class="md-dialog-header md-row-between">
+        <div>
+            <h3 class="md-title-large">Buat template pesan baru</h3>
+            <p class="md-body-small" style="color:var(--md-sys-color-on-surface-variant);">Tambahkan format pesan baru untuk keperluan jadwal kuliah spesifik.</p>
         </div>
+        <button type="button" onclick="modal_add_template.close()" class="md-icon-btn" aria-label="Tutup">
+            <svg style="width:18px;height:18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
 
-        <form action="/templates/create" method="POST" class="space-y-4">
-            <div class="space-y-1.5">
-                <label class="text-xs font-semibold text-slate-300">Nama Template</label>
-                <input type="text" name="name" required placeholder="Contoh: Pengingat Santai Mahasiswa (H-1)"
-                       class="w-full px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-rose-500/50 text-xs text-white placeholder-slate-500 outline-none transition" />
+    <div class="md-dialog-body">
+        <form action="/templates/create" method="POST" class="md-col" style="gap:16px; padding-bottom:8px;">
+            <div class="md-field">
+                <div class="md-field-box">
+                    <input type="text" name="name" required placeholder=" " />
+                    <label>Nama template</label>
+                </div>
+                <span class="md-field-support">Contoh: Pengingat Santai Mahasiswa (H-1)</span>
             </div>
 
-            <div class="space-y-1.5">
-                <label class="text-xs font-semibold text-slate-300">Format Naskah Pesan</label>
-                <textarea id="new-template-content" name="content" rows="8" required
-                          class="w-full p-3.5 rounded-xl bg-[#07090e] border border-white/[0.08] focus:border-rose-500/50 font-mono text-xs text-slate-200 outline-none resize-y"></textarea>
+            <div class="md-field">
+                <div class="md-row-between" style="padding:0 4px;">
+                    <label class="md-label-large" style="color:var(--md-sys-color-on-surface);">Format naskah pesan</label>
+                </div>
+                <div class="md-field-box">
+                    <textarea id="new-template-content" name="content" rows="8" required placeholder=" " class="md-mono"
+                              style="min-height:200px; line-height:1.6;"></textarea>
+                    <label>Naskah pesan</label>
+                </div>
             </div>
 
-            <div class="pt-1">
-                <label class="cursor-pointer inline-flex items-center gap-2.5 select-none">
-                    <input type="checkbox" name="is_default" class="w-4 h-4 rounded bg-white/[0.05] border border-white/[0.1] text-rose-600 focus:ring-0 focus:ring-offset-0 transition cursor-pointer" />
-                    <span class="text-xs text-slate-300">Jadikan Sebagai Template Utama</span>
-                </label>
-            </div>
+            <label class="md-check">
+                <input type="checkbox" name="is_default" />
+                <span>Jadikan sebagai template utama</span>
+            </label>
 
-            <div class="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.06]">
-                <button type="button" onclick="modal_add_template.close()" class="px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 text-xs font-medium transition">Batal</button>
-                <button type="submit" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/30 transition">Simpan Template</button>
+            <div class="md-row md-wrap" style="justify-content:flex-end; padding-top:8px; border-top:1px solid var(--md-sys-color-outline-variant);">
+                <button type="button" onclick="modal_add_template.close()" class="md-btn-text">Batal</button>
+                <button type="submit" class="md-btn">Simpan template</button>
             </div>
         </form>
     </div>
-    <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
+
+<style>
+    /* Layout editor (7fr) + preview (5fr) ala M3, menumpuk di layar kecil */
+    .tpl-grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+    @media (max-width: 1024px) {
+        .tpl-grid { grid-template-columns: 1fr; }
+    }
+</style>
 
 <script>
 // Initial template placeholder

@@ -155,28 +155,28 @@
         if (!statusBadge) return;
 
         const state = payload.state;
-        statusBadge.className = 'badge badge-sm font-semibold gap-1.5 transition-all';
 
         if (state === 'connected') {
-            statusBadge.classList.add('badge-success');
-            if (statusText) statusText.innerText = 'WhatsApp Terhubung';
-            if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+            statusBadge.className = 'md-chip md-chip-static';
+            if (statusText) statusText.innerText = 'WhatsApp terhubung';
+            if (statusDot) statusDot.className = 'md-dot md-dot-success';
             if (qrBtn) qrBtn.classList.add('hidden');
             if (phoneText && payload.phone) phoneText.innerText = payload.phone;
         } else if (state === 'need_qr') {
-            statusBadge.classList.add('badge-warning');
-            if (statusText) statusText.innerText = 'Perlu Scan QR';
-            if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-ping';
+            statusBadge.className = 'md-chip md-chip-static md-chip-active';
+            if (statusText) statusText.innerText = 'Perlu scan QR';
+            if (statusDot) statusDot.className = 'md-dot md-dot-warning';
             if (qrBtn) qrBtn.classList.remove('hidden');
         } else if (state === 'connecting') {
-            statusBadge.classList.add('badge-warning');
+            statusBadge.className = 'md-chip md-chip-static md-chip-active';
             if (statusText) statusText.innerText = 'Menyambungkan...';
-            if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+            if (statusDot) statusDot.className = 'md-dot md-dot-warning';
             if (qrBtn) qrBtn.classList.add('hidden');
         } else {
-            statusBadge.classList.add('badge-error');
-            if (statusText) statusText.innerText = 'Terputus';
-            if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-rose-400';
+            statusBadge.className = 'md-chip md-chip-static';
+            statusBadge.style.borderColor = 'var(--md-sys-color-error)';
+            if (statusText) { statusText.innerText = 'Terputus'; statusText.style.color = 'var(--md-sys-color-error)'; }
+            if (statusDot) statusDot.className = 'md-dot md-dot-error';
             if (qrBtn) qrBtn.classList.remove('hidden');
         }
     }
@@ -222,30 +222,40 @@
         const container = document.getElementById('toast-container');
         if (!container) return;
 
-        const toast = document.createElement('div');
-        let alertClass = 'alert-info';
-        if (level === 'success') alertClass = 'alert-success';
-        if (level === 'warning') alertClass = 'alert-warning';
-        if (level === 'error') alertClass = 'alert-error';
+        const icons = {
+            success: '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--md-sys-color-inverse-primary)"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+            error: '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>',
+            warning: '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>',
+            info: '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+        };
 
-        toast.className = `alert ${alertClass} shadow-xl text-sm font-medium transition-all transform translate-y-2 opacity-0 flex items-center justify-between gap-3`;
-        toast.innerHTML = `
-            <span>${message}</span>
-            <button class="btn btn-ghost btn-xs" onclick="this.parentElement.remove()">✕</button>
-        `;
+        const snackbar = document.createElement('div');
+        snackbar.className = 'md-snackbar';
+        snackbar.innerHTML = (icons[level] || icons.info) + '<span class="md-grow">' + message + '</span>';
 
-        container.appendChild(toast);
+        container.appendChild(snackbar);
 
-        // Animate in
+        // M3 snackbar: masuk dengan emphasized easing
+        setTimeout(() => snackbar.classList.add('md-snackbar-show'), 50);
+
+        // Auto tutup setelah 4 detik
         setTimeout(() => {
-            toast.classList.remove('translate-y-2', 'opacity-0');
-        }, 50);
-
-        // Auto remove after 4 seconds
-        setTimeout(() => {
-            toast.classList.add('opacity-0', '-translate-y-2');
-            setTimeout(() => toast.remove(), 300);
+            snackbar.classList.remove('md-snackbar-show');
+            setTimeout(() => snackbar.remove(), 350);
         }, 4000);
+
+        // Maksimal 3 snackbar bertumpuk
+        while (container.children.length > 3) container.firstChild.remove();
+    };
+
+    window.openTriggerModal = function (id, matkul) {
+        const modal = document.getElementById('modal_trigger_schedule');
+        if (!modal) return;
+        const nameEl = document.getElementById('trigger-matkul-name');
+        if (nameEl) nameEl.textContent = matkul || '-';
+        const form = document.getElementById('form-trigger-schedule');
+        if (form) form.action = '/schedules/' + id + '/trigger';
+        modal.showModal();
     };
 
     window.openWhatsAppModal = function () {
@@ -264,15 +274,21 @@
         if (!btnQr || !btnPhone || !contentQr || !contentPhone) return;
 
         if (tab === 'phone') {
-            btnPhone.className = 'py-2 px-3 rounded-xl transition-all duration-200 bg-rose-600 text-white shadow-md';
-            btnQr.className = 'py-2 px-3 rounded-xl transition-all duration-200 text-slate-400 hover:text-white';
+            btnPhone.className = 'md-btn md-btn-sm';
+            btnQr.className = 'md-btn-text md-btn-sm';
+            btnQr.style.background = 'transparent';
+            btnQr.style.color = 'var(--md-sys-color-on-surface-variant)';
             contentPhone.classList.remove('hidden');
             contentQr.classList.add('hidden');
             const phoneInput = document.getElementById('wa-pairing-phone');
             if (phoneInput) setTimeout(() => phoneInput.focus(), 100);
         } else {
-            btnQr.className = 'py-2 px-3 rounded-xl transition-all duration-200 bg-rose-600 text-white shadow-md';
-            btnPhone.className = 'py-2 px-3 rounded-xl transition-all duration-200 text-slate-400 hover:text-white';
+            btnQr.className = 'md-btn md-btn-sm';
+            btnQr.style.background = '';
+            btnQr.style.color = '';
+            btnPhone.className = 'md-btn-text md-btn-sm';
+            btnPhone.style.background = 'transparent';
+            btnPhone.style.color = 'var(--md-sys-color-on-surface-variant)';
             contentQr.classList.remove('hidden');
             contentPhone.classList.add('hidden');
             loadWhatsAppQR(false);
@@ -299,9 +315,8 @@
                 } else if (data.state === 'connected') {
                     if (qrPlaceholder) {
                         qrPlaceholder.innerHTML = `
-                            <span class="text-3xl">✓</span>
-                            <span class="text-emerald-400 font-bold text-sm">WhatsApp Sudah Terhubung!</span>
-                            <span class="text-xs text-slate-400 font-mono">${data.phone || ''}</span>
+                            <span class="md-badge md-badge-success" style="font-size:14px;text-transform:none;letter-spacing:0;">WhatsApp sudah terhubung</span>
+                            <span class="md-mono md-body-small md-muted">${data.phone || ''}</span>
                         `;
                     }
                 }
@@ -723,7 +738,7 @@
                 if (loading) loading.classList.add('hidden');
                 if (list) {
                     list.classList.remove('hidden');
-                    list.innerHTML = `<div class="p-4 text-center text-xs text-rose-400">Gagal memuat data WhatsApp: ${err.message}. Pastikan WhatsApp terhubung.</div>`;
+                    list.innerHTML = `<div class="md-empty md-body-small" style="color:var(--md-sys-color-error);">Gagal memuat data WhatsApp: ${err.message}. Pastikan WhatsApp terhubung.</div>`;
                 }
             });
     };
@@ -735,28 +750,28 @@
         list.innerHTML = '';
 
         if (!items || items.length === 0) {
-            list.innerHTML = `<div class="p-4 text-center text-xs text-slate-500 italic">Tidak ada kontak atau grup yang ditemukan.</div>`;
+            list.innerHTML = `<div class="md-empty md-body-small">Tidak ada kontak atau grup yang ditemukan.</div>`;
             return;
         }
 
         items.forEach(item => {
             const row = document.createElement('div');
-            row.className = 'p-2.5 rounded-xl bg-white/[0.02] hover:bg-rose-500/10 border border-white/[0.05] hover:border-rose-500/30 cursor-pointer flex items-center justify-between transition group';
+            row.className = 'md-list-item';
             row.onclick = function () {
                 selectWAPickerItem(item);
             };
 
             row.innerHTML = `
-                <div class="flex items-center gap-2.5 min-w-0">
-                    <div class="w-8 h-8 rounded-lg ${item.isGroup ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25' : 'bg-amber-500/15 text-amber-300 border border-amber-500/25'} flex items-center justify-center font-bold text-xs shrink-0">
+                <div class="md-row md-grow md-truncate" style="gap:10px;">
+                    <div class="md-list-item-leading" style="width:32px;height:32px;font-size:12px;border-radius:var(--md-shape-sm);${item.isGroup ? 'background:var(--md-sys-color-success-container);color:var(--md-sys-color-on-success-container);' : 'background:var(--md-sys-color-tertiary-container);color:var(--md-sys-color-on-tertiary-container);'}">
                         ${item.isGroup ? '👥' : '👤'}
                     </div>
                     <div class="min-w-0">
-                        <div class="font-bold text-white text-xs truncate group-hover:text-rose-300">${escapeHtml(item.name)}</div>
-                        <div class="font-mono text-[10px] text-slate-400 truncate">${escapeHtml(item.desc)}</div>
+                        <div class="md-title-small md-truncate">${escapeHtml(item.name)}</div>
+                        <div class="md-mono md-body-small md-muted md-truncate">${escapeHtml(item.desc)}</div>
                     </div>
                 </div>
-                <button type="button" class="btn btn-xs rounded-lg bg-white/5 group-hover:bg-rose-600 text-slate-300 group-hover:text-white border-0 text-[10px]">
+                <button type="button" class="md-btn-tonal md-btn-sm" style="height:28px;padding:0 12px;font-size:11px;">
                     Pilih
                 </button>
             `;

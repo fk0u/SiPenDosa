@@ -1,6 +1,6 @@
 {{define "base"}}
 <!DOCTYPE html>
-<html lang="id" data-theme="night" class="dark">
+<html lang="id" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -28,10 +28,10 @@
     <meta name="twitter:description" content="Asisten yang rela 'berdosa' demi mengingatkan dosen agar mahasiswa tidak perlu sungkan.">
     <meta name="twitter:image" content="/static/img/og-preview.png">
 
-    <!-- PWA & Mobile Web App Capabilities -->
-    <meta name="theme-color" content="#090a0f">
+    <!-- PWA & Mobile Web App Capabilities (theme-color disinkronkan dengan skema aktif via JS) -->
+    <meta name="theme-color" content="#FFF8F7">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="SiPenDosa">
     <link rel="manifest" href="/manifest.json">
 
@@ -40,621 +40,523 @@
     <link rel="icon" type="image/png" sizes="64x64" href="/static/img/favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png">
 
-    <!-- Tailwind CSS & DaisyUI (CDN) -->
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Terapkan tema sebelum paint pertama (anti-FOUC); ikuti preferensi sistem bila belum dipilih -->
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Plus Jakarta Sans', 'system-ui', '-apple-system', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'Menlo', 'monospace'],
-                    },
-                    colors: {
-                        brand: {
-                            50: '#fff1f2',
-                            100: '#ffe4e6',
-                            200: '#fecdd3',
-                            300: '#fda4af',
-                            400: '#fb7185',
-                            500: '#f43f5e',
-                            600: '#e11d48',
-                            700: '#be123c',
-                            800: '#9f1239',
-                            900: '#881337',
-                            950: '#4c0519',
-                        },
-                        accent: {
-                            50: '#fffbeb',
-                            100: '#fef3c7',
-                            200: '#fde68a',
-                            300: '#fcd34d',
-                            400: '#fbbf24',
-                            500: '#f59e0b',
-                            600: '#d97706',
-                            700: '#b45309',
-                            800: '#92400e',
-                            900: '#78350f',
-                        }
-                    }
-                }
-            }
-        }
+        (function () {
+            var saved = localStorage.getItem('md-theme');
+            var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.dataset.theme = theme;
+        })();
     </script>
+
+    <!-- Material Design 3 Design System (self-hosted, local-first) -->
+    <link rel="stylesheet" href="/static/css/m3.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-    <!-- HTMX -->
+    <!-- HTMX (live template preview) -->
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
     <!-- SiPenDosa WebSocket & Realtime Client Script -->
     <script src="/static/js/app.js" defer></script>
-
-    <style>
-        /* High-End Micro-Styles (SiPenDosa Obsidian & Ember Theme) */
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #08090d;
-            color: #f1f5f9;
-        }
-        .bezel-card {
-            background: rgba(18, 19, 26, 0.72);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.08), 0 20px 40px -15px rgba(0, 0, 0, 0.6);
-        }
-        .bezel-outer {
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #08090d;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #27272e;
-            border-radius: 9999px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #3f3f46;
-        }
-    </style>
 </head>
-<body class="min-h-[100dvh] flex flex-col antialiased selection:bg-rose-600 selection:text-white relative overflow-x-hidden">
+<body>
 
-    <!-- Fixed Ambient Glow Orbs (Ember & Warm Gold) -->
-    <div class="fixed top-0 left-1/4 w-96 h-96 bg-rose-600/10 rounded-full blur-[140px] pointer-events-none -z-10"></div>
-    <div class="fixed bottom-10 right-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-[140px] pointer-events-none -z-10"></div>
+    <div class="md-shell">
 
-    <!-- Toast Notification Container -->
-    <div id="toast-container" class="toast toast-top toast-end z-50 p-4 space-y-2"></div>
+        <!-- ============ NAVIGATION RAIL (desktop, M3) ============ -->
+        <nav class="md-nav-rail" aria-label="Navigasi utama">
+            <a href="/" class="md-rail-fab" title="SiPenDosa — Sistem Pengingat Dosen Saatnya">SPD</a>
 
-    <div class="drawer lg:drawer-open min-h-[100dvh]">
-        <input id="main-drawer" type="checkbox" class="drawer-toggle" />
+            <a href="/" class="md-rail-item {{if eq .ActivePage "overview"}}md-rail-item-active{{end}}">
+                <span class="md-rail-pill"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg></span>
+                Beranda
+            </a>
+            <a href="/contacts" class="md-rail-item {{if eq .ActivePage "contacts"}}md-rail-item-active{{end}}">
+                <span class="md-rail-pill"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg></span>
+                Kontak
+            </a>
+            <a href="/schedules" class="md-rail-item {{if eq .ActivePage "schedules"}}md-rail-item-active{{end}}">
+                <span class="md-rail-pill"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></span>
+                Jadwal
+            </a>
+            <a href="/templates" class="md-rail-item {{if eq .ActivePage "templates"}}md-rail-item-active{{end}}">
+                <span class="md-rail-pill"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></span>
+                Template
+            </a>
+            <a href="/history" class="md-rail-item {{if eq .ActivePage "history"}}md-rail-item-active{{end}}">
+                <span class="md-rail-pill"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>
+                Riwayat
+            </a>
+            <a href="/queue" class="md-rail-item {{if eq .ActivePage "queue"}}md-rail-item-active{{end}}">
+                <span class="md-rail-pill"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg></span>
+                Antrian
+            </a>
 
-        <!-- Drawer Content (Main Application Area) -->
-        <div class="drawer-content flex flex-col bg-[#08090d]">
-            
-            <!-- Floating Modern Header Island -->
-            <header class="sticky top-0 z-30 px-4 py-3 bg-[#08090d]/85 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-between transition-all duration-300">
-                <div class="flex items-center gap-3">
-                    <label for="main-drawer" class="btn btn-square btn-ghost btn-sm lg:hidden drawer-button text-slate-300">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                    </label>
-                    <div class="hidden sm:flex flex-col">
-                        <span class="text-[10px] uppercase font-bold tracking-[0.2em] text-slate-400">Sistem Pengingat Dosen Saatnya</span>
-                        <div class="text-sm font-extrabold tracking-tight text-white flex items-center gap-2">
-                            <span>SiPenDosa</span>
-                        </div>
+            <div style="flex:1"></div>
+
+            <a href="/terminal" class="md-rail-item {{if eq .ActivePage "terminal"}}md-rail-item-active{{end}}">
+                <span class="md-rail-pill"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></span>
+                Terminal
+            </a>
+            <a href="/settings" class="md-rail-item {{if eq .ActivePage "settings"}}md-rail-item-active{{end}}">
+                <span class="md-rail-pill"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></span>
+                Pengaturan
+            </a>
+            <a href="/logs" class="md-rail-item {{if eq .ActivePage "logs"}}md-rail-item-active{{end}}">
+                <span class="md-rail-pill"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></span>
+                Log
+            </a>
+            <a href="/changelog" class="md-rail-item {{if eq .ActivePage "changelog"}}md-rail-item-active{{end}}">
+                <span class="md-rail-pill"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg></span>
+                Rilis
+            </a>
+        </nav>
+
+        <!-- ============ KONTEN UTAMA ============ -->
+        <div style="flex:1; min-width:0; display:flex; flex-direction:column;">
+
+            <!-- Top App Bar (M3) -->
+            <header id="md-topbar" class="md-topbar">
+                <button type="button" class="md-icon-btn md-only-mobile" onclick="document.getElementById('more_menu').showModal()" aria-label="Menu lainnya">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
+
+                <div class="md-row md-gap-sm" style="gap:10px;">
+                    <div class="md-center" style="width:34px;height:34px;border-radius:12px;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);flex-shrink:0;">
+                        <svg style="width:18px;height:18px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                    </div>
+                    <div>
+                        <div class="md-topbar-title">SiPenDosa</div>
+                        <div class="md-label-small" style="color:var(--md-sys-color-on-surface-variant);margin-top:-2px;">Sistem Pengingat Dosen Saatnya</div>
                     </div>
                 </div>
 
-                <!-- Right Header Actions & Live Telemetry -->
-                <div class="flex items-center gap-3">
-                    <!-- WhatsApp Live Status Pill -->
-                    <div id="wa-status-badge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/80 border border-white/10 shadow-sm transition-all duration-300">
-                        <span id="wa-status-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
-                        <span id="wa-status-text" class="text-xs font-semibold tracking-tight text-slate-300">Memeriksa...</span>
-                    </div>
+                <div class="md-right md-row" style="gap:8px;">
+                    <!-- Status WhatsApp langsung (live) -->
+                    <button id="wa-status-badge" class="md-chip md-chip-static" onclick="openWhatsAppModal()" style="cursor:pointer;" title="Klik untuk mengelola koneksi WhatsApp">
+                        <span id="wa-status-dot" class="md-dot md-dot-neutral"></span>
+                        <span id="wa-status-text" class="md-label-medium">Memeriksa...</span>
+                    </button>
 
-                    <!-- Scan QR / Pair Button (Hidden by default, shown when disconnected) -->
-                    <button id="btn-scan-qr" onclick="openWhatsAppModal()" class="btn btn-xs rounded-full bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 gap-1.5 shadow hidden font-medium transition-all duration-200">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                    <button id="btn-scan-qr" onclick="openWhatsAppModal()" class="md-btn md-btn-sm hidden" style="height:36px;padding:0 16px;">
+                        <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
                         Tautkan WA
                     </button>
 
-                    <!-- Timezone & System Clock Pill -->
-                    <div class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/5 text-[11px] font-mono text-slate-400">
-                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                        <span>WITA (UTC+8)</span>
-                    </div>
-
-                    <!-- System Update Available Indicator (Hidden until update detected) -->
-                    <button id="header-update-badge" onclick="openUpdateModal()" class="btn btn-xs rounded-full bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-bold gap-1.5 shadow-lg shadow-rose-950/40 hidden animate-pulse transition-all">
-                        <span>🚀 Update <span id="header-update-version"></span></span>
+                    <!-- Indikator update tersedia -->
+                    <button id="header-update-badge" onclick="openUpdateModal()" class="md-btn-tonal md-btn-sm hidden" style="height:36px;padding:0 16px;">
+                        Update <span id="header-update-version"></span>
                     </button>
 
-                    <!-- User Menu Dropdown -->
-                    <div class="dropdown dropdown-end">
-                        <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-sm avatar placeholder">
-                            <div class="bg-rose-600/20 text-rose-300 rounded-full w-8 border border-rose-500/30 shadow-inner">
-                                <span class="text-xs font-bold uppercase">{{if .User}}{{slice .User.Username 0 1}}{{else}}U{{end}}</span>
+                    <!-- Toggle tema terang/gelap (M3 icon button) -->
+                    <button type="button" class="md-icon-btn" onclick="toggleTheme()" aria-label="Ganti tema terang atau gelap">
+                        <svg class="md-theme-icon-sun" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                        <svg class="md-theme-icon-moon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                    </button>
+
+                    <!-- Menu pengguna (M3 menu via details) -->
+                    <details class="md-menu">
+                        <summary class="md-list-item-leading" style="width:36px;height:36px;cursor:pointer;list-style:none;" title="{{if .User}}{{.User.Username}}{{else}}Administrator{{end}}">
+                            {{if .User}}{{slice .User.Username 0 1}}{{else}}U{{end}}
+                        </summary>
+                        <div class="md-menu-sheet">
+                            <div style="padding:12px 16px 10px;border-bottom:1px solid var(--md-sys-color-outline-variant);">
+                                <div class="md-title-small">{{if .User}}{{.User.Username}}{{else}}Administrator{{end}}</div>
+                                <div class="md-label-small" style="color:var(--md-sys-color-on-surface-variant);text-transform:uppercase;">{{if .User}}{{.User.Role}}{{else}}superadmin{{end}}</div>
                             </div>
+                            <a href="/settings" class="md-list-item">Pengaturan sistem</a>
+                            <a href="/logs" class="md-list-item">Log aktivitas & audit</a>
+                            <a href="/about" class="md-list-item">Tentang & filosofi</a>
+                            <a href="/changelog" class="md-list-item md-row-between">Catatan rilis <span class="md-badge md-badge-success">v1.3.0</span></a>
+                            <hr class="md-divider">
+                            <form action="/logout" method="POST">
+                                <button type="submit" class="md-list-item" style="width:100%;border:none;background:none;font:inherit;color:var(--md-sys-color-error);cursor:pointer;text-align:left;">Keluar dari sesi</button>
+                            </form>
                         </div>
-                        <ul tabindex="0" class="mt-3 z-[50] p-2 shadow-2xl menu menu-sm dropdown-content bg-slate-900/95 backdrop-blur-2xl rounded-2xl w-56 border border-white/10 space-y-1">
-                            <li class="menu-title px-4 py-2 border-b border-white/10 mb-1">
-                                <div class="font-bold text-white text-sm">{{if .User}}{{.User.Username}}{{else}}Administrator{{end}}</div>
-                                <div class="text-[10px] uppercase font-bold tracking-wider text-amber-400">{{if .User}}{{.User.Role}}{{else}}superadmin{{end}}</div>
-                            </li>
-                            <li><a href="/settings" class="py-2 rounded-lg hover:bg-white/5">Pengaturan Sistem</a></li>
-                            <li><a href="/changelog" class="py-2 rounded-lg hover:bg-white/5 flex items-center justify-between"><span>Catatan Rilis (Changelog)</span><span class="badge badge-xs badge-success font-mono font-bold">v1.2.0</span></a></li>
-                            <li><a href="/logs" class="py-2 rounded-lg hover:bg-white/5">Log Aktivitas & Audit</a></li>
-                            <li><a href="/about" class="py-2 rounded-lg hover:bg-white/5">Tentang & Filosofi</a></li>
-                            <li class="border-t border-white/10 pt-1 mt-1">
-                                <form action="/logout" method="POST" class="p-0">
-                                    <button type="submit" class="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 w-full text-left py-2 px-3 rounded-lg font-medium">
-                                        Keluar dari Sesi
-                                    </button>
-                                </form>
-                            </li>
-                        </ul>
-                    </div>
+                    </details>
                 </div>
             </header>
 
-            <!-- Top Update Alert Bar (Dismissable) -->
-            <div id="top-update-bar" class="hidden bg-gradient-to-r from-rose-950/80 via-black to-amber-950/80 border-b border-rose-500/30 px-4 py-2.5 text-xs text-slate-200 flex items-center justify-between shadow-lg">
-                <div class="flex items-center gap-2">
-                    <span class="text-base animate-bounce">🚀</span>
-                    <span>Versi baru <strong>SiPenDosa <span id="bar-update-version"></span></strong> telah dirilis! Nikmati fitur terbaru dan perbaikan sistem.</span>
+            <!-- Bar notifikasi update (dapat ditutup) -->
+            <div id="top-update-bar" class="hidden" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;background:var(--md-sys-color-tertiary-container);color:var(--md-sys-color-on-tertiary-container);font-size:13px;">
+                <div class="md-row md-gap-sm">
+                    <svg style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    <span>Versi baru <strong>SiPenDosa <span id="bar-update-version"></span></strong> telah dirilis.</span>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="openUpdateModal()" class="btn btn-xs rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold shadow-md">Perbarui Sekarang</button>
-                    <button onclick="dismissUpdateBar()" class="btn btn-xs btn-ghost text-slate-400 hover:text-white">✕</button>
+                <div class="md-row md-gap-sm">
+                    <button onclick="openUpdateModal()" class="md-btn md-btn-sm" style="background:var(--md-sys-color-on-tertiary-container);color:var(--md-sys-color-tertiary-container);">Perbarui sekarang</button>
+                    <button onclick="dismissUpdateBar()" class="md-icon-btn" style="width:32px;height:32px;color:inherit;">✕</button>
                 </div>
             </div>
 
-            <!-- Main Page Content Body -->
-            <main class="flex-1 p-4 md:p-8 pb-28 lg:pb-8 max-w-[1400px] w-full mx-auto space-y-8">
+            <!-- Konten halaman -->
+            <main id="md-content" class="md-content" style="flex:1; padding:24px; max-width:1400px; width:100%; margin:0 auto;">
                 {{block "content" .}}{{end}}
             </main>
 
-            <!-- Refined High-End Footer -->
-            <footer class="mt-auto px-6 py-8 border-t border-white/[0.06] bg-[#050609] text-xs text-slate-400">
-                <div class="max-w-[1400px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div class="space-y-1 text-center md:text-left">
-                        <p><strong class="text-white">SiPenDosa</strong> &copy; {{.CurrentYear}} — Sistem Pengingat Dosen Saatnya.</p>
-                        <p class="text-slate-500 italic">"Rela 'berdosa' demi kepastian jadwal kuliah, agar mahasiswa tidak perlu sungkan."</p>
+            <!-- Footer -->
+            <footer style="margin-top:auto; padding:24px; border-top:1px solid var(--md-sys-color-outline-variant); background:var(--md-sys-color-surface-container-low);">
+                <div class="md-container" style="padding:0; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
+                    <div>
+                        <p class="md-body-small"><strong>SiPenDosa</strong> &copy; {{.CurrentYear}} — Sistem Pengingat Dosen Saatnya.</p>
+                        <p class="md-body-small" style="color:var(--md-sys-color-on-surface-variant);font-style:italic;">"Rela 'berdosa' demi kepastian jadwal kuliah, agar mahasiswa tidak perlu sungkan."</p>
                     </div>
-                    <div class="flex flex-wrap items-center justify-center gap-5 text-slate-400 font-medium">
-                        <a href="/about" class="hover:text-white transition-colors duration-200">Filosofi</a>
-                        <span class="text-slate-700">•</span>
-                        <a href="/changelog" class="hover:text-white transition-colors duration-200 text-rose-400 font-semibold">Catatan Rilis (v1.2.0)</a>
-                        <span class="text-slate-700">•</span>
-                        <a href="/terms" class="hover:text-white transition-colors duration-200">Ketentuan Layanan</a>
-                        <span class="text-slate-700">•</span>
-                        <a href="/privacy" class="hover:text-white transition-colors duration-200">Privasi Data</a>
-                        <span class="text-slate-700">•</span>
-                        <a href="/healthz" target="_blank" class="hover:text-white transition-colors duration-200 font-mono">API Health</a>
+                    <div class="md-row md-wrap" style="gap:16px; font-size:13px;">
+                        <a href="/about">Filosofi</a>
+                        <a href="/changelog">Catatan rilis</a>
+                        <a href="/terms">Ketentuan layanan</a>
+                        <a href="/privacy">Privasi data</a>
+                        <a href="/healthz" target="_blank" class="md-mono">API health</a>
                     </div>
                 </div>
             </footer>
         </div>
-
-        <!-- Sidebar Navigation Drawer -->
-        <div class="drawer-side z-40">
-            <label for="main-drawer" class="drawer-overlay"></label>
-            <aside class="w-64 bg-[#0d0e14] text-slate-300 min-h-[100dvh] flex flex-col border-r border-white/[0.08] shadow-2xl">
-                
-                <!-- Brand logo with Gradient Squircle (Crimson Ember & Amber Gold) -->
-                <div class="p-6 border-b border-white/[0.08] flex items-center gap-3">
-                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-rose-700 via-rose-600 to-amber-500 flex items-center justify-center shadow-lg shadow-rose-600/30 ring-1 ring-white/20">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
-                    </div>
-                    <div>
-                        <div class="font-extrabold text-white text-lg tracking-tight">SiPenDosa</div>
-                        <div class="text-[10px] font-semibold tracking-wider uppercase text-amber-400/90">Pengingat Dosen</div>
-                    </div>
-                </div>
-
-                <!-- Navigation Links with Pill Highlight -->
-                <ul class="menu p-4 flex-1 space-y-1.5 text-sm font-medium">
-                    <li>
-                        <a href="/" class="{{if eq .ActivePage "overview"}}bg-rose-600/15 text-white font-semibold border border-rose-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
-                            <svg class="w-5 h-5 {{if eq .ActivePage "overview"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                            Overview
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/contacts" class="{{if eq .ActivePage "contacts"}}bg-rose-600/15 text-white font-semibold border border-rose-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
-                            <svg class="w-5 h-5 {{if eq .ActivePage "contacts"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                            Dosen & Kontak
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/schedules" class="{{if eq .ActivePage "schedules"}}bg-rose-600/15 text-white font-semibold border border-rose-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
-                            <svg class="w-5 h-5 {{if eq .ActivePage "schedules"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            Jadwal Kuliah
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/jadwal" target="_blank" class="text-indigo-400/90 hover:text-indigo-300 hover:bg-indigo-500/10 flex items-center justify-between py-3 px-3.5 rounded-xl transition-all duration-200">
-                            <div class="flex items-center gap-3.5">
-                                <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                                <span>Portal Publik</span>
-                            </div>
-                            <span class="text-[9px] font-mono font-bold bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-500/30">Publik ↗</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/templates" class="{{if eq .ActivePage "templates"}}bg-rose-600/15 text-white font-semibold border border-rose-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
-                            <svg class="w-5 h-5 {{if eq .ActivePage "templates"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            Template Pesan
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/history" class="{{if eq .ActivePage "history"}}bg-rose-600/15 text-white font-semibold border border-rose-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
-                            <svg class="w-5 h-5 {{if eq .ActivePage "history"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            Riwayat Kirim
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/queue" class="{{if eq .ActivePage "queue"}}bg-rose-600/15 text-white font-semibold border border-rose-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
-                            <svg class="w-5 h-5 {{if eq .ActivePage "queue"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                            Antrian Pesan
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/terminal" class="{{if eq .ActivePage "terminal"}}bg-amber-500/15 text-amber-300 font-semibold border border-amber-500/30 shadow-sm{{else}}text-amber-400/80 hover:text-amber-300 hover:bg-amber-500/10{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200 font-mono text-xs">
-                            <span class="text-base">🖥️</span>
-                            Terminal Mode (Android/Termux)
-                        </a>
-                    </li>
-
-                    <li class="menu-title pt-6 px-3.5 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Administrasi</li>
-                    <li>
-                        <a href="/settings" class="{{if eq .ActivePage "settings"}}bg-rose-600/15 text-white font-semibold border border-rose-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
-                            <svg class="w-5 h-5 {{if eq .ActivePage "settings"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            Pengaturan
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/logs" class="{{if eq .ActivePage "logs"}}bg-rose-600/15 text-white font-semibold border border-rose-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center gap-3.5 py-3 px-3.5 rounded-xl transition-all duration-200">
-                            <svg class="w-5 h-5 {{if eq .ActivePage "logs"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            Log Sistem
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/changelog" class="{{if eq .ActivePage "changelog"}}bg-rose-600/15 text-white font-semibold border border-rose-500/30 shadow-sm{{else}}text-slate-400 hover:text-white hover:bg-white/[0.04]{{end}} flex items-center justify-between py-3 px-3.5 rounded-xl transition-all duration-200">
-                            <div class="flex items-center gap-3.5">
-                                <svg class="w-5 h-5 {{if eq .ActivePage "changelog"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
-                                <span>Catatan Rilis</span>
-                            </div>
-                            <span class="badge badge-xs badge-success font-mono">v1.2.0</span>
-                        </a>
-                    </li>
-                </ul>
-
-                <!-- Device Info Sidebar Bottom -->
-                <div class="p-4 mx-3 mb-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] text-xs text-slate-400 flex flex-col gap-1.5">
-                    <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400">WhatsApp Terhubung</span>
-                    <span id="wa-phone-text" class="font-mono text-emerald-400 text-xs truncate">Memuat status...</span>
-                </div>
-            </aside>
-        </div>
     </div>
 
-    <!-- WhatsApp Dual-Mode Connection Modal (QR Code & Phone Pairing Code) -->
-    <dialog id="qr_modal" class="modal">
-        <div class="modal-box bg-[#0c0e14] border border-white/10 max-w-md p-6 rounded-3xl shadow-2xl space-y-5">
-            <!-- Header & Tab Switcher -->
-            <div class="text-center space-y-3">
-                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-mono font-bold">
-                    <span>⚡ WHATSAPP DEVICE LINKING</span>
-                </div>
-                <h3 class="font-bold text-xl text-white tracking-tight">Tautkan Perangkat WhatsApp</h3>
-                <p class="text-xs text-slate-400">Pilih metode koneksi yang paling mudah bagi Anda</p>
-                
-                <!-- Tab Buttons -->
-                <div class="grid grid-cols-2 gap-1.5 p-1 bg-white/[0.04] rounded-2xl border border-white/5 text-xs font-semibold">
-                    <button type="button" id="tab-btn-qr" onclick="switchWaTab('qr')" class="py-2 px-3 rounded-xl transition-all duration-200 bg-rose-600 text-white shadow-md">
-                        📷 Scan QR Code
-                    </button>
-                    <button type="button" id="tab-btn-phone" onclick="switchWaTab('phone')" class="py-2 px-3 rounded-xl transition-all duration-200 text-slate-400 hover:text-white">
-                        🔢 Tautkan Nomor HP
-                    </button>
-                </div>
+    <!-- ============ NAVIGATION BAR (mobile, M3) ============ -->
+    <nav class="md-nav-bar" aria-label="Navigasi utama">
+        <a href="/" class="md-bar-item {{if eq .ActivePage "overview"}}md-bar-item-active{{end}}">
+            <span class="md-bar-pill"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg></span>
+            Beranda
+        </a>
+        <a href="/contacts" class="md-bar-item {{if eq .ActivePage "contacts"}}md-bar-item-active{{end}}">
+            <span class="md-bar-pill"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg></span>
+            Kontak
+        </a>
+        <a href="/schedules" class="md-bar-item {{if eq .ActivePage "schedules"}}md-bar-item-active{{end}}">
+            <span class="md-bar-pill"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></span>
+            Jadwal
+        </a>
+        <a href="/queue" class="md-bar-item {{if eq .ActivePage "queue"}}md-bar-item-active{{end}}">
+            <span class="md-bar-pill"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg></span>
+            Antrian
+        </a>
+        <button type="button" class="md-bar-item" onclick="document.getElementById('more_menu').showModal()" style="background:none;border:none;font:inherit;">
+            <span class="md-bar-pill"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg></span>
+            Lainnya
+        </button>
+    </nav>
+
+    <!-- Dialog menu lainnya (mobile & akses cepat) -->
+    <dialog id="more_menu" class="md-dialog">
+        <div class="md-dialog-header md-row-between">
+            <h3 class="md-title-large">Menu lainnya</h3>
+            <form method="dialog"><button class="md-icon-btn" aria-label="Tutup">✕</button></form>
+        </div>
+        <div class="md-dialog-body">
+            <nav class="md-list">
+                <a href="/history" class="md-list-item">Riwayat kirim</a>
+                <a href="/templates" class="md-list-item">Template pesan</a>
+                <a href="/terminal" class="md-list-item">Terminal mode (Android/Termux)</a>
+                <a href="/settings" class="md-list-item">Pengaturan</a>
+                <a href="/logs" class="md-list-item">Log sistem</a>
+                <a href="/changelog" class="md-list-item">Catatan rilis</a>
+                <hr class="md-divider">
+                <a href="/jadwal" target="_blank" class="md-list-item md-row-between">Portal jadwal publik <span class="md-badge md-badge-tertiary">Publik ↗</span></a>
+                <a href="/about" class="md-list-item">Tentang & filosofi</a>
+            </nav>
+        </div>
+        <div class="md-dialog-actions">
+            <form method="dialog"><button class="md-btn-text">Tutup</button></form>
+        </div>
+    </dialog>
+
+    <!-- Floating help FAB -->
+    <button onclick="document.getElementById('help_modal').showModal()" class="md-fab" style="position:fixed; bottom:96px; right:16px; z-index:30; height:48px; padding:0 18px; font-size:13px;" title="Pusat bantuan & dukungan">
+        <svg style="width:20px;height:20px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span class="md-hide-sm">Bantuan</span>
+    </button>
+
+    <!-- ============ MODAL: Tautkan WhatsApp (QR & nomor HP) ============ -->
+    <dialog id="qr_modal" class="md-dialog">
+        <div class="md-dialog-header md-row-between">
+            <div>
+                <span class="md-badge md-badge-primary">WhatsApp device linking</span>
+                <h3 class="md-title-large" style="margin-top:8px;">Tautkan perangkat WhatsApp</h3>
+                <p class="md-body-small" style="color:var(--md-sys-color-on-surface-variant);">Pilih metode koneksi yang paling mudah bagi Anda.</p>
             </div>
-            
-            <!-- Tab 1: QR Code Scanner -->
-            <div id="tab-content-qr" class="space-y-4">
-                <div class="flex flex-col items-center justify-center min-h-[260px] bg-[#06070a] rounded-2xl p-4 border border-white/10 shadow-inner relative">
-                    <img id="modal-qr-image" src="" alt="WhatsApp QR Code" class="rounded-xl shadow-lg max-w-[210px] hidden transition-all duration-300" />
-                    <div id="modal-qr-placeholder" class="flex flex-col items-center justify-center text-slate-400 gap-3 py-8 text-center px-4">
-                        <span class="loading loading-spinner loading-md text-amber-400"></span>
-                        <span id="modal-qr-loading-text" class="text-xs">Mengambil QR Code WhatsApp...</span>
+            <form method="dialog"><button class="md-icon-btn" aria-label="Tutup">✕</button></form>
+        </div>
+
+        <div class="md-dialog-body">
+            <!-- Segmented tabs -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:var(--md-shape-full);background:var(--md-sys-color-surface-container-highest);margin-bottom:16px;">
+                <button type="button" id="tab-btn-qr" onclick="switchWaTab('qr')" class="md-btn md-btn-sm" style="background:var(--md-sys-color-primary);">Scan QR code</button>
+                <button type="button" id="tab-btn-phone" onclick="switchWaTab('phone')" class="md-btn-text md-btn-sm" style="background:transparent;color:var(--md-sys-color-on-surface-variant);">Tautkan nomor HP</button>
+            </div>
+
+            <!-- Tab QR -->
+            <div id="tab-content-qr" class="md-col">
+                <div class="md-center" style="min-height:260px;background:var(--md-sys-color-surface-container-lowest);border-radius:var(--md-shape-lg);padding:16px;border:1px solid var(--md-sys-color-outline-variant);flex-direction:column;gap:12px;">
+                    <img id="modal-qr-image" src="" alt="WhatsApp QR Code" class="hidden" style="border-radius:var(--md-shape-md);max-width:210px;box-shadow:var(--md-elev-2);" />
+                    <div id="modal-qr-placeholder" class="md-center md-stack" style="flex-direction:column;gap:12px;color:var(--md-sys-color-on-surface-variant);text-align:center;">
+                        <span class="md-spinner"></span>
+                        <span id="modal-qr-loading-text" class="md-body-small">Mengambil QR code WhatsApp...</span>
                     </div>
                 </div>
 
-                <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-left flex items-start gap-2.5">
-                    <span class="text-amber-400 text-base">💡</span>
-                    <p class="text-[11px] text-amber-200/90 leading-relaxed">
-                        <strong>Mengakses dari ponsel ini?</strong> Jika tidak bisa scan layar sendiri, gunakan tab <strong>"Tautkan Nomor HP"</strong> di atas untuk login tanpa kamera.
-                    </p>
+                <div style="display:flex;gap:10px;padding:12px;border-radius:var(--md-shape-md);background:var(--md-sys-color-warning-container);color:var(--md-sys-color-on-warning-container);font-size:12px;line-height:1.5;">
+                    <svg style="width:18px;height:18px;flex-shrink:0;margin-top:1px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                    <p><strong>Mengakses dari ponsel ini?</strong> Jika tidak bisa memindai layar sendiri, gunakan tab <strong>"Tautkan nomor HP"</strong> untuk login tanpa kamera.</p>
                 </div>
 
-                <div class="modal-action justify-between pt-1">
-                    <button type="button" onclick="loadWhatsAppQR(true)" class="btn btn-outline btn-xs rounded-full border-white/15 hover:border-white/30 text-slate-300 gap-1.5">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                        Minta QR Baru
+                <div class="md-row-between">
+                    <button type="button" onclick="loadWhatsAppQR(true)" class="md-btn-outlined md-btn-sm">
+                        <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        Minta QR baru
                     </button>
-                    <form method="dialog">
-                        <button class="btn btn-xs btn-ghost rounded-full text-slate-400 hover:text-white">Tutup</button>
-                    </form>
+                    <form method="dialog"><button class="md-btn-text md-btn-sm">Tutup</button></form>
                 </div>
             </div>
 
-            <!-- Tab 2: Pairing Code (Phone Number) -->
-            <div id="tab-content-phone" class="space-y-4 hidden">
-                <div class="space-y-3">
-                    <div class="text-left space-y-1">
-                        <label for="wa-pairing-phone" class="block text-xs font-semibold text-slate-300">
-                            Nomor WhatsApp Pengirim
-                        </label>
-                        <div class="relative">
-                            <input type="tel" id="wa-pairing-phone" placeholder="Contoh: 08123456789 atau 628..." 
-                                class="w-full bg-[#07080c] border border-white/10 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 font-mono tracking-wide transition-all outline-none" />
+            <!-- Tab pairing nomor HP -->
+            <div id="tab-content-phone" class="md-col hidden">
+                <div class="md-stack">
+                    <div class="md-field">
+                        <div class="md-field-box">
+                            <input type="tel" id="wa-pairing-phone" placeholder=" " />
+                            <label for="wa-pairing-phone">Nomor WhatsApp pengirim</label>
                         </div>
-                        <p class="text-[11px] text-slate-500">Masukkan nomor yang aktif di aplikasi WhatsApp Anda.</p>
+                        <span class="md-field-support">Contoh: 08123456789 atau 628... — nomor yang aktif di aplikasi WhatsApp Anda.</span>
                     </div>
 
-                    <button type="button" id="btn-submit-pairing" onclick="submitWhatsAppPairing()" class="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 active:scale-[0.99] text-white font-semibold text-xs shadow-lg shadow-rose-950/50 flex items-center justify-center gap-2 transition-all">
-                        <span id="pairing-btn-text">Dapatkan Kode Pairing (8 Digit)</span>
-                        <span id="pairing-btn-spinner" class="loading loading-spinner loading-xs hidden"></span>
+                    <button type="button" id="btn-submit-pairing" onclick="submitWhatsAppPairing()" class="md-btn" style="width:100%;">
+                        <span id="pairing-btn-text">Dapatkan kode pairing (8 digit)</span>
+                        <span id="pairing-btn-spinner" class="md-spinner hidden"></span>
                     </button>
                 </div>
 
-                <!-- Result Box for Pairing Code (Hidden initially) -->
-                <div id="wa-pairing-result" class="hidden space-y-3 bg-[#06070a] border border-emerald-500/30 rounded-2xl p-4 shadow-inner">
-                    <div class="text-center space-y-1">
-                        <span class="text-[10px] font-mono font-bold tracking-widest text-emerald-400 uppercase">Kode Pairing Anda</span>
-                        <div class="flex items-center justify-center gap-3 py-1">
-                            <span id="wa-pairing-code-display" class="font-mono font-black text-2xl md:text-3xl text-amber-400 tracking-widest bg-white/[0.04] px-4 py-1.5 rounded-xl border border-white/10 select-all">
-                                ---- - ----
-                            </span>
-                            <button type="button" onclick="copyPairingCode()" class="btn btn-sm btn-circle bg-white/10 hover:bg-white/20 border-none text-slate-200" title="Salin Kode">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                <!-- Hasil kode pairing -->
+                <div id="wa-pairing-result" class="hidden md-stack" style="padding:16px;border-radius:var(--md-shape-lg);background:var(--md-sys-color-success-container);color:var(--md-sys-color-on-success-container);">
+                    <div class="md-stack md-text-center" style="align-items:center;">
+                        <span class="md-label-small" style="letter-spacing:2px;text-transform:uppercase;">Kode pairing Anda</span>
+                        <div class="md-row" style="gap:12px;">
+                            <span id="wa-pairing-code-display" class="md-mono" style="font-size:28px;font-weight:700;letter-spacing:6px;padding:4px 16px;border-radius:var(--md-shape-md);background:color-mix(in srgb, var(--md-sys-color-on-success-container) 8%, transparent);user-select:all;">---- - ----</span>
+                            <button type="button" onclick="copyPairingCode()" class="md-icon-btn" title="Salin kode">
+                                <svg style="width:18px;height:18px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Tutorial Langkah-Langkah -->
-                    <div class="bg-white/[0.02] border border-white/5 rounded-xl p-3 text-left text-[11px] text-slate-300 space-y-2">
-                        <div class="font-bold text-slate-200 flex items-center gap-1.5">
-                            <span>📲</span> Langkah di Aplikasi WhatsApp:
-                        </div>
-                        <ol class="list-decimal list-inside space-y-1 text-slate-400 text-[11px] leading-relaxed">
-                            <li>Buka WhatsApp di ponsel &gt; Ketuk <strong class="text-white">Titik Tiga (⋮)</strong></li>
-                            <li>Pilih <strong class="text-white">Perangkat Tertaut</strong> &gt; <strong class="text-white">Tautkan Perangkat</strong></li>
-                            <li>Di bagian bawah, ketuk <strong class="text-amber-300">"Tautkan dengan nomor telepon saja"</strong></li>
+                    <div class="md-stack" style="font-size:12px;padding:12px;border-radius:var(--md-shape-md);background:color-mix(in srgb, var(--md-sys-color-on-success-container) 5%, transparent);">
+                        <div class="md-title-small md-row md-gap-sm">Langkah di aplikasi WhatsApp:</div>
+                        <ol style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;">
+                            <li>Buka WhatsApp di ponsel, ketuk <strong>titik tiga (⋮)</strong></li>
+                            <li>Pilih <strong>Perangkat tertaut</strong>, lalu <strong>Tautkan perangkat</strong></li>
+                            <li>Ketuk <strong>"Tautkan dengan nomor telepon saja"</strong></li>
                             <li>Masukkan 8 digit kode yang tertera di atas</li>
                         </ol>
                     </div>
                 </div>
 
-                <div class="modal-action justify-end pt-1">
-                    <form method="dialog">
-                        <button class="btn btn-xs btn-ghost rounded-full text-slate-400 hover:text-white">Tutup</button>
-                    </form>
+                <div style="display:flex;justify-content:flex-end;">
+                    <form method="dialog"><button class="md-btn-text md-btn-sm">Tutup</button></form>
                 </div>
             </div>
         </div>
-        <form method="dialog" class="modal-backdrop"><button>close</button></form>
     </dialog>
 
-    <!-- Mobile Bottom Navigation Bar (Authentic Native Mobile App Feel) -->
-    <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#08090d]/95 backdrop-blur-2xl border-t border-white/[0.08] px-2 py-1.5 flex items-center justify-around shadow-2xl safe-area-inset-bottom">
-        <a href="/" class="flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-all duration-200 active:scale-90 {{if eq .ActivePage "overview"}}bg-rose-600/15 text-rose-400 font-bold border border-rose-500/30 shadow-md shadow-rose-950/40{{else}}text-slate-400 hover:text-slate-200{{end}}">
-            <svg class="w-5 h-5 {{if eq .ActivePage "overview"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-            <span class="text-[10px] tracking-tight mt-0.5">Home</span>
-            {{if eq .ActivePage "overview"}}<span class="w-1 h-1 rounded-full bg-rose-400 mt-0.5"></span>{{end}}
-        </a>
-        <a href="/contacts" class="flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-all duration-200 active:scale-90 {{if eq .ActivePage "contacts"}}bg-rose-600/15 text-rose-400 font-bold border border-rose-500/30 shadow-md shadow-rose-950/40{{else}}text-slate-400 hover:text-slate-200{{end}}">
-            <svg class="w-5 h-5 {{if eq .ActivePage "contacts"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-            <span class="text-[10px] tracking-tight mt-0.5">Kontak</span>
-            {{if eq .ActivePage "contacts"}}<span class="w-1 h-1 rounded-full bg-rose-400 mt-0.5"></span>{{end}}
-        </a>
-        <a href="/schedules" class="flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-all duration-200 active:scale-90 {{if eq .ActivePage "schedules"}}bg-rose-600/15 text-rose-400 font-bold border border-rose-500/30 shadow-md shadow-rose-950/40{{else}}text-slate-400 hover:text-slate-200{{end}}">
-            <svg class="w-5 h-5 {{if eq .ActivePage "schedules"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-            <span class="text-[10px] tracking-tight mt-0.5">Jadwal</span>
-            {{if eq .ActivePage "schedules"}}<span class="w-1 h-1 rounded-full bg-rose-400 mt-0.5"></span>{{end}}
-        </a>
-        <a href="/queue" class="flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-all duration-200 active:scale-90 {{if eq .ActivePage "queue"}}bg-rose-600/15 text-rose-400 font-bold border border-rose-500/30 shadow-md shadow-rose-950/40{{else}}text-slate-400 hover:text-slate-200{{end}}">
-            <svg class="w-5 h-5 {{if eq .ActivePage "queue"}}text-rose-400{{end}}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-            <span class="text-[10px] tracking-tight mt-0.5">Antrian</span>
-            {{if eq .ActivePage "queue"}}<span class="w-1 h-1 rounded-full bg-rose-400 mt-0.5"></span>{{end}}
-        </a>
-        <label for="main-drawer" class="flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl cursor-pointer text-slate-400 hover:text-slate-200 active:scale-90 transition-all duration-200">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-            <span class="text-[10px] tracking-tight mt-0.5">Menu</span>
-        </label>
-    </nav>
+    <!-- ============ MODAL: Bantuan & diagnostik ============ -->
+    <dialog id="help_modal" class="md-dialog">
+        <div class="md-dialog-header md-row-between">
+            <div class="md-row" style="gap:12px;">
+                <div class="md-center" style="width:38px;height:38px;border-radius:var(--md-shape-md);background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);">
+                    <svg style="width:20px;height:20px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                </div>
+                <div>
+                    <h3 class="md-title-medium">Pusat bantuan & dukungan</h3>
+                    <p class="md-body-small" style="color:var(--md-sys-color-on-surface-variant);">SiPenDosa — Autonomous Academic Assistant</p>
+                </div>
+            </div>
+            <form method="dialog"><button class="md-icon-btn" aria-label="Tutup">✕</button></form>
+        </div>
 
-    <!-- Floating Quick Help Button (Offset from bottom nav on mobile) -->
-    <button onclick="document.getElementById('help_modal').showModal()" class="fixed bottom-20 lg:bottom-6 right-4 lg:right-6 z-30 flex items-center gap-2 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white text-xs font-semibold py-2 px-3.5 rounded-full shadow-xl shadow-rose-950/40 hover:shadow-rose-900/60 hover:scale-105 active:scale-95 transition-all duration-200 border border-white/20 backdrop-blur-md" title="Pusat Bantuan & Kontak Dukungan">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        <span class="hidden sm:inline">Bantuan</span>
-    </button>
+        <div class="md-dialog-body md-stack">
+            <div class="md-stack">
+                <span class="md-label-small" style="color:var(--md-sys-color-tertiary);text-transform:uppercase;">Hubungi langsung</span>
+                <div class="md-grid-2">
+                    <a href="https://wa.me/?text=Halo%20Admin%20SiPenDosa,%20saya%20butuh%20bantuan%20terkait%20jadwal%20dan%20pengingat." target="_blank" rel="noopener noreferrer" class="md-card-outlined md-row" style="padding:12px;text-decoration:none;">
+                        <span style="font-size:18px;">📱</span>
+                        <div class="md-stack" style="gap:0;">
+                            <span class="md-title-small">Chat WhatsApp</span>
+                            <span class="md-body-small" style="color:var(--md-sys-color-on-surface-variant);">Respon cepat</span>
+                        </div>
+                    </a>
+                    <a href="https://t.me/" target="_blank" rel="noopener noreferrer" class="md-card-outlined md-row" style="padding:12px;text-decoration:none;">
+                        <span style="font-size:18px;">💬</span>
+                        <div class="md-stack" style="gap:0;">
+                            <span class="md-title-small">Grup Telegram</span>
+                            <span class="md-body-small" style="color:var(--md-sys-color-on-surface-variant);">Diskusi & update</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
 
-    <!-- Help & Support Diagnostic Modal -->
-    <dialog id="help_modal" class="modal">
-        <div class="modal-box bg-[#0c0d14] border border-white/10 max-w-md p-6 rounded-3xl shadow-2xl space-y-5">
-            <div class="flex items-center justify-between pb-3 border-b border-white/10">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-500 to-amber-500 flex items-center justify-center text-white shadow-md">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-base text-white">Pusat Bantuan & Dukungan</h3>
-                        <p class="text-[11px] text-slate-400">SiPenDosa — Autonomous Academic Assistant</p>
-                    </div>
+            <div class="md-stack">
+                <div class="md-row-between">
+                    <span class="md-label-small" style="color:var(--md-sys-color-on-surface-variant);text-transform:uppercase;">Diagnostik sistem</span>
+                    <button onclick="copyDiagnostics()" class="md-btn-text md-btn-sm" style="height:auto;padding:2px 8px;">Salin data</button>
+                </div>
+                <div class="md-code" id="diagnostic-box">
+                    <div>APP_NAME : SiPenDosa (Academic Assistant)</div>
+                    <div>VERSION  : 1.3.0 (Official Release / Multi-Platform)</div>
+                    <div>CLIENT   : <span id="diag-url"></span></div>
+                    <div>STATUS   : Active & Listening on Port 8473</div>
+                </div>
+            </div>
+
+            <div class="md-row md-wrap" style="justify-content:space-between;font-size:12px;border-top:1px solid var(--md-sys-color-outline-variant);padding-top:12px;">
+                <a href="/about">Tentang & filosofi</a>
+                <a href="/terms">Ketentuan layanan</a>
+                <a href="/privacy">Kebijakan privasi</a>
+            </div>
+        </div>
+
+        <div class="md-dialog-actions" style="width:100%;">
+            <form method="dialog" style="width:100%;"><button class="md-btn-outlined" style="width:100%;">Tutup</button></form>
+        </div>
+    </dialog>
+
+    <!-- ============ MODAL: Pembaruan sistem ============ -->
+    <dialog id="update_modal" class="md-dialog" style="width:min(92vw, 512px);">
+        <div class="md-dialog-header md-row-between">
+            <div class="md-row" style="gap:12px;">
+                <div class="md-center" style="width:38px;height:38px;border-radius:var(--md-shape-md);background:var(--md-sys-color-tertiary-container);color:var(--md-sys-color-on-tertiary-container);">
+                    <svg style="width:20px;height:20px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                </div>
+                <div>
+                    <h3 class="md-title-medium">Pembaruan sistem SiPenDosa</h3>
+                    <p class="md-body-small md-mono" style="color:var(--md-sys-color-tertiary);font-weight:600;" id="modal-update-badge">Versi baru resmi tersedia</p>
+                </div>
+            </div>
+            <form method="dialog"><button class="md-icon-btn" aria-label="Tutup">✕</button></form>
+        </div>
+
+        <div class="md-dialog-body md-stack">
+            <div class="md-row-between md-card-filled" style="padding:14px 16px;">
+                <div class="md-col" style="gap:0;">
+                    <span class="md-label-small" style="color:var(--md-sys-color-on-surface-variant);text-transform:uppercase;">Versi saat ini</span>
+                    <span id="modal-current-version" class="md-mono md-title-medium">v1.1.0</span>
+                </div>
+                <div style="color:var(--md-sys-color-tertiary);font-weight:700;">→</div>
+                <div class="md-col" style="gap:0;align-items:flex-end;">
+                    <span class="md-label-small" style="color:var(--md-sys-color-success);text-transform:uppercase;">Versi terbaru</span>
+                    <span id="modal-latest-version" class="md-mono md-title-medium" style="color:var(--md-sys-color-success);">v1.x.x</span>
+                </div>
+            </div>
+
+            <div class="md-stack">
+                <span class="md-label-small" style="color:var(--md-sys-color-on-surface-variant);text-transform:uppercase;">Catatan rilis resmi</span>
+                <div class="md-code" id="modal-release-notes" style="max-height:180px;overflow-y:auto;white-space:pre-wrap;">
+                    Memeriksa rilis terbaru...
+                </div>
+            </div>
+
+            <div id="update-progress-container" class="hidden md-stack" style="padding:12px;border-radius:var(--md-shape-md);background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);">
+                <div class="md-row-between md-label-medium">
+                    <span id="update-progress-text">Mengunduh pembaruan...</span>
+                    <span id="update-progress-percent" class="md-mono">0%</span>
+                </div>
+                <div class="md-progress"><div id="update-progress-bar" class="md-progress-bar" style="width:0%;"></div></div>
+            </div>
+        </div>
+
+        <div class="md-dialog-actions" style="flex-direction:column;align-items:stretch;">
+            <button type="button" id="btn-do-update" onclick="executeAutomaticUpdate()" class="md-btn" style="width:100%;">
+                <span id="btn-update-label">Perbarui sekarang (instal otomatis)</span>
+            </button>
+            <div class="md-row-between" style="margin-top:4px;">
+                <div class="md-row md-gap-sm">
+                    <a id="link-github-release" href="https://github.com/fk0u/SiPenDosa/releases" target="_blank" rel="noopener noreferrer" class="md-btn-text md-btn-sm">GitHub ↗</a>
+                    <a href="/changelog" class="md-btn-text md-btn-sm">Riwayat changelog</a>
                 </div>
                 <form method="dialog">
-                    <button class="btn btn-sm btn-circle btn-ghost text-slate-400 hover:text-white">✕</button>
-                </form>
-            </div>
-
-            <div class="space-y-4 text-xs text-slate-300">
-                <!-- Kontak Pengembang / Helpdesk -->
-                <div class="space-y-2">
-                    <span class="text-[10px] uppercase font-bold tracking-wider text-amber-400">Hubungi Langsung</span>
-                    <div class="grid grid-cols-2 gap-2">
-                        <a href="https://wa.me/?text=Halo%20Admin%20SiPenDosa,%20saya%20butuh%20bantuan%20terkait%20jadwal%20dan%20pengingat." target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-950/30 hover:bg-emerald-900/40 border border-emerald-500/30 text-emerald-300 hover:text-white transition-all">
-                            <span class="text-base">📱</span>
-                            <div class="flex flex-col">
-                                <span class="font-semibold text-[11px]">Chat WhatsApp</span>
-                                <span class="text-[9px] text-emerald-400/70">Respon Cepat</span>
-                            </div>
-                        </a>
-                        <a href="https://t.me/" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 p-2.5 rounded-xl bg-rose-950/30 hover:bg-rose-900/40 border border-rose-500/30 text-rose-300 hover:text-white transition-all">
-                            <span class="text-base">💬</span>
-                            <div class="flex flex-col">
-                                <span class="font-semibold text-[11px]">Grup Telegram</span>
-                                <span class="text-[9px] text-rose-400/70">Diskusi & Update</span>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Ringkasan Diagnostik Sistem -->
-                <div class="space-y-2">
-                    <div class="flex items-center justify-between">
-                        <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Diagnostik Sistem</span>
-                        <button onclick="copyDiagnostics()" class="text-[10px] text-amber-400 hover:text-amber-300 underline cursor-pointer">Salin Data Diagnostik</button>
-                    </div>
-                    <div class="p-3 rounded-xl bg-black/40 border border-white/5 font-mono text-[10px] space-y-1 text-slate-400" id="diagnostic-box">
-                        <div>APP_NAME : SiPenDosa (Academic Assistant)</div>
-                        <div>VERSION  : 1.1.0 (Official Release / Multi-Platform)</div>
-                        <div>CLIENT   : <span id="diag-url"></span></div>
-                        <div>STATUS   : Active & Listening on Port 8473</div>
-                    </div>
-                </div>
-
-                <!-- Tautan Tambahan -->
-                <div class="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400">
-                    <a href="/about" class="hover:text-rose-400 transition-colors">Tentang & Filosofi</a>
-                    <span>•</span>
-                    <a href="/terms" class="hover:text-rose-400 transition-colors">Ketentuan Layanan</a>
-                    <span>•</span>
-                    <a href="/privacy" class="hover:text-rose-400 transition-colors">Kebijakan Privasi</a>
-                </div>
-            </div>
-
-            <div class="modal-action pt-1">
-                <form method="dialog" class="w-full">
-                    <button class="btn btn-sm btn-outline w-full rounded-full border-white/10 text-slate-300 hover:bg-white/5">Tutup</button>
+                    <button onclick="dismissUpdateModalSession()" class="md-btn-text md-btn-sm">Nanti saja</button>
                 </form>
             </div>
         </div>
-        <form method="dialog" class="modal-backdrop"><button>close</button></form>
     </dialog>
 
-    <!-- System Automatic Update Modal -->
-    <dialog id="update_modal" class="modal">
-        <div class="modal-box bg-[#0c0e14] border border-white/10 max-w-lg p-6 rounded-3xl shadow-2xl space-y-5">
-            <div class="flex items-center justify-between pb-3 border-b border-white/10">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-rose-600 via-rose-500 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-rose-600/30">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-base text-white">Pembaruan Sistem SiPenDosa</h3>
-                        <p class="text-[11px] text-amber-400 font-mono font-semibold" id="modal-update-badge">Versi Baru Resmi Tersedia</p>
-                    </div>
-                </div>
-                <form method="dialog">
-                    <button class="btn btn-sm btn-circle btn-ghost text-slate-400 hover:text-white">✕</button>
-                </form>
-            </div>
+    <!-- Snackbar host -->
+    <div id="toast-container" class="md-snackbar-container" aria-live="polite"></div>
 
-            <div class="space-y-4 text-xs text-slate-300">
-                <!-- Version Comparison Card -->
-                <div class="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] border border-white/5">
-                    <div class="flex flex-col">
-                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Versi Saat Ini</span>
-                        <span id="modal-current-version" class="font-mono font-bold text-slate-300 text-sm">v1.1.0</span>
-                    </div>
-                    <div class="text-amber-400 font-bold text-lg">➔</div>
-                    <div class="flex flex-col items-end">
-                        <span class="text-[10px] text-emerald-400 uppercase font-semibold">Versi Terbaru</span>
-                        <span id="modal-latest-version" class="font-mono font-bold text-emerald-400 text-sm">v1.x.x</span>
-                    </div>
-                </div>
+    <style>
+        /* Header-specific: ikon tema & menu pengguna */
+        .md-theme-icon-moon { display: none; }
+        [data-theme="dark"] .md-theme-icon-sun { display: none; }
+        [data-theme="dark"] .md-theme-icon-moon { display: block; }
 
-                <!-- Release Title & Notes -->
-                <div class="space-y-1.5 text-left">
-                    <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Catatan Rilis Resmi</span>
-                    <div class="p-3.5 rounded-2xl bg-[#06070a] border border-white/10 max-h-48 overflow-y-auto font-mono text-[11px] text-slate-300 whitespace-pre-wrap leading-relaxed shadow-inner" id="modal-release-notes">
-                        Memeriksa rilis terbaru...
-                    </div>
-                </div>
+        details.md-menu { position: relative; }
+        details.md-menu summary::-webkit-details-marker { display: none; }
+        .md-menu-sheet {
+            position: absolute; right: 0; top: calc(100% + 8px); z-index: 50;
+            min-width: 224px;
+            background: var(--md-sys-color-surface-container-high);
+            border-radius: var(--md-shape-md);
+            box-shadow: var(--md-elev-2);
+            padding: 8px;
+            display: flex; flex-direction: column;
+        }
+        .md-menu-sheet .md-list-item { padding: 10px 12px; border-radius: var(--md-shape-sm); font-size: 14px; }
 
-                <!-- Update Progress Indicator (Hidden until update starts) -->
-                <div id="update-progress-container" class="hidden space-y-2 p-3 rounded-2xl bg-rose-950/20 border border-rose-500/30 text-left">
-                    <div class="flex items-center justify-between text-xs font-semibold">
-                        <span id="update-progress-text" class="text-amber-400">Mengunduh pembaruan...</span>
-                        <span id="update-progress-percent" class="font-mono text-white">0%</span>
-                    </div>
-                    <progress id="update-progress-bar" class="progress progress-error w-full" value="0" max="100"></progress>
-                </div>
-            </div>
+        .md-spinner {
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            border: 2.5px solid var(--md-sys-color-primary-container);
+            border-top-color: var(--md-sys-color-primary);
+            animation: mdSpin 0.8s linear infinite;
+            display: inline-block;
+        }
+        @keyframes mdSpin { to { transform: rotate(360deg); } }
 
-            <!-- Modal Action Buttons -->
-            <div class="space-y-2 pt-2 border-t border-white/10">
-                <button type="button" id="btn-do-update" onclick="executeAutomaticUpdate()" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-rose-600 via-rose-500 to-amber-600 hover:from-rose-500 hover:to-amber-500 active:scale-[0.99] text-white font-bold text-xs shadow-xl shadow-rose-950/50 flex items-center justify-center gap-2 transition-all">
-                    <span class="text-base">⚡</span>
-                    <span id="btn-update-label">Perbarui Sekarang (Instal Otomatis)</span>
-                </button>
+        /* Bayangan topbar saat halaman digulir (M3 elevation on scroll) */
+        .md-topbar-scrolled { box-shadow: var(--md-elev-2); }
 
-                <div class="flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-1">
-                        <a id="link-github-release" href="https://github.com/fk0u/SiPenDosa/releases" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-ghost text-slate-400 hover:text-white font-medium">
-                            GitHub ↗
-                        </a>
-                        <a href="/changelog" class="btn btn-xs btn-ghost text-rose-400 hover:text-white font-medium">
-                            Riwayat Changelog 📋
-                        </a>
-                    </div>
-                    <form method="dialog">
-                        <button onclick="dismissUpdateModalSession()" class="btn btn-xs btn-ghost text-slate-400 hover:text-white">
-                            Nanti Saja
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-        <form method="dialog" class="modal-backdrop"><button>close</button></form>
-    </dialog>
+        .md-only-mobile { display: inline-flex !important; }
+        @media (min-width: 901px) {
+            .md-only-mobile { display: none !important; }
+        }
+        @media (max-width: 720px) {
+            .md-hide-sm { display: none !important; }
+        }
+        @media (max-width: 720px) {
+            .md-content { padding: 16px 16px 32px !important; }
+        }
+    </style>
 
     <script>
         function copyDiagnostics() {
-            const diagText = document.getElementById('diagnostic-box').innerText;
-            navigator.clipboard.writeText(diagText).then(() => {
-                alert('✓ Data diagnostik berhasil disalin ke clipboard!');
-            }).catch(() => {
+            var diagText = document.getElementById('diagnostic-box').innerText;
+            navigator.clipboard.writeText(diagText).then(function () {
+                if (window.showToast) showToast('success', 'Data diagnostik berhasil disalin ke clipboard.');
+            }).catch(function () {
                 prompt('Salin data diagnostik berikut:', diagText);
             });
         }
-        document.addEventListener('DOMContentLoaded', () => {
-            const diagUrl = document.getElementById('diag-url');
+
+        function toggleTheme() {
+            var root = document.documentElement;
+            var next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+            root.dataset.theme = next;
+            localStorage.setItem('md-theme', next);
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', next === 'dark' ? '#1A1112' : '#FFF8F7');
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var diagUrl = document.getElementById('diag-url');
             if (diagUrl) diagUrl.innerText = window.location.origin;
+
+            // Elevation topbar saat scroll (M3: elevated app bar on scroll)
+            var topbar = document.getElementById('md-topbar');
+            window.addEventListener('scroll', function () {
+                if (topbar) topbar.classList.toggle('md-topbar-scrolled', window.scrollY > 4);
+            }, { passive: true });
+
+            // Sinkronkan theme-color meta dengan skema awal
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', document.documentElement.dataset.theme === 'dark' ? '#1A1112' : '#FFF8F7');
         });
     </script>
 

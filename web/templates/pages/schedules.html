@@ -1,324 +1,360 @@
 {{define "content"}}
-<div class="space-y-6">
+<div class="md-col md-enter" style="gap:24px;">
 
     <!-- Header Section -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div class="space-y-1">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/25 text-[10px] uppercase tracking-[0.2em] font-semibold text-rose-400">
-                Otomasi Jadwal
-            </div>
-            <h2 class="text-2xl font-black text-white tracking-tight">Jadwal Kuliah & Pengingat</h2>
-            <p class="text-xs text-slate-400">Atur jadwal perkuliahan mingguan, mode H-1, template pesan, dan penerima notifikasi otomatis.</p>
+    <div class="md-row-between md-wrap" style="align-items:flex-start; gap:16px;">
+        <div class="md-col" style="gap:4px; max-width:640px;">
+            <span class="md-badge md-badge-primary" style="align-self:flex-start;">Otomasi jadwal</span>
+            <h2 class="md-headline-small md-balance" style="margin-top:8px;">Jadwal kuliah &amp; pengingat</h2>
+            <p class="md-body-small md-muted md-balance">Atur jadwal perkuliahan mingguan, mode H-1, template pesan, dan penerima notifikasi otomatis.</p>
         </div>
-        <div class="flex items-center gap-2 self-start sm:self-auto">
-            <a href="/jadwal" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 font-semibold text-xs transition">
-                <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                <span>Lihat Portal Publik ↗</span>
+        <div class="md-row md-wrap">
+            <a href="/jadwal" target="_blank" class="md-btn-outlined md-btn-sm">
+                <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                Portal publik ↗
             </a>
-            <button onclick="modal_add_schedule.showModal()" class="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs shadow-lg shadow-rose-600/25 transition-all duration-200 active:scale-[0.98]">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                <span>Tambah Jadwal Baru</span>
+            <button onclick="modal_add_schedule.showModal()" class="md-btn">
+                <svg style="width:18px;height:18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Tambah jadwal baru
             </button>
         </div>
     </div>
 
-    <!-- Schedules Table (Double-Bezel) -->
-    <div class="rounded-[2rem] p-1 bezel-outer">
-        <div class="bezel-card rounded-[calc(2rem-0.25rem)] overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="table table-sm md:table-md w-full">
-                    <thead>
-                        <tr class="text-[11px] uppercase tracking-wider font-bold text-slate-500 border-b border-white/[0.06] bg-black/20">
-                            <th class="py-3.5 px-4">Mata Kuliah & Sesi</th>
-                            <th class="py-3.5 px-4">Waktu Perkuliahan</th>
-                            <th class="py-3.5 px-4">Dosen Pengampu</th>
-                            <th class="py-3.5 px-4">Target Penerima</th>
-                            <th class="py-3.5 px-4">Mode Kirim</th>
-                            <th class="py-3.5 px-4 text-center">Status</th>
-                            <th class="py-3.5 px-4 text-right">Tindakan</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-white/[0.04]">
-                        {{if .Data.Schedules}}
-                        {{range .Data.Schedules}}
-                        <tr class="hover:bg-white/[0.02] transition-colors duration-150">
-                            <td class="py-3.5 px-4">
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold text-white text-sm tracking-tight">{{.Matkul}}</span>
-                                    {{if .IsPublic}}
-                                    <span class="px-1.5 py-0.2 rounded text-[9px] font-mono uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Publik</span>
-                                    {{end}}
-                                </div>
-                                <div class="text-[11px] text-slate-400">{{.Title}}</div>
-                                {{if .Location}}<div class="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5"><span>📍</span> {{.Location}}</div>{{end}}
-                            </td>
-                            <td class="py-3.5 px-4 whitespace-nowrap">
-                                <div class="font-bold text-rose-300 text-xs">{{dayName .DayOfWeek}}</div>
-                                <div class="text-xs font-mono text-slate-400">{{.StartTime}} - {{.EndTime}} WITA</div>
-                            </td>
-                            <td class="py-3.5 px-4 text-xs font-medium text-slate-200 whitespace-nowrap">
-                                {{if .DosenName}}{{.DosenName}}{{else}}<span class="text-slate-600 italic">-</span>{{end}}
-                            </td>
-                            <td class="py-3.5 px-4 text-xs whitespace-nowrap">
-                                <div class="font-semibold text-white">{{if .RecipientName}}{{.RecipientName}}{{else}}Sesuai Nomor{{end}}</div>
-                                {{if .TargetPhone}}<div class="font-mono text-[11px] text-rose-400">{{.TargetPhone}}</div>{{end}}
-                            </td>
-                            <td class="py-3.5 px-4 whitespace-nowrap">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-white/5 border border-white/10 text-slate-300">{{.Mode}}</span>
-                                <div class="text-[11px] text-slate-400 mt-1 font-mono">Pukul {{.SendAtTime}} WITA</div>
-                            </td>
-                            <td class="py-3.5 px-4 text-center whitespace-nowrap">
-                                <div class="flex flex-col gap-1 items-center justify-center">
-                                    <form action="/schedules/{{.ID}}/toggle" method="POST">
-                                        <button type="submit" class="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider transition-all duration-150 {{if .IsActive}}bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25{{else}}bg-slate-800 text-slate-400 border border-white/5 hover:bg-slate-700{{end}}">
-                                            {{if .IsActive}}AKTIF{{else}}NONAKTIF{{end}}
-                                        </button>
-                                    </form>
-                                    {{if .DryRun}}
-                                    <span class="px-2 py-0.2 rounded text-[9px] font-mono uppercase bg-amber-500/15 text-amber-300 border border-amber-500/25">Dry-Run</span>
-                                    {{end}}
-                                </div>
-                            </td>
-                            <td class="py-3.5 px-4 text-right whitespace-nowrap space-x-1">
-                                <button onclick="openTriggerModal('{{.ID}}', '{{.Matkul}}')" class="btn btn-xs rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20" title="Picu pesan jadwal sekarang">
-                                    Picu Cepat
+    <!-- Schedules Table -->
+    <section class="md-card-outlined" style="padding:0; overflow:hidden;">
+        <div class="md-table-wrap">
+            <table class="md-table">
+                <thead>
+                    <tr>
+                        <th>Mata kuliah &amp; sesi</th>
+                        <th>Waktu perkuliahan</th>
+                        <th>Dosen pengampu</th>
+                        <th>Target penerima</th>
+                        <th>Mode kirim</th>
+                        <th style="text-align:center;">Status</th>
+                        <th style="text-align:right;">Tindakan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{if .Data.Schedules}}
+                    {{range .Data.Schedules}}
+                    <tr>
+                        <td>
+                            <div class="md-row md-gap-sm">
+                                <span class="md-title-small">{{.Matkul}}</span>
+                                {{if .IsPublic}}
+                                <span class="md-badge md-badge-tertiary">Publik</span>
+                                {{end}}
+                            </div>
+                            <div class="md-body-small md-muted">{{.Title}}</div>
+                            {{if .Location}}<div class="md-label-small md-muted" style="margin-top:2px;">📍 {{.Location}}</div>{{end}}
+                        </td>
+                        <td style="white-space:nowrap;">
+                            <div class="md-label-large" style="color:var(--md-sys-color-primary);">{{dayName .DayOfWeek}}</div>
+                            <div class="md-body-small md-muted md-mono">{{.StartTime}} - {{.EndTime}} WITA</div>
+                        </td>
+                        <td class="md-body-medium" style="white-space:nowrap;">
+                            {{if .DosenName}}{{.DosenName}}{{else}}<span class="md-muted" style="font-style:italic;">-</span>{{end}}
+                        </td>
+                        <td style="white-space:nowrap;">
+                            <div class="md-title-small">{{if .RecipientName}}{{.RecipientName}}{{else}}Sesuai nomor{{end}}</div>
+                            {{if .TargetPhone}}<div class="md-mono md-body-small" style="color:var(--md-sys-color-primary);">{{.TargetPhone}}</div>{{end}}
+                        </td>
+                        <td style="white-space:nowrap;">
+                            <span class="md-badge md-badge-neutral md-mono">{{.Mode}}</span>
+                            <div class="md-label-small md-muted md-mono" style="margin-top:4px;">Pukul {{.SendAtTime}} WITA</div>
+                        </td>
+                        <td style="text-align:center; white-space:nowrap;">
+                            <div class="md-stack md-text-center" style="align-items:center; gap:6px;">
+                                <form action="/schedules/{{.ID}}/toggle" method="POST">
+                                    <button type="submit" class="md-chip {{if .IsActive}}md-chip-active{{end}}" title="Aktifkan / nonaktifkan jadwal">
+                                        {{if .IsActive}}AKTIF{{else}}NONAKTIF{{end}}
+                                    </button>
+                                </form>
+                                {{if .DryRun}}
+                                <span class="md-badge md-badge-warning">Dry-run</span>
+                                {{end}}
+                            </div>
+                        </td>
+                        <td style="text-align:right; white-space:nowrap;">
+                            <div class="md-row md-gap-sm" style="justify-content:flex-end;">
+                                <button onclick="openTriggerModal('{{.ID}}', '{{.Matkul}}')" class="md-btn-text md-btn-sm" style="color:var(--md-sys-color-tertiary);" title="Picu pesan jadwal sekarang">
+                                    Picu cepat
                                 </button>
                                 <form action="/schedules/{{.ID}}/delete" method="POST" onsubmit="return confirm('Hapus jadwal kuliah ini?')" class="inline">
-                                    <button type="submit" class="btn btn-xs btn-ghost text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg">
+                                    <button type="submit" class="md-btn-text md-btn-sm" style="color:var(--md-sys-color-error);">
                                         Hapus
                                     </button>
                                 </form>
-                            </td>
-                        </tr>
-                        {{end}}
-                        {{else}}
-                        <tr>
-                            <td colspan="7" class="text-center py-12 text-xs text-slate-500 italic">
-                                Belum ada jadwal kuliah yang terdaftar. Klik "Tambah Jadwal Baru" untuk memulai penjadwalan.
-                            </td>
-                        </tr>
-                        {{end}}
-                    </tbody>
-                </table>
-            </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {{end}}
+                    {{else}}
+                    <tr>
+                        <td colspan="7" style="padding:0;">
+                            <div class="md-empty md-body-small">
+                                <svg fill="none" stroke="currentColor" stroke-width="1.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                Belum ada jadwal kuliah yang terdaftar. Klik "Tambah jadwal baru" untuk memulai penjadwalan.
+                            </div>
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
         </div>
-    </div>
+    </section>
 
 </div>
 
 <!-- Modal Tambah Jadwal -->
-<dialog id="modal_add_schedule" class="modal">
-    <div class="modal-box bg-slate-950 border border-white/10 max-w-xl p-6 md:p-8 rounded-3xl shadow-2xl space-y-4">
-        <div class="space-y-1">
-            <h3 class="font-bold text-lg text-white">Tambah Jadwal Perkuliahan</h3>
-            <p class="text-xs text-slate-400">Konfigurasi jadwal mata kuliah dan pengingat otomatis</p>
+<dialog id="modal_add_schedule" class="md-dialog" style="width:min(92vw, 640px);">
+    <div class="md-dialog-header md-row-between">
+        <div>
+            <h3 class="md-title-large">Tambah jadwal perkuliahan</h3>
+            <p class="md-body-small" style="color:var(--md-sys-color-on-surface-variant);">Konfigurasi jadwal mata kuliah dan pengingat otomatis</p>
         </div>
+        <form method="dialog"><button class="md-icon-btn" aria-label="Tutup">✕</button></form>
+    </div>
 
-        <form action="/schedules/create" method="POST" class="space-y-3.5 text-xs">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div class="space-y-1">
-                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Nama Mata Kuliah</label>
-                    <input type="text" name="matkul" required placeholder="Contoh: Pemrograman Web Lanjut"
-                           class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white text-xs" />
+    <div class="md-dialog-body">
+        <form action="/schedules/create" method="POST" class="md-col" style="gap:16px; padding-bottom:8px;">
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">
+                <div class="md-field">
+                    <div class="md-field-box">
+                        <input type="text" name="matkul" required placeholder=" " />
+                        <label>Nama mata kuliah</label>
+                    </div>
+                    <span class="md-field-support">Contoh: Pemrograman Web Lanjut</span>
                 </div>
-                <div class="space-y-1">
-                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Judul Kelas / Sesi</label>
-                    <input type="text" name="title" required placeholder="Contoh: Kelas A (Reguler)"
-                           class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white text-xs" />
+                <div class="md-field">
+                    <div class="md-field-box">
+                        <input type="text" name="title" required placeholder=" " />
+                        <label>Judul kelas / sesi</label>
+                    </div>
+                    <span class="md-field-support">Contoh: Kelas A (Reguler)</span>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div class="space-y-1">
-                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Dosen Pengampu</label>
-                    <select name="dosen_id" class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white text-xs">
-                        <option value="">-- Pilih Dosen Pengampu --</option>
-                        {{range .Data.Contacts}}
-                        {{if eq .ContactType "dosen"}}
-                        <option value="{{.ID}}">{{.Name}}</option>
-                        {{end}}
-                        {{end}}
-                    </select>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">
+                <div class="md-field">
+                    <div class="md-field-box">
+                        <select name="dosen_id">
+                            <option value="">-- Pilih Dosen Pengampu --</option>
+                            {{range .Data.Contacts}}
+                            {{if eq .ContactType "dosen"}}
+                            <option value="{{.ID}}">{{.Name}}</option>
+                            {{end}}
+                            {{end}}
+                        </select>
+                        <label>Dosen pengampu</label>
+                    </div>
                 </div>
 
-                <div class="space-y-1">
-                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Target Kontak Penerima</label>
-                    <select id="schedule-recipient-select" name="recipient_id" class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white text-xs">
-                        <option value="">-- Pilih Penerima Tersimpan --</option>
-                        {{range .Data.Contacts}}
-                        <option value="{{.ID}}">{{.Name}} ({{.ContactType}} - {{.Phone}})</option>
-                        {{end}}
-                    </select>
+                <div class="md-field">
+                    <div class="md-field-box">
+                        <select id="schedule-recipient-select" name="recipient_id">
+                            <option value="">-- Pilih Penerima Tersimpan --</option>
+                            {{range .Data.Contacts}}
+                            <option value="{{.ID}}">{{.Name}} ({{.ContactType}} - {{.Phone}})</option>
+                            {{end}}
+                        </select>
+                        <label>Target kontak penerima</label>
+                    </div>
                 </div>
             </div>
 
             <!-- Issue #2: WhatsApp Group & Contact Picker Integration -->
-            <div class="space-y-1 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
-                <div class="flex items-center justify-between gap-2 mb-1.5">
-                    <label class="text-[11px] font-bold uppercase tracking-wider text-rose-400">Nomor Telepon / JID WhatsApp Tujuan</label>
-                    <div class="flex items-center gap-1.5">
-                        <button type="button" onclick="openWAPicker('groups')" class="px-2 py-0.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold transition flex items-center gap-1">
-                            <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                            Pilih Grup WA
+            <div class="md-card-outlined md-col" style="padding:14px; gap:10px;">
+                <div class="md-row-between md-wrap" style="gap:8px;">
+                    <span class="md-label-medium" style="color:var(--md-sys-color-primary); font-weight:600;">Nomor telepon / JID WhatsApp tujuan</span>
+                    <div class="md-row md-gap-sm">
+                        <button type="button" onclick="openWAPicker('groups')" class="md-btn-tonal-success md-btn-sm">
+                            <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            Pilih grup WA
                         </button>
-                        <button type="button" onclick="openWAPicker('contacts')" class="px-2 py-0.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold transition flex items-center gap-1">
-                            Pilih Kontak WA
+                        <button type="button" onclick="openWAPicker('contacts')" class="md-btn-tonal md-btn-sm">
+                            Pilih kontak WA
                         </button>
                     </div>
                 </div>
-                <input type="text" id="schedule-target-phone" name="target_phone" placeholder="Ketik nomor (08... / 628...) atau pilih grup WhatsApp di atas"
-                       class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white font-mono text-xs" />
-                <div class="text-[10px] text-slate-500">Jika memilih dari grup WA, pesan akan dikirim otomatis ke grup tersebut.</div>
+                <div class="md-field">
+                    <div class="md-field-box">
+                        <input type="text" id="schedule-target-phone" name="target_phone" placeholder=" " class="md-mono" />
+                        <label>Nomor / JID tujuan</label>
+                    </div>
+                    <span class="md-field-support">Ketik nomor (08... / 628...) atau pilih grup WhatsApp di atas. Jika memilih dari grup WA, pesan akan dikirim otomatis ke grup tersebut.</span>
+                </div>
             </div>
 
-            <div class="grid grid-cols-3 gap-3">
-                <div class="space-y-1">
-                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Hari Kuliah</label>
-                    <select name="day_of_week" class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white text-xs">
-                        <option value="1">Senin</option>
-                        <option value="2">Selasa</option>
-                        <option value="3">Rabu</option>
-                        <option value="4">Kamis</option>
-                        <option value="5">Jumat</option>
-                        <option value="6">Sabtu</option>
-                        <option value="0">Minggu</option>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px;">
+                <div class="md-field">
+                    <div class="md-field-box">
+                        <select name="day_of_week">
+                            <option value="1">Senin</option>
+                            <option value="2">Selasa</option>
+                            <option value="3">Rabu</option>
+                            <option value="4">Kamis</option>
+                            <option value="5">Jumat</option>
+                            <option value="6">Sabtu</option>
+                            <option value="0">Minggu</option>
+                        </select>
+                        <label>Hari kuliah</label>
+                    </div>
+                </div>
+
+                <div class="md-field">
+                    <div class="md-field-box">
+                        <input type="text" name="start_time" required placeholder=" " class="md-mono" />
+                        <label>Mulai (WITA)</label>
+                    </div>
+                    <span class="md-field-support">Contoh: 08:00</span>
+                </div>
+
+                <div class="md-field">
+                    <div class="md-field-box">
+                        <input type="text" name="end_time" required placeholder=" " class="md-mono" />
+                        <label>Selesai (WITA)</label>
+                    </div>
+                    <span class="md-field-support">Contoh: 09:40</span>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">
+                <div class="md-field">
+                    <div class="md-field-box">
+                        <input type="text" name="location" placeholder=" " />
+                        <label>Ruangan / lokasi</label>
+                    </div>
+                    <span class="md-field-support">Ruang 301 / Lab Komputer 2</span>
+                </div>
+
+                <div class="md-field">
+                    <div class="md-field-box">
+                        <input type="text" name="link_group" placeholder=" " />
+                        <label>Tautan grup / kelas</label>
+                    </div>
+                    <span class="md-field-support">https://chat.whatsapp.com/...</span>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+                <div class="md-field">
+                    <div class="md-field-box">
+                        <select name="mode">
+                            <option value="H-1">H-1 (Satu Hari Sebelumnya)</option>
+                            <option value="H-0">H-0 (Hari H Perkuliahan)</option>
+                        </select>
+                        <label>Mode pengingat</label>
+                    </div>
+                </div>
+
+                <div class="md-field">
+                    <div class="md-field-box">
+                        <input type="text" name="send_at_time" required value="08:00" placeholder=" " class="md-mono" />
+                        <label>Jam pengiriman (WITA)</label>
+                    </div>
+                    <span class="md-field-support">Contoh: 08:00</span>
+                </div>
+            </div>
+
+            <div class="md-field">
+                <div class="md-field-box">
+                    <select name="template_id">
+                        <option value="">-- Gunakan Template Default --</option>
+                        {{range .Data.Templates}}
+                        <option value="{{.ID}}">{{.Name}} {{if .IsDefault}}(Default){{end}}</option>
+                        {{end}}
                     </select>
+                    <label>Template pesan</label>
                 </div>
-
-                <div class="space-y-1">
-                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Mulai (WITA)</label>
-                    <input type="text" name="start_time" required placeholder="08:00"
-                           class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white font-mono text-xs" />
-                </div>
-
-                <div class="space-y-1">
-                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Selesai (WITA)</label>
-                    <input type="text" name="end_time" required placeholder="09:40"
-                           class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white font-mono text-xs" />
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div class="space-y-1">
-                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Ruangan / Lokasi</label>
-                    <input type="text" name="location" placeholder="Ruang 301 / Lab Komputer 2"
-                           class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white text-xs" />
-                </div>
-
-                <div class="space-y-1">
-                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tautan Grup / Kelas</label>
-                    <input type="text" name="link_group" placeholder="https://chat.whatsapp.com/..."
-                           class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white text-xs" />
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <div class="space-y-1">
-                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Mode Pengingat</label>
-                    <select name="mode" class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white text-xs">
-                        <option value="H-1">H-1 (Satu Hari Sebelumnya)</option>
-                        <option value="H-0">H-0 (Hari H Perkuliahan)</option>
-                    </select>
-                </div>
-
-                <div class="space-y-1">
-                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Jam Pengiriman (WITA)</label>
-                    <input type="text" name="send_at_time" required value="08:00" placeholder="08:00"
-                           class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white font-mono text-xs" />
-                </div>
-            </div>
-
-            <div class="space-y-1">
-                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Template Pesan</label>
-                <select name="template_id" class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white text-xs">
-                    <option value="">-- Gunakan Template Default --</option>
-                    {{range .Data.Templates}}
-                    <option value="{{.ID}}">{{.Name}} {{if .IsDefault}}(Default){{end}}</option>
-                    {{end}}
-                </select>
             </div>
 
             <!-- Toggles for Active, Public Schedule, and Dry Run -->
-            <div class="flex flex-wrap items-center gap-4 py-2 border-t border-white/[0.06]">
-                <label class="cursor-pointer flex items-center gap-2">
-                    <input type="checkbox" name="is_active" checked class="w-4 h-4 rounded bg-white/[0.05] border border-white/[0.1] text-rose-600 focus:ring-0 focus:ring-offset-0 transition cursor-pointer" />
-                    <span class="text-xs text-slate-300">Aktifkan Otomatis</span>
+            <div class="md-row md-wrap" style="gap:16px; padding-top:12px; border-top:1px solid var(--md-sys-color-outline-variant);">
+                <label class="md-check">
+                    <input type="checkbox" name="is_active" checked />
+                    <span>Aktifkan otomatis</span>
                 </label>
 
                 <!-- Issue #4: Public Schedule Toggle -->
-                <label class="cursor-pointer flex items-center gap-2">
-                    <input type="checkbox" name="is_public" checked class="w-4 h-4 rounded bg-white/[0.05] border border-white/[0.1] text-indigo-500 focus:ring-0 focus:ring-offset-0 transition cursor-pointer" />
-                    <span class="text-xs text-indigo-300 font-semibold">Tampilkan di Portal Publik</span>
+                <label class="md-check">
+                    <input type="checkbox" name="is_public" checked />
+                    <span>Tampilkan di portal publik</span>
                 </label>
 
-                <label class="cursor-pointer flex items-center gap-2">
-                    <input type="checkbox" name="dry_run" class="w-4 h-4 rounded bg-white/[0.05] border border-white/[0.1] text-amber-500 focus:ring-0 focus:ring-offset-0 transition cursor-pointer" />
-                    <span class="text-xs text-slate-300">Dry Run (Simulasi)</span>
+                <label class="md-check">
+                    <input type="checkbox" name="dry_run" />
+                    <span>Dry run (simulasi)</span>
                 </label>
             </div>
 
-            <div class="modal-action justify-between pt-2">
-                <button type="button" onclick="modal_add_schedule.close()" class="btn btn-xs btn-ghost rounded-full text-slate-400">Batal</button>
-                <button type="submit" class="btn btn-xs rounded-full bg-rose-600 hover:bg-rose-500 text-white font-semibold px-5">Simpan Jadwal</button>
+            <div class="md-row-between md-wrap" style="padding-top:4px;">
+                <button type="button" onclick="modal_add_schedule.close()" class="md-btn-text">Batal</button>
+                <button type="submit" class="md-btn">Simpan jadwal</button>
             </div>
         </form>
     </div>
-    <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
 
 <!-- Modal Manual Trigger -->
-<dialog id="modal_trigger_schedule" class="modal">
-    <div class="modal-box bg-slate-950 border border-white/10 max-w-sm text-center p-6 rounded-3xl shadow-2xl space-y-4">
-        <div class="space-y-1">
-            <h3 class="font-bold text-lg text-white">Picu Pengiriman Pesan</h3>
-            <p class="text-xs text-slate-400">Anda akan membuat pesan antrian untuk jadwal <strong id="trigger-matkul-name" class="text-white"></strong> sekarang juga.</p>
+<dialog id="modal_trigger_schedule" class="md-dialog" style="width:min(92vw, 400px);">
+    <div class="md-dialog-header md-row-between">
+        <div>
+            <h3 class="md-title-large">Picu pengiriman pesan</h3>
+            <p class="md-body-small" style="color:var(--md-sys-color-on-surface-variant);">Anda akan membuat pesan antrian untuk jadwal <strong id="trigger-matkul-name"></strong> sekarang juga.</p>
         </div>
+        <form method="dialog"><button class="md-icon-btn" aria-label="Tutup">✕</button></form>
+    </div>
 
-        <form id="form-trigger-schedule" action="" method="POST" class="space-y-4 pt-1">
-            <div class="p-3 rounded-xl bg-white/[0.02] border border-white/5">
-                <label class="cursor-pointer flex items-center justify-center gap-2">
-                    <input type="checkbox" name="dry_run" value="true" class="w-4 h-4 rounded bg-white/[0.05] border border-white/[0.1] text-amber-500 focus:ring-0 focus:ring-offset-0 transition cursor-pointer" />
-                    <span class="text-xs font-medium text-slate-300">Kirim sebagai Dry-Run (Simulasi)</span>
+    <div class="md-dialog-body">
+        <form id="form-trigger-schedule" action="" method="POST" class="md-col" style="gap:16px; padding-bottom:8px;">
+            <div class="md-card-filled md-center" style="padding:14px; justify-content:center;">
+                <label class="md-check">
+                    <input type="checkbox" name="dry_run" value="true" />
+                    <span>Kirim sebagai dry-run (simulasi)</span>
                 </label>
             </div>
 
-            <div class="modal-action justify-between pt-2">
-                <button type="button" onclick="modal_trigger_schedule.close()" class="btn btn-xs btn-ghost rounded-full text-slate-400">Batal</button>
-                <button type="submit" class="btn btn-xs rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4">Picu Sekarang ⚡</button>
+            <div class="md-row-between" style="padding-bottom:8px;">
+                <button type="button" onclick="modal_trigger_schedule.close()" class="md-btn-text">Batal</button>
+                <button type="submit" class="md-btn-tonal">Picu sekarang ⚡</button>
             </div>
         </form>
     </div>
-    <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
 
 <!-- Issue #2: Modal WhatsApp Group & Contact Picker -->
-<dialog id="modal_wa_picker" class="modal">
-    <div class="modal-box bg-[#0c0e14] border border-white/10 max-w-md p-6 rounded-3xl shadow-2xl space-y-4">
-        <div class="flex items-center justify-between pb-2 border-b border-white/[0.06]">
-            <div>
-                <h3 id="wa-picker-title" class="font-bold text-white text-base">Pilih WhatsApp</h3>
-                <p id="wa-picker-subtitle" class="text-xs text-slate-400">Memuat data dari sesi WhatsApp...</p>
+<dialog id="modal_wa_picker" class="md-dialog" style="width:min(92vw, 448px);">
+    <div class="md-dialog-header md-row-between">
+        <div>
+            <h3 id="wa-picker-title" class="md-title-medium">Pilih WhatsApp</h3>
+            <p id="wa-picker-subtitle" class="md-body-small" style="color:var(--md-sys-color-on-surface-variant);">Memuat data dari sesi WhatsApp...</p>
+        </div>
+        <button type="button" onclick="modal_wa_picker.close()" class="md-icon-btn" aria-label="Tutup">✕</button>
+    </div>
+
+    <div class="md-dialog-body md-col" style="gap:16px; padding-bottom:24px;">
+        <div class="md-field">
+            <div class="md-field-box">
+                <input type="text" id="wa-picker-search" oninput="filterWAPickerItems()" placeholder=" " />
+                <label>Cari nama atau nomor</label>
             </div>
-            <button type="button" onclick="modal_wa_picker.close()" class="btn btn-xs btn-ghost text-slate-400">✕</button>
         </div>
 
-        <input type="text" id="wa-picker-search" oninput="filterWAPickerItems()" placeholder="Cari nama atau nomor..."
-               class="w-full px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/10 focus:border-rose-500 text-white text-xs outline-none" />
-
-        <div id="wa-picker-loading" class="py-8 text-center text-xs text-slate-500 space-y-2">
-            <span class="loading loading-spinner loading-sm text-rose-500"></span>
+        <div id="wa-picker-loading" class="md-empty md-body-small" style="padding:32px 16px;">
+            <span class="md-spinner"></span>
             <div>Mengambil daftar dari WhatsApp...</div>
         </div>
 
-        <div id="wa-picker-list" class="space-y-1.5 max-h-64 overflow-y-auto pr-1 hidden">
+        <div id="wa-picker-list" class="md-col hidden" style="gap:8px; max-height:264px; overflow-y:auto;">
             <!-- Items injected by JS -->
         </div>
 
-        <div class="modal-action justify-end pt-2">
-            <button type="button" onclick="modal_wa_picker.close()" class="btn btn-xs btn-ghost rounded-full text-slate-400">Tutup</button>
+        <div class="md-row" style="justify-content:flex-end;">
+            <button type="button" onclick="modal_wa_picker.close()" class="md-btn-text">Tutup</button>
         </div>
     </div>
-    <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
 
 {{end}}

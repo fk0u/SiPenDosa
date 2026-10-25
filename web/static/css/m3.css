@@ -1,0 +1,745 @@
+/* ==================================================================
+   SiPenDosa — Material Design 3 (Material You) Design System
+   Dibangun mengikuti spesifikasi resmi M3:
+   - Color roles  : https://m3.material.io/styles/color/roles
+   - Elevation    : https://m3.material.io/styles/elevation
+   - Shape        : https://m3.material.io/styles/shape/shape-scale-tokens
+   - Typography   : https://m3.material.io/styles/typography/type-scale-tokens
+   - State layers : https://m3.material.io/foundations/interaction/states/state-layers
+   - Motion       : https://m3.material.io/styles/motion/easing-and-duration
+   Self-hosted & bebas CDN — sesuai prinsip local-first zero-telemetry.
+   ================================================================== */
+
+/* ==================================================================
+   1. DESIGN TOKENS
+   ================================================================== */
+:root {
+    /* -- Shape scale -- */
+    --md-shape-none: 0;
+    --md-shape-xs: 4px;
+    --md-shape-sm: 8px;
+    --md-shape-md: 12px;
+    --md-shape-lg: 16px;
+    --md-shape-xl: 28px;
+    --md-shape-full: 999px;
+
+    /* -- Typography scale (M3 type roles) -- */
+    --md-font: 'Roboto', 'Google Sans Text', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --md-font-mono: 'Roboto Mono', ui-monospace, 'JetBrains Mono', Menlo, monospace;
+
+    /* -- Motion (M3 easing & duration) -- */
+    --md-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --md-ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+    --md-ease-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+    --md-dur-short: 150ms;
+    --md-dur-med: 300ms;
+    --md-dur-long: 500ms;
+
+    /* -- Elevation (level 0-5, tinted shadow — bukan hitam pekat) -- */
+    --md-elev-0: none;
+    --md-elev-1: 0 1px 2px rgba(58, 7, 25, 0.18), 0 1px 3px 1px rgba(58, 7, 25, 0.08);
+    --md-elev-2: 0 1px 2px rgba(58, 7, 25, 0.18), 0 2px 6px 2px rgba(58, 7, 25, 0.10);
+    --md-elev-3: 0 4px 8px 3px rgba(58, 7, 25, 0.12), 0 1px 3px rgba(58, 7, 25, 0.18);
+    --md-elev-4: 0 6px 10px 4px rgba(58, 7, 25, 0.14), 0 2px 3px rgba(58, 7, 25, 0.18);
+    --md-elev-5: 0 8px 12px 6px rgba(58, 7, 25, 0.16), 0 4px 4px rgba(58, 7, 25, 0.18);
+
+    /* -- State layer opacities (M3 spec) -- */
+    --md-state-hover: 0.08;
+    --md-state-focus: 0.12;
+    --md-state-pressed: 0.12;
+
+    /* -- Layout -- */
+    --md-nav-rail-w: 88px;
+    --md-topbar-h: 64px;
+
+    color-scheme: light;
+}
+
+/* ------------------------------------------------------------------
+   Light scheme — seed: rose (#E11D48), tonal palette M3
+   ------------------------------------------------------------------ */
+:root, [data-theme="light"] {
+    --md-sys-color-primary: #8E2447;
+    --md-sys-color-on-primary: #FFFFFF;
+    --md-sys-color-primary-container: #FFD9DF;
+    --md-sys-color-on-primary-container: #3A0719;
+    --md-sys-color-secondary: #75565B;
+    --md-sys-color-on-secondary: #FFFFFF;
+    --md-sys-color-secondary-container: #FDD9DE;
+    --md-sys-color-on-secondary-container: #2B1518;
+    --md-sys-color-tertiary: #7B5636;
+    --md-sys-color-on-tertiary: #FFFFFF;
+    --md-sys-color-tertiary-container: #FFDCC1;
+    --md-sys-color-on-tertiary-container: #2E1502;
+    --md-sys-color-error: #BA1A1A;
+    --md-sys-color-on-error: #FFFFFF;
+    --md-sys-color-error-container: #FFDAD6;
+    --md-sys-color-on-error-container: #410002;
+    --md-sys-color-success: #3E6B3C;
+    --md-sys-color-on-success: #FFFFFF;
+    --md-sys-color-success-container: #BFD9B7;
+    --md-sys-color-on-success-container: #0B2105;
+    --md-sys-color-warning: #7A5900;
+    --md-sys-color-on-warning: #FFFFFF;
+    --md-sys-color-warning-container: #FFDEA6;
+    --md-sys-color-on-warning-container: #261A00;
+    --md-sys-color-surface: #FFF8F7;
+    --md-sys-color-on-surface: #221919;
+    --md-sys-color-surface-container-lowest: #FFFFFF;
+    --md-sys-color-surface-container-low: #FFF0EF;
+    --md-sys-color-surface-container: #F9EBEA;
+    --md-sys-color-surface-container-high: #F3E5E4;
+    --md-sys-color-surface-container-highest: #EEE0DF;
+    --md-sys-color-surface-dim: #E7D7D7;
+    --md-sys-color-surface-bright: #FFF8F7;
+    --md-sys-color-on-surface-variant: #534344;
+    --md-sys-color-outline: #857374;
+    --md-sys-color-outline-variant: #D8C1C2;
+    --md-sys-color-inverse-surface: #382E2E;
+    --md-sys-color-inverse-on-surface: #FFEDEC;
+    --md-sys-color-inverse-primary: #FFB1C0;
+    --md-sys-color-surface-tint: #8E2447;
+    --md-sys-color-scrim: rgba(0, 0, 0, 0.45);
+}
+
+/* ------------------------------------------------------------------
+   Dark scheme — tonal surface 6%, primary tone 80
+   ------------------------------------------------------------------ */
+[data-theme="dark"] {
+    --md-sys-color-primary: #FFB1C0;
+    --md-sys-color-on-primary: #54112B;
+    --md-sys-color-primary-container: #702A40;
+    --md-sys-color-on-primary-container: #FFD9DF;
+    --md-sys-color-secondary: #E2BDC1;
+    --md-sys-color-on-secondary: #42292D;
+    --md-sys-color-secondary-container: #5A3F44;
+    --md-sys-color-on-secondary-container: #FDD9DE;
+    --md-sys-color-tertiary: #EFC08E;
+    --md-sys-color-on-tertiary: #472B10;
+    --md-sys-color-tertiary-container: #604125;
+    --md-sys-color-on-tertiary-container: #FFDCC1;
+    --md-sys-color-error: #FFB4AB;
+    --md-sys-color-on-error: #690005;
+    --md-sys-color-error-container: #93000A;
+    --md-sys-color-on-error-container: #FFDAD6;
+    --md-sys-color-success: #A4D49B;
+    --md-sys-color-on-success: #10300D;
+    --md-sys-color-success-container: #2C4A24;
+    --md-sys-color-on-success-container: #BFD9B7;
+    --md-sys-color-warning: #FFC76D;
+    --md-sys-color-on-warning: #402D00;
+    --md-sys-color-warning-container: #5C4200;
+    --md-sys-color-on-warning-container: #FFDEA6;
+    --md-sys-color-surface: #1A1112;
+    --md-sys-color-on-surface: #F1DEDF;
+    --md-sys-color-surface-container-lowest: #140B0C;
+    --md-sys-color-surface-container-low: #22191A;
+    --md-sys-color-surface-container: #261D1E;
+    --md-sys-color-surface-container-high: #312728;
+    --md-sys-color-surface-container-highest: #3D3233;
+    --md-sys-color-surface-dim: #1A1112;
+    --md-sys-color-surface-bright: #423738;
+    --md-sys-color-on-surface-variant: #D8C1C2;
+    --md-sys-color-outline: #A08C8D;
+    --md-sys-color-outline-variant: #534344;
+    --md-sys-color-inverse-surface: #F1DEDF;
+    --md-sys-color-inverse-on-surface: #382E2E;
+    --md-sys-color-inverse-primary: #8E2447;
+    --md-sys-color-surface-tint: #FFB1C0;
+    --md-sys-color-scrim: rgba(0, 0, 0, 0.55);
+    color-scheme: dark;
+}
+
+/* ==================================================================
+   2. BASE & RESET
+   ================================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+    margin: 0;
+    font-family: var(--md-font);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--md-sys-color-on-surface);
+    background: var(--md-sys-color-surface);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100dvh;
+    text-rendering: optimizeLegibility;
+}
+
+::selection { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--md-sys-color-outline-variant); border-radius: var(--md-shape-full); }
+::-webkit-scrollbar-thumb:hover { background: var(--md-sys-color-outline); }
+
+:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary);
+    outline-offset: 2px;
+    border-radius: var(--md-shape-xs);
+}
+
+h1, h2, h3, h4, h5, h6 { margin: 0; font-weight: 400; }
+p { margin: 0; }
+a { color: var(--md-sys-color-primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+img { max-width: 100%; }
+
+/* M3 typography roles sebagai kelas */
+.md-display-large  { font-size: 57px; line-height: 1.12; letter-spacing: -0.25px; font-weight: 400; }
+.md-display-medium { font-size: 45px; line-height: 1.16; font-weight: 400; }
+.md-display-small  { font-size: 36px; line-height: 1.22; font-weight: 400; }
+.md-headline-large { font-size: 32px; line-height: 1.25; font-weight: 400; }
+.md-headline-medium { font-size: 28px; line-height: 1.29; font-weight: 400; }
+.md-headline-small { font-size: 24px; line-height: 1.33; font-weight: 400; }
+.md-title-large  { font-size: 22px; line-height: 1.27; font-weight: 400; }
+.md-title-medium { font-size: 16px; line-height: 1.5; font-weight: 500; letter-spacing: 0.15px; }
+.md-title-small  { font-size: 14px; line-height: 1.43; font-weight: 500; letter-spacing: 0.1px; }
+.md-body-large   { font-size: 16px; line-height: 1.5; letter-spacing: 0.5px; }
+.md-body-medium  { font-size: 14px; line-height: 1.43; letter-spacing: 0.25px; }
+.md-body-small   { font-size: 12px; line-height: 1.33; letter-spacing: 0.4px; }
+.md-label-large  { font-size: 14px; line-height: 1.43; font-weight: 500; letter-spacing: 0.1px; }
+.md-label-medium { font-size: 12px; line-height: 1.33; font-weight: 500; letter-spacing: 0.5px; }
+.md-label-small  { font-size: 11px; line-height: 1.45; font-weight: 500; letter-spacing: 0.5px; }
+.md-mono { font-family: var(--md-font-mono); font-variant-numeric: tabular-nums; }
+.md-tabular { font-variant-numeric: tabular-nums; }
+
+/* ==================================================================
+   3. LAYOUT UTILITIES (subset minimal)
+   ================================================================== */
+.md-container { max-width: 1280px; margin: 0 auto; padding: 24px; width: 100%; }
+.md-row { display: flex; align-items: center; gap: 12px; }
+.md-row-between { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.md-col { display: flex; flex-direction: column; gap: 12px; }
+.md-stack { display: flex; flex-direction: column; gap: 8px; }
+.md-grid { display: grid; gap: 16px; }
+.md-grid-2 { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.md-grid-3 { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.md-grid-stats { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.md-grow { flex: 1; min-width: 0; }
+.md-center { display: flex; align-items: center; justify-content: center; }
+.md-wrap { flex-wrap: wrap; }
+.md-gap-sm { gap: 8px; }
+.md-gap-lg { gap: 24px; }
+.md-hidden { display: none !important; }
+/* Kompatibilitas JS lama yang toggle kelas .hidden */
+.hidden { display: none !important; }
+.md-right { margin-left: auto; }
+.md-text-center { text-align: center; }
+.md-mono-sm { font-family: var(--md-font-mono); font-size: 12px; }
+.md-muted { color: var(--md-sys-color-on-surface-variant); }
+.md-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.md-balance { text-wrap: balance; }
+@media (max-width: 720px) {
+    .md-container { padding: 16px; }
+}
+
+/* ==================================================================
+   4. SURFACES — ELEVATED / FILLED / OUTLINED CARD
+   ================================================================== */
+.md-card {
+    background: var(--md-sys-color-surface-container-low);
+    border-radius: var(--md-shape-md);
+    padding: 20px;
+    transition: box-shadow var(--md-dur-med) var(--md-ease-standard);
+}
+.md-card-elevated {
+    background: var(--md-sys-color-surface-container-low);
+    border-radius: var(--md-shape-md);
+    padding: 20px;
+    box-shadow: var(--md-elev-1);
+    transition: box-shadow var(--md-dur-med) var(--md-ease-standard);
+}
+.md-card-elevated:hover { box-shadow: var(--md-elev-2); }
+.md-card-filled {
+    background: var(--md-sys-color-surface-container-highest);
+    border-radius: var(--md-shape-md);
+    padding: 20px;
+}
+.md-card-outlined {
+    background: var(--md-sys-color-surface);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-shape-md);
+    padding: 20px;
+}
+/* Panel besar (hero/onboarding) memakai shape extra-large */
+.md-card-xl { border-radius: var(--md-shape-xl); padding: 28px; }
+
+/* ==================================================================
+   5. BUTTONS — common, filled / tonal / outlined / text / icon / FAB
+   ================================================================== */
+.md-btn, .md-btn-tonal, .md-btn-outlined, .md-btn-text {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 24px;
+    border: none;
+    border-radius: var(--md-shape-full);
+    font-family: var(--md-font);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+    cursor: pointer;
+    text-decoration: none !important;
+    user-select: none;
+    white-space: nowrap;
+    transition: box-shadow var(--md-dur-short) var(--md-ease-standard),
+                transform var(--md-dur-short) var(--md-ease-standard),
+                background-color var(--md-dur-short) var(--md-ease-standard);
+}
+.md-btn:active, .md-btn-tonal:active, .md-btn-outlined:active, .md-btn-text:active { transform: scale(0.98); }
+.md-btn:disabled, .md-btn-tonal:disabled, .md-btn-outlined:disabled, .md-btn-text:disabled {
+    opacity: 0.38; cursor: not-allowed; pointer-events: none;
+}
+/* State layer via ::after overlay */
+.md-btn::after, .md-btn-tonal::after, .md-btn-outlined::after, .md-btn-text::after,
+.md-icon-btn::after, .md-fab::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit;
+    background: currentColor; opacity: 0; transition: opacity var(--md-dur-short) var(--md-ease-standard);
+    pointer-events: none;
+}
+.md-btn:hover::after, .md-btn-tonal:hover::after, .md-btn-outlined:hover::after, .md-btn-text:hover::after,
+.md-icon-btn:hover::after, .md-fab:hover::after { opacity: var(--md-state-hover); }
+.md-btn:active::after, .md-btn-tonal:active::after, .md-btn-outlined:active::after, .md-btn-text:active::after,
+.md-icon-btn:active::after, .md-fab:active::after { opacity: var(--md-state-pressed); }
+
+.md-btn {
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+}
+.md-btn:hover { box-shadow: var(--md-elev-1); }
+
+.md-btn-tonal {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+}
+.md-btn-tonal:hover { box-shadow: var(--md-elev-1); }
+
+.md-btn-outlined {
+    background: transparent;
+    color: var(--md-sys-color-primary);
+    box-shadow: inset 0 0 0 1px var(--md-sys-color-outline);
+}
+.md-btn-outlined:hover { background: color-mix(in srgb, var(--md-sys-color-primary) var(--md-state-hover), transparent); }
+
+.md-btn-text {
+    background: transparent;
+    color: var(--md-sys-color-primary);
+    padding: 0 12px;
+}
+.md-btn-text:hover { background: color-mix(in srgb, var(--md-sys-color-primary) var(--md-state-hover), transparent); }
+
+.md-btn-error { background: var(--md-sys-color-error); color: var(--md-sys-color-on-error); }
+.md-btn-tonal-error { background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
+.md-btn-tonal-success { background: var(--md-sys-color-success-container); color: var(--md-sys-color-on-success-container); }
+.md-btn-sm { height: 32px; padding: 0 16px; font-size: 13px; }
+
+.md-icon-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px; height: 40px;
+    border: none; border-radius: var(--md-shape-full);
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    cursor: pointer;
+    text-decoration: none !important;
+    transition: background-color var(--md-dur-short) var(--md-ease-standard);
+    flex-shrink: 0;
+}
+.md-icon-btn svg { width: 22px; height: 22px; }
+
+.md-fab {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 56px;
+    padding: 0 20px;
+    border: none;
+    border-radius: var(--md-shape-lg);
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    font-family: var(--md-font); font-size: 14px; font-weight: 600;
+    cursor: pointer; text-decoration: none !important;
+    box-shadow: var(--md-elev-3);
+    transition: box-shadow var(--md-dur-short) var(--md-ease-standard), transform var(--md-dur-short) var(--md-ease-standard);
+}
+.md-fab:hover { box-shadow: var(--md-elev-4); }
+.md-fab:active { transform: scale(0.98); }
+.md-fab svg { width: 24px; height: 24px; }
+
+/* ==================================================================
+   6. TEXT FIELDS (M3 filled) — floating label via :placeholder-shown
+   ================================================================== */
+.md-field { display: flex; flex-direction: column; gap: 4px; }
+.md-field-box { position: relative; }
+.md-field-box input, .md-field-box select, .md-field-box textarea {
+    width: 100%;
+    height: 56px;
+    padding: 24px 16px 8px;
+    border: none;
+    border-radius: var(--md-shape-xs) var(--md-shape-xs) 0 0;
+    background: var(--md-sys-color-surface-container-highest);
+    color: var(--md-sys-color-on-surface);
+    font-family: var(--md-font);
+    font-size: 14px;
+    outline: none;
+    transition: background-color var(--md-dur-short) var(--md-ease-standard);
+    -webkit-appearance: none; appearance: none;
+}
+.md-field-box textarea { min-height: 96px; height: auto; padding-top: 26px; resize: vertical; line-height: 1.5; }
+.md-field-box select { cursor: pointer; padding-right: 36px;
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='%23857374'%3E%3Cpath d='M7.4 8.6 12 13.2l4.6-4.6L18 10l-6 6-6-6z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center;
+}
+.md-field-box input:hover, .md-field-box select:hover, .md-field-box textarea:hover {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) 4%, var(--md-sys-color-surface-container-highest));
+}
+.md-field-box input:focus, .md-field-box select:focus, .md-field-box textarea:focus {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) 6%, var(--md-sys-color-surface-container-highest));
+}
+/* Indikator bawah (active indicator) */
+.md-field-box::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
+    background: var(--md-sys-color-on-surface-variant); pointer-events: none;
+}
+.md-field-box:focus-within::after { height: 2px; background: var(--md-sys-color-primary); }
+.md-field-box label {
+    position: absolute; left: 16px; top: 16px;
+    font-size: 14px; color: var(--md-sys-color-on-surface-variant);
+    pointer-events: none;
+    transition: all var(--md-dur-short) var(--md-ease-standard);
+}
+.md-field-box input:focus + label,
+.md-field-box textarea:focus + label,
+.md-field-box input:not(:placeholder-shown) + label,
+.md-field-box textarea:not(:placeholder-shown) + label,
+.md-field-box select:valid + label,
+.md-field-box .md-field-static + label {
+    top: 8px; font-size: 12px; font-weight: 500; color: var(--md-sys-color-primary);
+}
+.md-field-support { font-size: 12px; color: var(--md-sys-color-on-surface-variant); padding: 0 16px; }
+.md-field-error input, .md-field-error textarea { border-bottom: 2px solid var(--md-sys-color-error); }
+.md-field-error .md-field-support { color: var(--md-sys-color-error); }
+
+/* ==================================================================
+   7. CHIPS, BADGES & STATUS
+   ================================================================== */
+.md-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 32px;
+    padding: 0 16px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-shape-sm);
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 13px; font-weight: 500; letter-spacing: 0.1px;
+    cursor: pointer; text-decoration: none !important;
+    transition: background-color var(--md-dur-short) var(--md-ease-standard);
+    user-select: none;
+}
+.md-chip:hover { background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-state-hover), transparent); }
+.md-chip-active {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    border-color: transparent;
+}
+.md-chip-static { cursor: default; }
+
+.md-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px;
+    border-radius: var(--md-shape-sm);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.md-badge-primary { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+.md-badge-secondary { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+.md-badge-tertiary { background: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); }
+.md-badge-success { background: var(--md-sys-color-success-container); color: var(--md-sys-color-on-success-container); }
+.md-badge-warning { background: var(--md-sys-color-warning-container); color: var(--md-sys-color-on-warning-container); }
+.md-badge-error { background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
+.md-badge-neutral { background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface-variant); }
+
+.md-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.md-dot-success { background: var(--md-sys-color-success); }
+.md-dot-warning { background: var(--md-sys-color-warning); }
+.md-dot-error { background: var(--md-sys-color-error); }
+.md-dot-neutral { background: var(--md-sys-color-outline); }
+.md-dot-primary { background: var(--md-sys-color-primary); }
+
+/* ==================================================================
+   8. SWITCH, CHECKBOX, RADIO (M3)
+   ================================================================== */
+.md-switch { position: relative; display: inline-flex; align-items: center; cursor: pointer; }
+.md-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+.md-switch-track {
+    width: 52px; height: 32px;
+    border-radius: var(--md-shape-full);
+    background: var(--md-sys-color-surface-container-highest);
+    border: 2px solid var(--md-sys-color-outline);
+    transition: background-color var(--md-dur-med) var(--md-ease-standard), border-color var(--md-dur-med) var(--md-ease-standard);
+}
+.md-switch-thumb {
+    position: absolute; left: 6px; top: 50%; transform: translateY(-50%);
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--md-sys-color-outline);
+    transition: all var(--md-dur-med) var(--md-ease-emphasized);
+}
+.md-switch input:checked ~ .md-switch-track { background: var(--md-sys-color-primary); border-color: var(--md-sys-color-primary); }
+.md-switch input:checked ~ .md-switch-thumb { left: 28px; width: 24px; height: 24px; background: var(--md-sys-color-on-primary); }
+.md-switch input:focus-visible ~ .md-switch-track { outline: 3px solid var(--md-sys-color-primary); outline-offset: 2px; }
+
+.md-check { display: inline-flex; align-items: center; gap: 12px; cursor: pointer; font-size: 14px; }
+.md-check input { width: 18px; height: 18px; accent-color: var(--md-sys-color-primary); cursor: pointer; }
+
+/* ==================================================================
+   9. LIST ITEMS & DIVIDERS
+   ================================================================== */
+.md-list { display: flex; flex-direction: column; }
+.md-list-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+    border-radius: var(--md-shape-md);
+    transition: background-color var(--md-dur-short) var(--md-ease-standard);
+    color: inherit; text-decoration: none !important;
+}
+.md-list-item:hover { background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-state-hover), transparent); }
+.md-list-item-leading {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 15px; flex-shrink: 0;
+}
+.md-list-item-leading svg { width: 20px; height: 20px; }
+.md-divider { height: 1px; background: var(--md-sys-color-outline-variant); border: none; margin: 8px 0; }
+
+/* ==================================================================
+   10. TOP APP BAR
+   ================================================================== */
+.md-topbar {
+    position: sticky; top: 0; z-index: 40;
+    height: var(--md-topbar-h);
+    display: flex; align-items: center; gap: 12px;
+    padding: 0 16px;
+    background: var(--md-sys-color-surface-container);
+    transition: background-color var(--md-dur-med) var(--md-ease-standard);
+}
+.md-topbar-scrolled { box-shadow: var(--md-elev-2); }
+.md-topbar-title { font-size: 20px; font-weight: 500; letter-spacing: 0.15px; }
+
+/* ==================================================================
+   11. NAVIGATION RAIL (desktop) & NAVIGATION BAR (mobile)
+   ================================================================== */
+.md-shell { display: flex; min-height: 100dvh; }
+.md-nav-rail {
+    width: var(--md-nav-rail-w);
+    position: sticky; top: 0; height: 100dvh;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 16px 12px 24px;
+    gap: 4px;
+    background: var(--md-sys-color-surface-container-low);
+    flex-shrink: 0;
+    z-index: 30;
+}
+.md-rail-fab {
+    display: flex; align-items: center; justify-content: center;
+    width: 56px; height: 32px; margin-bottom: 12px;
+    border-radius: var(--md-shape-full);
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    font-weight: 700; font-size: 13px; letter-spacing: 0.5px;
+    text-decoration: none !important;
+    box-shadow: var(--md-elev-1);
+}
+.md-rail-item {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 4px 0;
+    border-radius: var(--md-shape-md);
+    color: var(--md-sys-color-on-surface-variant);
+    text-decoration: none !important;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.4px;
+    width: 100%;
+}
+.md-rail-item svg { width: 24px; height: 24px; }
+.md-rail-pill {
+    display: flex; align-items: center; justify-content: center;
+    width: 56px; height: 32px;
+    border-radius: var(--md-shape-full);
+    transition: background-color var(--md-dur-short) var(--md-ease-standard), color var(--md-dur-short) var(--md-ease-standard);
+}
+.md-rail-item:hover .md-rail-pill { background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-state-hover), transparent); }
+.md-rail-item-active { color: var(--md-sys-color-on-surface); }
+.md-rail-item-active .md-rail-pill { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+
+.md-nav-bar {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
+    background: var(--md-sys-color-surface-container);
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+    justify-content: space-around;
+}
+.md-bar-item {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    text-decoration: none !important;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 12px; font-weight: 600;
+    min-width: 56px;
+}
+.md-bar-item svg { width: 24px; height: 24px; }
+.md-bar-pill {
+    display: flex; align-items: center; justify-content: center;
+    width: 56px; height: 30px; border-radius: var(--md-shape-full);
+    transition: background-color var(--md-dur-short) var(--md-ease-standard);
+}
+.md-bar-item-active { color: var(--md-sys-color-on-surface); }
+.md-bar-item-active .md-bar-pill { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+
+@media (max-width: 900px) {
+    .md-nav-rail { display: none; }
+    .md-nav-bar { display: flex; }
+    .md-content { padding-bottom: 96px !important; }
+}
+
+/* ==================================================================
+   12. SNACKBAR (toast)
+   ================================================================== */
+.md-snackbar-container {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    z-index: 60; display: flex; flex-direction: column; gap: 8px; align-items: center;
+    width: min(92vw, 560px);
+    pointer-events: none;
+}
+.md-snackbar {
+    display: flex; align-items: center; gap: 12px;
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: var(--md-shape-xs);
+    background: var(--md-sys-color-inverse-surface);
+    color: var(--md-sys-color-inverse-on-surface);
+    font-size: 14px;
+    box-shadow: var(--md-elev-3);
+    opacity: 0; transform: translateY(12px);
+    transition: opacity var(--md-dur-med) var(--md-ease-standard), transform var(--md-dur-med) var(--md-ease-emphasized);
+    pointer-events: auto;
+}
+.md-snackbar-show { opacity: 1; transform: translateY(0); }
+.md-snackbar svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+/* ==================================================================
+   13. DIALOG
+   ================================================================== */
+dialog.md-dialog {
+    border: none;
+    border-radius: var(--md-shape-xl);
+    background: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface);
+    padding: 0;
+    width: min(92vw, 448px);
+    max-height: 85dvh;
+    box-shadow: var(--md-elev-3);
+    outline: none;
+}
+dialog.md-dialog::backdrop { background: var(--md-sys-color-scrim); }
+.md-dialog-header { padding: 24px 24px 12px; }
+.md-dialog-body { padding: 0 24px; overflow-y: auto; max-height: 55dvh; }
+.md-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 24px 24px; }
+
+/* ==================================================================
+   14. TABLE & DATA
+   ================================================================== */
+.md-table-wrap { overflow-x: auto; border-radius: var(--md-shape-md); }
+.md-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.md-table th {
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.5px;
+    color: var(--md-sys-color-on-surface-variant);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    white-space: nowrap;
+}
+.md-table td { padding: 14px 16px; border-bottom: 1px solid var(--md-sys-color-outline-variant); vertical-align: middle; }
+.md-table tr:last-child td { border-bottom: none; }
+.md-table tbody tr { transition: background-color var(--md-dur-short) var(--md-ease-standard); }
+.md-table tbody tr:hover { background: color-mix(in srgb, var(--md-sys-color-on-surface) 4%, transparent); }
+
+/* Progress & metering */
+.md-progress { width: 100%; height: 4px; border-radius: var(--md-shape-full); background: var(--md-sys-color-surface-container-highest); overflow: hidden; }
+.md-progress-bar { height: 100%; border-radius: var(--md-shape-full); background: var(--md-sys-color-primary); transition: width var(--md-dur-long) var(--md-ease-standard); }
+
+/* Stat card (dashboard metric) */
+.md-stat {
+    background: var(--md-sys-color-surface-container);
+    border-radius: var(--md-shape-lg);
+    padding: 16px 20px;
+    display: flex; flex-direction: column; gap: 4px;
+}
+.md-stat-value { font-size: 32px; font-weight: 400; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.md-stat-icon {
+    width: 40px; height: 40px; border-radius: var(--md-shape-full);
+    display: flex; align-items: center; justify-content: center;
+    background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container);
+    margin-bottom: 4px;
+}
+.md-stat-icon svg { width: 20px; height: 20px; }
+
+/* Kode / terminal block */
+.md-code {
+    font-family: var(--md-font-mono);
+    font-size: 12px;
+    background: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-surface);
+    border-radius: var(--md-shape-md);
+    padding: 12px 16px;
+    overflow-x: auto;
+    line-height: 1.6;
+}
+
+/* Empty state */
+.md-empty {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    padding: 48px 24px; text-align: center;
+    color: var(--md-sys-color-on-surface-variant);
+}
+.md-empty svg { width: 48px; height: 48px; opacity: 0.5; }
+
+/* Section heading */
+.md-section-title {
+    font-size: 16px; font-weight: 600; letter-spacing: 0.15px;
+    color: var(--md-sys-color-on-surface);
+}
+.md-section-sub { font-size: 13px; color: var(--md-sys-color-on-surface-variant); margin-top: 2px; }
+
+/* Page transition: staggered entry (M3 emphasized) */
+.md-enter { animation: mdEnter var(--md-dur-long) var(--md-ease-emphasized) both; }
+@keyframes mdEnter {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* Status mapping helper (dipakai JS & template) */
+.md-status-connected { color: var(--md-sys-color-success); }
+.md-status-warning { color: var(--md-sys-color-warning); }
+.md-status-error { color: var(--md-sys-color-error); }

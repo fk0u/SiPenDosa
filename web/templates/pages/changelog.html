@@ -1,331 +1,274 @@
 {{define "content"}}
-<div class="space-y-8 max-w-4xl mx-auto py-2">
+<div class="md-col md-enter" style="max-width:720px; margin:0 auto; gap:24px; padding-top:8px;">
 
-    <!-- Header Section -->
-    <div class="space-y-2">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-mono font-bold">
-            <span>📋 OFFICIAL RELEASE HISTORY & CHANGELOG</span>
-        </div>
-        <h1 class="text-2xl md:text-3xl font-black text-white tracking-tight">Catatan Rilis & Pembaruan Sistem</h1>
-        <p class="text-xs md:text-sm text-slate-400">Dokumentasi lengkap setiap rilis, pembaruan fitur, pengerasan keamanan, dan optimasi performa SiPenDosa.</p>
-    </div>
+    <!-- ============ Header ============ -->
+    <header class="md-col" style="gap:8px;">
+        <span class="md-badge md-badge-tertiary" style="align-self:flex-start;">Riwayat rilis resmi &amp; changelog</span>
+        <h1 class="md-headline-small md-balance">Catatan rilis &amp; pembaruan sistem</h1>
+        <p class="md-body-medium md-muted md-balance">Dokumentasi lengkap setiap rilis, pembaruan fitur, pengerasan keamanan, dan optimasi performa SiPenDosa.</p>
+    </header>
 
-    <!-- Timeline Wrapper -->
-    <div class="space-y-6">
+    <!-- ============ Timeline ============ -->
+    <div class="md-col" style="gap:0;">
 
-        <!-- RELEASE v1.2.0 (CURRENT) -->
-        <div class="bezel-outer p-1 rounded-3xl relative overflow-hidden ring-1 ring-rose-500/30">
-            <div class="bezel-card rounded-[1.4rem] p-6 md:p-8 space-y-5 bg-[#0a0c12]">
-                
-                <!-- Release Header -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-600 via-rose-500 to-amber-500 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-rose-600/30">
-                            1.2.0
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <h2 class="text-lg font-bold text-white tracking-tight">SiPenDosa v1.2.0</h2>
-                                <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono font-bold uppercase">Versi Terpasang</span>
-                            </div>
-                            <span class="text-xs text-slate-400">Rilis Resmi: 09 September 2026</span>
-                        </div>
+        <!-- ============ Rilis v1.2.0 (terkini) ============ -->
+        <article class="md-col" style="gap:16px; padding:0 0 24px 24px; border-left:2px solid var(--md-sys-color-primary); position:relative;">
+            <span class="md-dot md-dot-primary" style="position:absolute; left:-6px; top:4px; width:10px; height:10px; background:var(--md-sys-color-primary);"></span>
+
+            <div class="md-row-between md-wrap" style="gap:8px;">
+                <div class="md-col" style="gap:4px;">
+                    <div class="md-row md-wrap" style="gap:8px;">
+                        <span class="md-badge md-badge-primary md-mono-sm">v1.2.0</span>
+                        <span class="md-badge md-badge-success">Versi terpasang</span>
                     </div>
-
-                    <div class="flex items-center gap-2">
-                        <button onclick="openUpdateModal()" class="btn btn-xs rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-bold border-none gap-1 shadow-md">
-                            <span>⚡ Cek Update OTA</span>
-                        </button>
-                        <a href="https://github.com/fk0u/SiPenDosa/releases/tag/v1.2.0" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-ghost text-slate-400 hover:text-white rounded-xl">
-                            GitHub ↗
-                        </a>
-                    </div>
+                    <h2 class="md-title-medium" style="margin-top:2px;">SiPenDosa v1.2.0</h2>
+                    <span class="md-body-small md-muted">Rilis resmi: 09 September 2026</span>
                 </div>
-
-                <!-- Release Items Bento -->
-                <div class="space-y-4 text-xs">
-                    
-                    <!-- Feature 1: Dynamic WhatsApp Group & Contact Picker -->
-                    <div class="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
-                        <div class="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider">
-                            <span>👥</span>
-                            <span>Dynamic WhatsApp Group & Contact Picker (Issue #2)</span>
-                        </div>
-                        <p class="text-slate-300 leading-relaxed">
-                            Otomatis memuat daftar grup WhatsApp dan kontak yang terhubung pada bot melalui WhatsMeow. Dilengkapi dropdown pemilih interaktif pada pembuatan jadwal sehingga pengguna tidak perlu lagi menyalin JID grup secara manual.
-                        </p>
-                    </div>
-
-                    <!-- Feature 2: Built-in Zero-Config Public Tunneling -->
-                    <div class="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
-                        <div class="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
-                            <span>🌐</span>
-                            <span>Zero-Config Public Tunneling (Issue #3)</span>
-                        </div>
-                        <p class="text-slate-300 leading-relaxed">
-                            Akses global remote instan via Cloudflare Quick Tunnel dengan tombol 1-klik di menu Pengaturan. Dilengkapi live status endpoint dan QR Code instan untuk membuka dashboard dari HP di jaringan internet mana pun tanpa port-forwarding.
-                        </p>
-                    </div>
-
-                    <!-- Feature 3: Public Academic Schedule Portal & iCalendar -->
-                    <div class="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
-                        <div class="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider">
-                            <span>📅</span>
-                            <span>Papan Jadwal Publik & Sinkronisasi Kalender (Issue #4)</span>
-                        </div>
-                        <p class="text-slate-300 leading-relaxed">
-                            Portal jadwal perkuliahan publik di <code class="text-rose-300">/jadwal</code> untuk mahasiswa tanpa login. Dilengkapi hitung mundur perkuliahan, filter hari, pencarian dosen/matkul, serta ekspor file <code class="text-amber-300">.ics</code> untuk Google Calendar & Apple Calendar.
-                        </p>
-                    </div>
-
-                    <!-- Feature 4: Two-Factor Authentication (2FA) & Multi-Tenant -->
-                    <div class="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
-                        <div class="flex items-center gap-2 text-cyan-400 font-bold text-xs uppercase tracking-wider">
-                            <span>🔐</span>
-                            <span>Autentikasi Dua Faktor (2FA / TOTP) & Multi-Tenant Session</span>
-                        </div>
-                        <p class="text-slate-300 leading-relaxed">
-                            Penguatan keamanan akun menggunakan TOTP Authenticator (Google Authenticator / 1Password) dengan kode pemulihan darurat, registrasi terkontrol oleh Admin, serta isolasi data kontak, jadwal, antrian, dan multi-sesi WhatsApp per pengguna.
-                        </p>
-                    </div>
-
+                <div class="md-row" style="gap:8px;">
+                    <button onclick="openUpdateModal()" class="md-btn md-btn-sm">
+                        <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        Cek update OTA
+                    </button>
+                    <a href="https://github.com/fk0u/SiPenDosa/releases/tag/v1.2.0" target="_blank" rel="noopener noreferrer" class="md-btn-text md-btn-sm">GitHub ↗</a>
                 </div>
             </div>
-        </div>
 
-        <!-- RELEASE v1.1.2 -->
-        <div class="bezel-outer p-1 rounded-3xl relative overflow-hidden border border-white/5 opacity-85">
-            <div class="bezel-card rounded-[1.4rem] p-6 md:p-8 space-y-5 bg-[#0a0c12]">
-                
-                <!-- Release Header -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 font-black text-sm">
-                            1.1.2
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <h2 class="text-lg font-bold text-white tracking-tight">SiPenDosa v1.1.2</h2>
-                            </div>
-                            <span class="text-xs text-slate-400">Rilis Resmi: 08 September 2026</span>
-                        </div>
+            <div class="md-col" style="gap:12px;">
+                <div class="md-card-outlined md-col" style="padding:16px; gap:6px;">
+                    <div class="md-row" style="gap:8px;">
+                        <span style="font-size:16px;">👥</span>
+                        <span class="md-label-large" style="color:var(--md-sys-color-primary);">Dynamic WhatsApp group &amp; contact picker (Issue #2)</span>
                     </div>
-
-                    <div class="flex items-center gap-2">
-                        <a href="https://github.com/fk0u/SiPenDosa/releases/tag/v1.1.2" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-ghost text-slate-400 hover:text-white rounded-xl">
-                            GitHub ↗
-                        </a>
-                    </div>
+                    <p class="md-body-small md-muted" style="line-height:1.6;">
+                        Otomatis memuat daftar grup WhatsApp dan kontak yang terhubung pada bot melalui WhatsMeow. Dilengkapi dropdown pemilih interaktif pada pembuatan jadwal sehingga pengguna tidak perlu lagi menyalin JID grup secara manual.
+                    </p>
                 </div>
 
-                <!-- Release Items Bento -->
-                <div class="space-y-4 text-xs">
-                    
-                    <!-- Feature 1: Android WhatsApp WebSocket Fix -->
-                    <div class="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
-                        <div class="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider">
-                            <span>⚡</span>
-                            <span>Perbaikan Krusial WhatsApp WebSocket di Android</span>
-                        </div>
-                        <p class="text-slate-300 leading-relaxed">
-                            Memperbaiki kegagalan resolusi DNS saat engine WhatsApp menghubungkan WebSocket ke server WhatsApp Web di Android melalui <strong>DNS Fallback Resolver</strong> mandiri, sinkronisasi thread-safe write mutex pada Gorilla WebSocket Hub, serta pemuatan bundel sertifikat Root CA Android.
-                        </p>
+                <div class="md-card-outlined md-col" style="padding:16px; gap:6px;">
+                    <div class="md-row" style="gap:8px;">
+                        <span style="font-size:16px;">🌐</span>
+                        <span class="md-label-large" style="color:var(--md-sys-color-tertiary);">Zero-config public tunneling (Issue #3)</span>
                     </div>
+                    <p class="md-body-small md-muted" style="line-height:1.6;">
+                        Akses global remote instan via Cloudflare Quick Tunnel dengan tombol 1-klik di menu Pengaturan. Dilengkapi live status endpoint dan QR Code instan untuk membuka dashboard dari HP di jaringan internet mana pun tanpa port-forwarding.
+                    </p>
+                </div>
 
-                    <!-- Feature 2: Mobile UI Single Dock -->
-                    <div class="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
-                        <div class="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
-                            <span>📱</span>
-                            <span>Penyempurnaan UI Mobile (Single Bottom Dock Bar)</span>
-                        </div>
-                        <p class="text-slate-300 leading-relaxed">
-                            Menghilangkan masalah bilah dock ganda (double bottom dock) dengan menghapus dock native Android dan mempertahankan dock bar responsif Web UI SiPenDosa yang elegan, ergonomis, dan berfitur lengkap.
-                        </p>
+                <div class="md-card-outlined md-col" style="padding:16px; gap:6px;">
+                    <div class="md-row" style="gap:8px;">
+                        <span style="font-size:16px;">📅</span>
+                        <span class="md-label-large" style="color:var(--md-sys-color-success);">Papan jadwal publik &amp; sinkronisasi kalender (Issue #4)</span>
                     </div>
+                    <p class="md-body-small md-muted" style="line-height:1.6;">
+                        Portal jadwal perkuliahan publik di <code style="font-family:var(--md-font-mono);font-size:12px;background:var(--md-sys-color-surface-container);padding:2px 8px;border-radius:var(--md-shape-sm);">/jadwal</code> untuk mahasiswa tanpa login. Dilengkapi hitung mundur perkuliahan, filter hari, pencarian dosen/matkul, serta ekspor file <code style="font-family:var(--md-font-mono);font-size:12px;background:var(--md-sys-color-surface-container);padding:2px 8px;border-radius:var(--md-shape-sm);">.ics</code> untuk Google Calendar &amp; Apple Calendar.
+                    </p>
+                </div>
 
-                    <!-- Feature 3: Resilient Realtime Client -->
-                    <div class="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
-                        <div class="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider">
-                            <span>🛡️</span>
-                            <span>Client Realtime Tangguh & Polling Fallback</span>
-                        </div>
-                        <p class="text-slate-300 leading-relaxed">
-                            Bootstrapping client JavaScript diperbaiki agar langsung terhubung pada WebView Android, dilengkapi sistem <em>HTTP Polling Fallback</em> otomatis saat WebSocket terputus sehingga status WhatsApp dan QR Code selalu tampil real-time.
-                        </p>
+                <div class="md-card-outlined md-col" style="padding:16px; gap:6px;">
+                    <div class="md-row" style="gap:8px;">
+                        <span style="font-size:16px;">🔐</span>
+                        <span class="md-label-large">Autentikasi dua faktor (2FA / TOTP) &amp; multi-tenant session</span>
                     </div>
-
+                    <p class="md-body-small md-muted" style="line-height:1.6;">
+                        Penguatan keamanan akun menggunakan TOTP Authenticator (Google Authenticator / 1Password) dengan kode pemulihan darurat, registrasi terkontrol oleh Admin, serta isolasi data kontak, jadwal, antrian, dan multi-sesi WhatsApp per pengguna.
+                    </p>
                 </div>
             </div>
-        </div>
+        </article>
 
-        <!-- RELEASE v1.1.1 -->
-        <div class="bezel-outer p-1 rounded-3xl relative overflow-hidden border border-white/5 opacity-85">
-            <div class="bezel-card rounded-[1.4rem] p-6 md:p-8 space-y-5 bg-[#0a0c12]">
-                
-                <!-- Release Header -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 font-black text-sm">
-                            1.1.1
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <h2 class="text-lg font-bold text-white tracking-tight">SiPenDosa v1.1.1</h2>
-                                <span class="px-2 py-0.5 rounded-full bg-white/10 text-slate-400 text-[10px] font-mono font-bold uppercase">Rilis Sebelumnya</span>
-                            </div>
-                            <span class="text-xs text-slate-400">Rilis Resmi: 07 September 2026</span>
-                        </div>
-                    </div>
+        <!-- ============ Rilis v1.1.2 ============ -->
+        <article class="md-col" style="gap:16px; padding:0 0 24px 24px; border-left:2px solid var(--md-sys-color-outline-variant); position:relative;">
+            <span class="md-dot" style="position:absolute; left:-6px; top:4px; width:10px; height:10px; background:var(--md-sys-color-outline);"></span>
 
-                    <div class="flex items-center gap-2">
-                        <button onclick="openUpdateModal()" class="btn btn-xs rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-bold border-none gap-1 shadow-md">
-                            <span>⚡ Cek Update OTA</span>
-                        </button>
-                        <a href="https://github.com/fk0u/SiPenDosa/releases/tag/v1.1.1" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-ghost text-slate-400 hover:text-white rounded-xl">
-                            GitHub ↗
-                        </a>
+            <div class="md-row-between md-wrap" style="gap:8px;">
+                <div class="md-col" style="gap:4px;">
+                    <div class="md-row md-wrap" style="gap:8px;">
+                        <span class="md-badge md-badge-neutral md-mono-sm">v1.1.2</span>
                     </div>
+                    <h2 class="md-title-medium" style="margin-top:2px;">SiPenDosa v1.1.2</h2>
+                    <span class="md-body-small md-muted">Rilis resmi: 08 September 2026</span>
                 </div>
-
-                <!-- Release Items Bento -->
-                <div class="space-y-4 text-xs">
-                    
-                    <!-- Feature 1: Automatic Update -->
-                    <div class="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
-                        <div class="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider">
-                            <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-                            ⚡ 1-Klik Automatic Update & OTA Engine
-                        </div>
-                        <p class="text-slate-300 leading-relaxed text-xs">
-                            Kini aplikasi secara otomatis mendeteksi ketersediaan rilis terbaru di GitHub dan memungkinkan pemasangan langsung dalam 1 klik tanpa unduh manual di browser:
-                        </p>
-                        <ul class="list-disc list-inside space-y-1 text-slate-400 pl-1">
-                            <li><strong class="text-slate-200">Android Package Installer Direct Hook</strong>: Mengunduh biner APK langsung ke penyimpanan aplikasi dan membuka layar pembaruan native Android via <code>ApkFileProvider</code>.</li>
-                            <li><strong class="text-slate-200">Self-Update Desktop & Server</strong>: Mendukung hot replacement binary untuk distribusi Linux, macOS CLI, Windows, dan skrip Termux.</li>
-                            <li><strong class="text-slate-200">Indikator Pembaruan Real-Time</strong>: Pulsing header badge dan kartu pembaruan sistem di halaman pengaturan.</li>
-                        </ul>
-                    </div>
-
-                    <!-- Feature 2: Native Mobile UI -->
-                    <div class="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
-                        <div class="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
-                            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                            📱 Pengalaman Antarmuka Mobile App 100% Native
-                        </div>
-                        <p class="text-slate-300 leading-relaxed text-xs">
-                            Peningkatan total pada sisi aplikasi Android agar terasa sepenuhnya seperti aplikasi mobile modern:
-                        </p>
-                        <ul class="list-disc list-inside space-y-1 text-slate-400 pl-1">
-                            <li><strong class="text-slate-200">Pembersihan Developer Top Bar</strong>: Menghapus tombol debug kasar yang memenuhi layar; digantikan dengan tampilan layar penuh yang bersih dan elegan.</li>
-                            <li><strong class="text-slate-200">Native Splash Loader</strong>: Tampilan pembuka yang mulus dengan ikon SiPenDosa yang berpendar dan transisi fade-in saat server siap.</li>
-                            <li><strong class="text-slate-200">Immersive Status & Navigation Bar</strong>: Penyelarasan warna status bar dan bilah navigasi Android ke nuansa Obsidian (#08090d).</li>
-                            <li><strong class="text-slate-200">Thumb-Friendly Bottom Bar</strong>: Navigasi bawah 5 tab dengan haptic touch feedback dan padding aman (safe-area-inset).</li>
-                        </ul>
-                    </div>
-
-                    <!-- Feature 3: Bug Fixes -->
-                    <div class="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
-                        <div class="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            🛠️ Perbaikan Bug & Optimasi Template
-                        </div>
-                        <ul class="list-disc list-inside space-y-1 text-slate-400 pl-1">
-                            <li>Memperbaiki error refleksi template Go: <code>can't evaluate field ActiveSchedules in type interface {}</code> pada halaman dashboard.</li>
-                            <li>Penambahan fallback bertingkat pada seluruh elemen statistik antarmuka.</li>
-                            <li>Peningkatan kestabilan D8 Dalvik compiler untuk Android SDK 33+.</li>
-                        </ul>
-                    </div>
+                <div class="md-row" style="gap:8px;">
+                    <a href="https://github.com/fk0u/SiPenDosa/releases/tag/v1.1.2" target="_blank" rel="noopener noreferrer" class="md-btn-text md-btn-sm">GitHub ↗</a>
                 </div>
-
             </div>
-        </div>
 
-        <!-- RELEASE v1.1.0 -->
-        <div class="bezel-outer p-1 rounded-3xl opacity-90">
-            <div class="bezel-card rounded-[1.4rem] p-6 md:p-8 space-y-5 bg-[#090b10]">
-                
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.06]">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-2xl bg-white/[0.06] border border-white/10 flex items-center justify-center text-slate-300 font-black text-sm">
-                            1.1.0
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <h2 class="text-lg font-bold text-white tracking-tight">SiPenDosa v1.1.0</h2>
-                                <span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-[10px] font-mono">Arsip Rilis</span>
-                            </div>
-                            <span class="text-xs text-slate-500">Rilis Resmi: 07 September 2026</span>
-                        </div>
+            <div class="md-col" style="gap:12px;">
+                <div class="md-card-outlined md-col" style="padding:16px; gap:6px;">
+                    <div class="md-row" style="gap:8px;">
+                        <span style="font-size:16px;">⚡</span>
+                        <span class="md-label-large" style="color:var(--md-sys-color-primary);">Perbaikan krusial WhatsApp WebSocket di Android</span>
                     </div>
-
-                    <a href="https://github.com/fk0u/SiPenDosa/releases/tag/v1.1.0" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-ghost text-slate-400 hover:text-white rounded-xl">
-                        Lihat Tag Rilis ↗
-                    </a>
+                    <p class="md-body-small md-muted" style="line-height:1.6;">
+                        Memperbaiki kegagalan resolusi DNS saat engine WhatsApp menghubungkan WebSocket ke server WhatsApp Web di Android melalui <strong>DNS Fallback Resolver</strong> mandiri, sinkronisasi thread-safe write mutex pada Gorilla WebSocket Hub, serta pemuatan bundel sertifikat Root CA Android.
+                    </p>
                 </div>
 
-                <div class="space-y-4 text-xs">
-                    <div class="p-4 rounded-2xl bg-white/[0.015] border border-white/[0.04] space-y-2">
-                        <div class="text-rose-400 font-bold text-xs uppercase tracking-wider">
-                            🔢 WhatsApp Pairing Code (Tautkan Nomor HP)
-                        </div>
-                        <p class="text-slate-400 leading-relaxed text-xs">
-                            Solusi login WhatsApp tanpa perlu memindai QR code via kamera: cukup masukkan nomor WhatsApp Anda dan terima 8 karakter kode pairing langsung di aplikasi.
-                        </p>
+                <div class="md-card-outlined md-col" style="padding:16px; gap:6px;">
+                    <div class="md-row" style="gap:8px;">
+                        <span style="font-size:16px;">📱</span>
+                        <span class="md-label-large" style="color:var(--md-sys-color-tertiary);">Penyempurnaan UI mobile (single bottom dock bar)</span>
                     </div>
-
-                    <div class="p-4 rounded-2xl bg-white/[0.015] border border-white/[0.04] space-y-2">
-                        <div class="text-amber-400 font-bold text-xs uppercase tracking-wider">
-                            🛡️ Pengerasan Keamanan OWASP Top 10
-                        </div>
-                        <p class="text-slate-400 leading-relaxed text-xs">
-                            Validasi CSRF Origin Header pada seluruh mutasi data, perlindungan BFLA pada rute administratif, rate limiter login 10 req/menit, dan pembatasan body payload proteksi DoS.
-                        </p>
-                    </div>
-
-                    <div class="p-4 rounded-2xl bg-white/[0.015] border border-white/[0.04] space-y-2">
-                        <div class="text-slate-300 font-bold text-xs uppercase tracking-wider">
-                            📱 Ekosistem Termux & Web Terminal
-                        </div>
-                        <p class="text-slate-400 leading-relaxed text-xs">
-                            Penyediaan CLI tool <code>sipen pair &lt;nomor&gt;</code> dan antarmuka konsol shell mandiri pada rute <code>/terminal</code>.
-                        </p>
-                    </div>
+                    <p class="md-body-small md-muted" style="line-height:1.6;">
+                        Menghilangkan masalah bilah dock ganda (double bottom dock) dengan menghapus dock native Android dan mempertahankan dock bar responsif Web UI SiPenDosa yang elegan, ergonomis, dan berfitur lengkap.
+                    </p>
                 </div>
 
+                <div class="md-card-outlined md-col" style="padding:16px; gap:6px;">
+                    <div class="md-row" style="gap:8px;">
+                        <span style="font-size:16px;">🛡️</span>
+                        <span class="md-label-large" style="color:var(--md-sys-color-success);">Client realtime tangguh &amp; polling fallback</span>
+                    </div>
+                    <p class="md-body-small md-muted" style="line-height:1.6;">
+                        Bootstrapping client JavaScript diperbaiki agar langsung terhubung pada WebView Android, dilengkapi sistem <em>HTTP Polling Fallback</em> otomatis saat WebSocket terputus sehingga status WhatsApp dan QR Code selalu tampil real-time.
+                    </p>
+                </div>
             </div>
-        </div>
+        </article>
 
-        <!-- RELEASE v1.0.0 -->
-        <div class="bezel-outer p-1 rounded-3xl opacity-80">
-            <div class="bezel-card rounded-[1.4rem] p-6 md:p-8 space-y-5 bg-[#08090d]">
-                
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.06]">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-2xl bg-white/[0.04] border border-white/5 flex items-center justify-center text-slate-400 font-black text-sm">
-                            1.0.0
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <h2 class="text-lg font-bold text-white tracking-tight">SiPenDosa v1.0.0</h2>
-                                <span class="px-2 py-0.5 rounded-full bg-slate-800/80 text-slate-500 text-[10px] font-mono">Fondasi Awal</span>
-                            </div>
-                            <span class="text-xs text-slate-500">Rilis Perdana: September 2026</span>
-                        </div>
+        <!-- ============ Rilis v1.1.1 ============ -->
+        <article class="md-col" style="gap:16px; padding:0 0 24px 24px; border-left:2px solid var(--md-sys-color-outline-variant); position:relative;">
+            <span class="md-dot" style="position:absolute; left:-6px; top:4px; width:10px; height:10px; background:var(--md-sys-color-outline);"></span>
+
+            <div class="md-row-between md-wrap" style="gap:8px;">
+                <div class="md-col" style="gap:4px;">
+                    <div class="md-row md-wrap" style="gap:8px;">
+                        <span class="md-badge md-badge-neutral md-mono-sm">v1.1.1</span>
+                        <span class="md-badge md-badge-neutral">Rilis sebelumnya</span>
                     </div>
-
-                    <a href="https://github.com/fk0u/SiPenDosa/releases/tag/v1.0.0" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-ghost text-slate-500 hover:text-white rounded-xl">
-                        Lihat Tag Rilis ↗
-                    </a>
+                    <h2 class="md-title-medium" style="margin-top:2px;">SiPenDosa v1.1.1</h2>
+                    <span class="md-body-small md-muted">Rilis resmi: 07 September 2026</span>
                 </div>
-
-                <div class="space-y-2 text-xs text-slate-400">
-                    <p>• Peluncuran resmi arsitektur multi-platform: Android APK/AAB, macOS DMG/PKG, Windows Setup EXE, Linux DEB & Tarball.</p>
-                    <p>• Mesin penjadwalan cerdas pengingat perkuliahan dosen dengan rentang jam etika kampus (Window Policy).</p>
-                    <p>• Antrian pesan anti-ban dengan jeda acak (*jitter*) dan integrasi kalender hari libur.</p>
+                <div class="md-row" style="gap:8px;">
+                    <button onclick="openUpdateModal()" class="md-btn md-btn-sm">
+                        <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        Cek update OTA
+                    </button>
+                    <a href="https://github.com/fk0u/SiPenDosa/releases/tag/v1.1.1" target="_blank" rel="noopener noreferrer" class="md-btn-text md-btn-sm">GitHub ↗</a>
                 </div>
-
             </div>
-        </div>
+
+            <div class="md-col" style="gap:12px;">
+                <div class="md-card-outlined md-col" style="padding:16px; gap:8px;">
+                    <div class="md-row" style="gap:8px;">
+                        <span style="font-size:16px;">⚡</span>
+                        <span class="md-label-large" style="color:var(--md-sys-color-primary);">1-klik automatic update &amp; OTA engine</span>
+                    </div>
+                    <p class="md-body-small md-muted" style="line-height:1.6;">
+                        Kini aplikasi secara otomatis mendeteksi ketersediaan rilis terbaru di GitHub dan memungkinkan pemasangan langsung dalam 1 klik tanpa unduh manual di browser:
+                    </p>
+                    <ul style="margin:0; padding-left:20px; display:flex; flex-direction:column; gap:6px; color:var(--md-sys-color-on-surface-variant);" class="md-body-small">
+                        <li><strong style="color:var(--md-sys-color-on-surface);">Android Package Installer Direct Hook</strong>: Mengunduh biner APK langsung ke penyimpanan aplikasi dan membuka layar pembaruan native Android via <code style="font-family:var(--md-font-mono);font-size:12px;background:var(--md-sys-color-surface-container);padding:2px 8px;border-radius:var(--md-shape-sm);">ApkFileProvider</code>.</li>
+                        <li><strong style="color:var(--md-sys-color-on-surface);">Self-update desktop &amp; server</strong>: Mendukung hot replacement binary untuk distribusi Linux, macOS CLI, Windows, dan skrip Termux.</li>
+                        <li><strong style="color:var(--md-sys-color-on-surface);">Indikator pembaruan real-time</strong>: Pulsing header badge dan kartu pembaruan sistem di halaman pengaturan.</li>
+                    </ul>
+                </div>
+
+                <div class="md-card-outlined md-col" style="padding:16px; gap:8px;">
+                    <div class="md-row" style="gap:8px;">
+                        <span style="font-size:16px;">📱</span>
+                        <span class="md-label-large" style="color:var(--md-sys-color-tertiary);">Pengalaman antarmuka mobile app 100% native</span>
+                    </div>
+                    <p class="md-body-small md-muted" style="line-height:1.6;">
+                        Peningkatan total pada sisi aplikasi Android agar terasa sepenuhnya seperti aplikasi mobile modern:
+                    </p>
+                    <ul style="margin:0; padding-left:20px; display:flex; flex-direction:column; gap:6px; color:var(--md-sys-color-on-surface-variant);" class="md-body-small">
+                        <li><strong style="color:var(--md-sys-color-on-surface);">Pembersihan developer top bar</strong>: Menghapus tombol debug kasar yang memenuhi layar; digantikan dengan tampilan layar penuh yang bersih dan elegan.</li>
+                        <li><strong style="color:var(--md-sys-color-on-surface);">Native splash loader</strong>: Tampilan pembuka yang mulus dengan ikon SiPenDosa yang berpendar dan transisi fade-in saat server siap.</li>
+                        <li><strong style="color:var(--md-sys-color-on-surface);">Immersive status &amp; navigation bar</strong>: Penyelarasan warna status bar dan bilah navigasi Android ke nuansa Obsidian (#08090d).</li>
+                        <li><strong style="color:var(--md-sys-color-on-surface);">Thumb-friendly bottom bar</strong>: Navigasi bawah 5 tab dengan haptic touch feedback dan padding aman (safe-area-inset).</li>
+                    </ul>
+                </div>
+
+                <div class="md-card-outlined md-col" style="padding:16px; gap:8px;">
+                    <div class="md-row" style="gap:8px;">
+                        <span style="font-size:16px;">🛠️</span>
+                        <span class="md-label-large" style="color:var(--md-sys-color-success);">Perbaikan bug &amp; optimasi template</span>
+                    </div>
+                    <ul style="margin:0; padding-left:20px; display:flex; flex-direction:column; gap:6px; color:var(--md-sys-color-on-surface-variant);" class="md-body-small">
+                        <li>Memperbaiki error refleksi template Go: <code style="font-family:var(--md-font-mono);font-size:12px;background:var(--md-sys-color-surface-container);padding:2px 8px;border-radius:var(--md-shape-sm);">can't evaluate field ActiveSchedules in type interface {}</code> pada halaman dashboard.</li>
+                        <li>Penambahan fallback bertingkat pada seluruh elemen statistik antarmuka.</li>
+                        <li>Peningkatan kestabilan D8 Dalvik compiler untuk Android SDK 33+.</li>
+                    </ul>
+                </div>
+            </div>
+        </article>
+
+        <!-- ============ Rilis v1.1.0 ============ -->
+        <article class="md-col" style="gap:16px; padding:0 0 24px 24px; border-left:2px solid var(--md-sys-color-outline-variant); position:relative;">
+            <span class="md-dot" style="position:absolute; left:-6px; top:4px; width:10px; height:10px; background:var(--md-sys-color-outline);"></span>
+
+            <div class="md-row-between md-wrap" style="gap:8px;">
+                <div class="md-col" style="gap:4px;">
+                    <div class="md-row md-wrap" style="gap:8px;">
+                        <span class="md-badge md-badge-neutral md-mono-sm">v1.1.0</span>
+                        <span class="md-badge md-badge-neutral">Arsip rilis</span>
+                    </div>
+                    <h2 class="md-title-medium" style="margin-top:2px;">SiPenDosa v1.1.0</h2>
+                    <span class="md-body-small md-muted">Rilis resmi: 07 September 2026</span>
+                </div>
+                <div class="md-row" style="gap:8px;">
+                    <a href="https://github.com/fk0u/SiPenDosa/releases/tag/v1.1.0" target="_blank" rel="noopener noreferrer" class="md-btn-text md-btn-sm">Lihat tag rilis ↗</a>
+                </div>
+            </div>
+
+            <div class="md-col" style="gap:12px;">
+                <div class="md-card-outlined md-col" style="padding:16px; gap:6px;">
+                    <div class="md-row" style="gap:8px;">
+                        <span style="font-size:16px;">🔢</span>
+                        <span class="md-label-large" style="color:var(--md-sys-color-primary);">WhatsApp pairing code (tautkan nomor HP)</span>
+                    </div>
+                    <p class="md-body-small md-muted" style="line-height:1.6;">
+                        Solusi login WhatsApp tanpa perlu memindai QR code via kamera: cukup masukkan nomor WhatsApp Anda dan terima 8 karakter kode pairing langsung di aplikasi.
+                    </p>
+                </div>
+
+                <div class="md-card-outlined md-col" style="padding:16px; gap:6px;">
+                    <div class="md-row" style="gap:8px;">
+                        <span style="font-size:16px;">🛡️</span>
+                        <span class="md-label-large" style="color:var(--md-sys-color-tertiary);">Pengerasan keamanan OWASP Top 10</span>
+                    </div>
+                    <p class="md-body-small md-muted" style="line-height:1.6;">
+                        Validasi CSRF Origin Header pada seluruh mutasi data, perlindungan BFLA pada rute administratif, rate limiter login 10 req/menit, dan pembatasan body payload proteksi DoS.
+                    </p>
+                </div>
+
+                <div class="md-card-outlined md-col" style="padding:16px; gap:6px;">
+                    <div class="md-row" style="gap:8px;">
+                        <span style="font-size:16px;">📱</span>
+                        <span class="md-label-large">Ekosistem Termux &amp; web terminal</span>
+                    </div>
+                    <p class="md-body-small md-muted" style="line-height:1.6;">
+                        Penyediaan CLI tool <code style="font-family:var(--md-font-mono);font-size:12px;background:var(--md-sys-color-surface-container);padding:2px 8px;border-radius:var(--md-shape-sm);">sipen pair &lt;nomor&gt;</code> dan antarmuka konsol shell mandiri pada rute <code style="font-family:var(--md-font-mono);font-size:12px;background:var(--md-sys-color-surface-container);padding:2px 8px;border-radius:var(--md-shape-sm);">/terminal</code>.
+                    </p>
+                </div>
+            </div>
+        </article>
+
+        <!-- ============ Rilis v1.0.0 ============ -->
+        <article class="md-col" style="gap:16px; padding:0 0 8px 24px; border-left:2px solid transparent; position:relative;">
+            <span class="md-dot" style="position:absolute; left:-6px; top:4px; width:10px; height:10px; background:var(--md-sys-color-outline-variant);"></span>
+
+            <div class="md-row-between md-wrap" style="gap:8px;">
+                <div class="md-col" style="gap:4px;">
+                    <div class="md-row md-wrap" style="gap:8px;">
+                        <span class="md-badge md-badge-neutral md-mono-sm">v1.0.0</span>
+                        <span class="md-badge md-badge-neutral">Fondasi awal</span>
+                    </div>
+                    <h2 class="md-title-medium" style="margin-top:2px;">SiPenDosa v1.0.0</h2>
+                    <span class="md-body-small md-muted">Rilis perdana: September 2026</span>
+                </div>
+                <div class="md-row" style="gap:8px;">
+                    <a href="https://github.com/fk0u/SiPenDosa/releases/tag/v1.0.0" target="_blank" rel="noopener noreferrer" class="md-btn-text md-btn-sm">Lihat tag rilis ↗</a>
+                </div>
+            </div>
+
+            <ul style="margin:0; padding-left:20px; display:flex; flex-direction:column; gap:6px; color:var(--md-sys-color-on-surface-variant);" class="md-body-small">
+                <li>Peluncuran resmi arsitektur multi-platform: Android APK/AAB, macOS DMG/PKG, Windows Setup EXE, Linux DEB &amp; Tarball.</li>
+                <li>Mesin penjadwalan cerdas pengingat perkuliahan dosen dengan rentang jam etika kampus (Window Policy).</li>
+                <li>Antrian pesan anti-ban dengan jeda acak (*jitter*) dan integrasi kalender hari libur.</li>
+            </ul>
+        </article>
 
     </div>
 

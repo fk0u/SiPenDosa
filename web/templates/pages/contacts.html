@@ -1,219 +1,238 @@
 {{define "content"}}
-<div class="space-y-6">
+<div class="md-col md-enter" style="gap:24px;">
 
     <!-- Header Section -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div class="space-y-1">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/25 text-[10px] uppercase tracking-[0.2em] font-semibold text-rose-400">
-                Direktori Kontak
-            </div>
-            <h2 class="text-2xl font-black text-white tracking-tight">Dosen & Kontak Tujuan</h2>
-            <p class="text-xs text-slate-400">Kelola nomor telepon dosen pengampu, ketua tingkat (komti), mahasiswa, atau grup WhatsApp kelas.</p>
+    <div class="md-row-between md-wrap" style="align-items:flex-start; gap:16px;">
+        <div class="md-col" style="gap:4px; max-width:640px;">
+            <span class="md-badge md-badge-primary" style="align-self:flex-start;">Direktori kontak</span>
+            <h2 class="md-headline-small md-balance" style="margin-top:8px;">Dosen &amp; kontak tujuan</h2>
+            <p class="md-body-small md-muted md-balance">Kelola nomor telepon dosen pengampu, ketua tingkat (komti), mahasiswa, atau grup WhatsApp kelas.</p>
         </div>
-        <button onclick="modal_add_contact.showModal()" class="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs shadow-lg shadow-rose-600/25 transition-all duration-200 active:scale-[0.98] self-start sm:self-auto">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-            <span>Tambah Kontak Baru</span>
+        <button onclick="modal_add_contact.showModal()" class="md-btn">
+            <svg style="width:18px;height:18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            Tambah kontak baru
         </button>
     </div>
 
-    <!-- Filter Type Pills -->
-    <div class="flex flex-wrap gap-2 pt-1">
-        <a href="/contacts" class="px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 {{if eq .Data.FilterType ""}}bg-rose-600 text-white shadow-sm shadow-rose-600/30{{else}}bg-white/[0.03] text-slate-400 hover:text-white border border-white/5{{end}}">
-            Semua Kontak
+    <!-- Filter Type Chips -->
+    <div class="md-row md-wrap">
+        <a href="/contacts" class="md-chip {{if eq .Data.FilterType ""}}md-chip-active{{end}}">
+            Semua kontak
         </a>
-        <a href="/contacts?type=dosen" class="px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 {{if eq .Data.FilterType "dosen"}}bg-rose-600 text-white shadow-sm shadow-rose-600/30{{else}}bg-white/[0.03] text-slate-400 hover:text-white border border-white/5{{end}}">
+        <a href="/contacts?type=dosen" class="md-chip {{if eq .Data.FilterType "dosen"}}md-chip-active{{end}}">
             Dosen
         </a>
-        <a href="/contacts?type=komti" class="px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 {{if eq .Data.FilterType "komti"}}bg-rose-600 text-white shadow-sm shadow-rose-600/30{{else}}bg-white/[0.03] text-slate-400 hover:text-white border border-white/5{{end}}">
-            Ketua Tingkat (Komti)
+        <a href="/contacts?type=komti" class="md-chip {{if eq .Data.FilterType "komti"}}md-chip-active{{end}}">
+            Ketua tingkat (komti)
         </a>
-        <a href="/contacts?type=mahasiswa" class="px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 {{if eq .Data.FilterType "mahasiswa"}}bg-rose-600 text-white shadow-sm shadow-rose-600/30{{else}}bg-white/[0.03] text-slate-400 hover:text-white border border-white/5{{end}}">
+        <a href="/contacts?type=mahasiswa" class="md-chip {{if eq .Data.FilterType "mahasiswa"}}md-chip-active{{end}}">
             Mahasiswa
         </a>
-        <a href="/contacts?type=group" class="px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 {{if eq .Data.FilterType "group"}}bg-rose-600 text-white shadow-sm shadow-rose-600/30{{else}}bg-white/[0.03] text-slate-400 hover:text-white border border-white/5{{end}}">
+        <a href="/contacts?type=group" class="md-chip {{if eq .Data.FilterType "group"}}md-chip-active{{end}}">
             Grup WhatsApp
         </a>
     </div>
 
-    <!-- Contacts Table Card (Double-Bezel) -->
-    <div class="rounded-[2rem] p-1 bezel-outer">
-        <div class="bezel-card rounded-[calc(2rem-0.25rem)] overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="table table-sm md:table-md w-full">
-                    <thead>
-                        <tr class="text-[11px] uppercase tracking-wider font-bold text-slate-500 border-b border-white/[0.06] bg-black/20">
-                            <th class="py-3.5 px-4">Nama Kontak</th>
-                            <th class="py-3.5 px-4">Nomor WhatsApp / JID</th>
-                            <th class="py-3.5 px-4">Kategori</th>
-                            <th class="py-3.5 px-4">NIM / Identitas</th>
-                            <th class="py-3.5 px-4">Catatan</th>
-                            <th class="py-3.5 px-4 text-right">Tindakan</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-white/[0.04]">
-                        {{if .Data.Contacts}}
-                        {{range .Data.Contacts}}
-                        <tr class="hover:bg-white/[0.02] transition-colors duration-150">
-                            <td class="py-3.5 px-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-600/30 to-amber-500/30 border border-rose-500/30 flex items-center justify-center text-xs font-bold text-rose-300 uppercase shrink-0">
-                                        {{slice .Name 0 1}}
-                                    </div>
-                                    <span class="font-bold text-white text-sm tracking-tight">{{.Name}}</span>
-                                </div>
-                            </td>
-                            <td class="py-3.5 px-4 font-mono text-xs text-rose-300 whitespace-nowrap">
-                                {{.Phone}}
-                            </td>
-                            <td class="py-3.5 px-4 whitespace-nowrap">
-                                {{if eq .ContactType "dosen"}}
-                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-500/15 text-rose-400 border border-rose-500/30">Dosen</span>
-                                {{else if eq .ContactType "komti"}}
-                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/30">Komti</span>
-                                {{else if eq .ContactType "group"}}
-                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/30">Grup WA</span>
-                                {{else}}
-                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-500/15 text-slate-400 border border-slate-500/30">Mahasiswa</span>
-                                {{end}}
-                            </td>
-                            <td class="py-3.5 px-4 text-xs font-mono text-slate-400">
-                                {{if .NIM}}{{.NIM}}{{else}}<span class="text-slate-600">-</span>{{end}}
-                            </td>
-                            <td class="py-3.5 px-4 text-xs text-slate-400 max-w-xs truncate">
-                                {{if .Notes}}{{.Notes}}{{else}}<span class="text-slate-600 italic">-</span>{{end}}
-                            </td>
-                            <td class="py-3.5 px-4 text-right whitespace-nowrap space-x-1">
+    <!-- Contacts Table -->
+    <section class="md-card-outlined" style="padding:0; overflow:hidden;">
+        <div class="md-table-wrap">
+            <table class="md-table">
+                <thead>
+                    <tr>
+                        <th>Nama kontak</th>
+                        <th>Nomor WhatsApp / JID</th>
+                        <th>Kategori</th>
+                        <th>NIM / identitas</th>
+                        <th>Catatan</th>
+                        <th style="text-align:right;">Tindakan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{if .Data.Contacts}}
+                    {{range .Data.Contacts}}
+                    <tr>
+                        <td>
+                            <div class="md-row" style="gap:12px;">
+                                <span class="md-list-item-leading" style="width:36px; height:36px; font-size:13px;">{{slice .Name 0 1}}</span>
+                                <span class="md-title-small">{{.Name}}</span>
+                            </div>
+                        </td>
+                        <td class="md-mono md-body-small" style="color:var(--md-sys-color-primary); white-space:nowrap;">
+                            {{.Phone}}
+                        </td>
+                        <td style="white-space:nowrap;">
+                            {{if eq .ContactType "dosen"}}
+                            <span class="md-badge md-badge-primary">Dosen</span>
+                            {{else if eq .ContactType "komti"}}
+                            <span class="md-badge md-badge-warning">Komti</span>
+                            {{else if eq .ContactType "group"}}
+                            <span class="md-badge md-badge-tertiary">Grup WA</span>
+                            {{else}}
+                            <span class="md-badge md-badge-neutral">Mahasiswa</span>
+                            {{end}}
+                        </td>
+                        <td class="md-mono md-body-small md-muted">
+                            {{if .NIM}}{{.NIM}}{{else}}<span>-</span>{{end}}
+                        </td>
+                        <td class="md-body-small md-muted md-truncate" style="max-width:240px;">
+                            {{if .Notes}}{{.Notes}}{{else}}<span style="font-style:italic;">-</span>{{end}}
+                        </td>
+                        <td style="text-align:right; white-space:nowrap;">
+                            <div class="md-row md-gap-sm" style="justify-content:flex-end;">
                                 <button onclick="openEditContact('{{.ID}}', '{{.Name}}', '{{.Phone}}', '{{.ContactType}}', '{{.NIM}}', '{{.Email}}', '{{.Notes}}')"
-                                        class="btn btn-xs btn-ghost text-slate-400 hover:text-white rounded-lg">
+                                        class="md-btn-text md-btn-sm">
                                     Edit
                                 </button>
                                 <form action="/contacts/{{.ID}}/delete" method="POST" class="inline" onsubmit="return confirm('Hapus kontak {{.Name}}?')">
-                                    <button type="submit" class="btn btn-xs btn-ghost text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg">
+                                    <button type="submit" class="md-btn-text md-btn-sm" style="color:var(--md-sys-color-error);">
                                         Hapus
                                     </button>
                                 </form>
-                            </td>
-                        </tr>
-                        {{end}}
-                        {{else}}
-                        <tr>
-                            <td colspan="6" class="text-center py-12 text-xs text-slate-500 italic">
-                                Belum ada kontak yang tersimpan. Klik "Tambah Kontak Baru" untuk memasukkan data dosen atau komti.
-                            </td>
-                        </tr>
-                        {{end}}
-                    </tbody>
-                </table>
-            </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {{end}}
+                    {{else}}
+                    <tr>
+                        <td colspan="6" style="padding:0;">
+                            <div class="md-empty md-body-small">
+                                <svg fill="none" stroke="currentColor" stroke-width="1.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                Belum ada kontak yang tersimpan. Klik "Tambah kontak baru" untuk memasukkan data dosen atau komti.
+                            </div>
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
         </div>
-    </div>
+    </section>
 
 </div>
 
 <!-- Modal Tambah Kontak -->
-<dialog id="modal_add_contact" class="modal">
-    <div class="modal-box bg-slate-950 border border-white/10 max-w-md p-6 rounded-3xl shadow-2xl space-y-4">
-        <div class="space-y-1">
-            <h3 class="font-bold text-lg text-white">Tambah Kontak Baru</h3>
-            <p class="text-xs text-slate-400">Pastikan nomor ponsel aktif di WhatsApp</p>
+<dialog id="modal_add_contact" class="md-dialog" style="width:min(92vw, 448px);">
+    <div class="md-dialog-header md-row-between">
+        <div>
+            <h3 class="md-title-large">Tambah kontak baru</h3>
+            <p class="md-body-small" style="color:var(--md-sys-color-on-surface-variant);">Pastikan nomor ponsel aktif di WhatsApp</p>
         </div>
+        <form method="dialog"><button class="md-icon-btn" aria-label="Tutup">✕</button></form>
+    </div>
 
-        <form action="/contacts/create" method="POST" class="space-y-3.5 text-xs">
-            <div class="space-y-1">
-                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Nama Lengkap / Dosen / Grup</label>
-                <input type="text" name="name" required placeholder="Contoh: Dr. Ir. Budi Santoso, M.Kom"
-                       class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white text-xs" />
-            </div>
-
-            <div class="space-y-1">
-                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Nomor Telepon / WhatsApp ID</label>
-                <input type="text" name="phone" required placeholder="Contoh: 081234567890 atau 6281234567890"
-                       class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white font-mono text-xs" />
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <div class="space-y-1">
-                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Kategori</label>
-                    <select name="contact_type" class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white text-xs">
-                        <option value="dosen">Dosen</option>
-                        <option value="komti">Ketua Tingkat (Komti)</option>
-                        <option value="mahasiswa">Mahasiswa</option>
-                        <option value="group">Grup WhatsApp</option>
-                    </select>
+    <div class="md-dialog-body">
+        <form action="/contacts/create" method="POST" class="md-col" style="gap:16px; padding-bottom:8px;">
+            <div class="md-field">
+                <div class="md-field-box">
+                    <input type="text" name="name" required placeholder=" " />
+                    <label>Nama lengkap / dosen / grup</label>
                 </div>
-                <div class="space-y-1">
-                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">NIM / NIP</label>
-                    <input type="text" name="nim" placeholder="Contoh: 19850101..."
-                           class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white font-mono text-xs" />
+                <span class="md-field-support">Contoh: Dr. Ir. Budi Santoso, M.Kom</span>
+            </div>
+
+            <div class="md-field">
+                <div class="md-field-box">
+                    <input type="text" name="phone" required placeholder=" " class="md-mono" />
+                    <label>Nomor telepon / WhatsApp ID</label>
+                </div>
+                <span class="md-field-support">Contoh: 081234567890 atau 6281234567890</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px;">
+                <div class="md-field">
+                    <div class="md-field-box">
+                        <select name="contact_type">
+                            <option value="dosen">Dosen</option>
+                            <option value="komti">Ketua Tingkat (Komti)</option>
+                            <option value="mahasiswa">Mahasiswa</option>
+                            <option value="group">Grup WhatsApp</option>
+                        </select>
+                        <label>Kategori</label>
+                    </div>
+                </div>
+                <div class="md-field">
+                    <div class="md-field-box">
+                        <input type="text" name="nim" placeholder=" " class="md-mono" />
+                        <label>NIM / NIP</label>
+                    </div>
+                    <span class="md-field-support">Contoh: 19850101...</span>
                 </div>
             </div>
 
-            <div class="space-y-1">
-                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Catatan Khusus</label>
-                <textarea name="notes" rows="2" placeholder="Contoh: Dosen pengampu Pemrograman Lanjut kelas A"
-                          class="w-full px-3.5 py-2 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white text-xs leading-relaxed"></textarea>
+            <div class="md-field">
+                <div class="md-field-box">
+                    <textarea name="notes" rows="2" placeholder=" "></textarea>
+                    <label>Catatan khusus</label>
+                </div>
+                <span class="md-field-support">Contoh: Dosen pengampu Pemrograman Lanjut kelas A</span>
             </div>
 
-            <div class="modal-action justify-between pt-2">
-                <button type="button" onclick="modal_add_contact.close()" class="btn btn-xs btn-ghost rounded-full text-slate-400">Batal</button>
-                <button type="submit" class="btn btn-xs rounded-full bg-rose-600 hover:bg-rose-500 text-white font-semibold px-4">Simpan Kontak</button>
+            <div class="md-row-between md-wrap" style="padding-top:4px;">
+                <button type="button" onclick="modal_add_contact.close()" class="md-btn-text">Batal</button>
+                <button type="submit" class="md-btn">Simpan kontak</button>
             </div>
         </form>
     </div>
-    <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
 
 <!-- Modal Edit Kontak -->
-<dialog id="modal_edit_contact" class="modal">
-    <div class="modal-box bg-slate-950 border border-white/10 max-w-md p-6 rounded-3xl shadow-2xl space-y-4">
-        <div class="space-y-1">
-            <h3 class="font-bold text-lg text-white">Edit Data Kontak</h3>
-            <p class="text-xs text-slate-400">Perbarui data dosen atau perwakilan kelas</p>
+<dialog id="modal_edit_contact" class="md-dialog" style="width:min(92vw, 448px);">
+    <div class="md-dialog-header md-row-between">
+        <div>
+            <h3 class="md-title-large">Edit data kontak</h3>
+            <p class="md-body-small" style="color:var(--md-sys-color-on-surface-variant);">Perbarui data dosen atau perwakilan kelas</p>
         </div>
+        <form method="dialog"><button class="md-icon-btn" aria-label="Tutup">✕</button></form>
+    </div>
 
-        <form id="form_edit_contact" action="" method="POST" class="space-y-3.5 text-xs">
-            <div class="space-y-1">
-                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Nama Lengkap / Dosen / Grup</label>
-                <input type="text" id="edit_name" name="name" required
-                       class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white text-xs" />
-            </div>
-
-            <div class="space-y-1">
-                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Nomor Telepon / WhatsApp ID</label>
-                <input type="text" id="edit_phone" name="phone" required
-                       class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white font-mono text-xs" />
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <div class="space-y-1">
-                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Kategori</label>
-                    <select id="edit_contact_type" name="contact_type" class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white text-xs">
-                        <option value="dosen">Dosen</option>
-                        <option value="komti">Ketua Tingkat (Komti)</option>
-                        <option value="mahasiswa">Mahasiswa</option>
-                        <option value="group">Grup WhatsApp</option>
-                    </select>
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">NIM / NIP</label>
-                    <input type="text" id="edit_nim" name="nim"
-                           class="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white font-mono text-xs" />
+    <div class="md-dialog-body">
+        <form id="form_edit_contact" action="" method="POST" class="md-col" style="gap:16px; padding-bottom:8px;">
+            <div class="md-field">
+                <div class="md-field-box">
+                    <input type="text" id="edit_name" name="name" required placeholder=" " />
+                    <label>Nama lengkap / dosen / grup</label>
                 </div>
             </div>
 
-            <div class="space-y-1">
-                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Catatan Khusus</label>
-                <textarea id="edit_notes" name="notes" rows="2"
-                          class="w-full px-3.5 py-2 rounded-xl bg-black/40 border border-white/10 focus:border-rose-500 focus:outline-none text-white text-xs leading-relaxed"></textarea>
+            <div class="md-field">
+                <div class="md-field-box">
+                    <input type="text" id="edit_phone" name="phone" required placeholder=" " class="md-mono" />
+                    <label>Nomor telepon / WhatsApp ID</label>
+                </div>
             </div>
 
-            <div class="modal-action justify-between pt-2">
-                <button type="button" onclick="modal_edit_contact.close()" class="btn btn-xs btn-ghost rounded-full text-slate-400">Batal</button>
-                <button type="submit" class="btn btn-xs rounded-full bg-rose-600 hover:bg-rose-500 text-white font-semibold px-4">Perbarui Data</button>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px;">
+                <div class="md-field">
+                    <div class="md-field-box">
+                        <select id="edit_contact_type" name="contact_type">
+                            <option value="dosen">Dosen</option>
+                            <option value="komti">Ketua Tingkat (Komti)</option>
+                            <option value="mahasiswa">Mahasiswa</option>
+                            <option value="group">Grup WhatsApp</option>
+                        </select>
+                        <label>Kategori</label>
+                    </div>
+                </div>
+                <div class="md-field">
+                    <div class="md-field-box">
+                        <input type="text" id="edit_nim" name="nim" placeholder=" " class="md-mono" />
+                        <label>NIM / NIP</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="md-field">
+                <div class="md-field-box">
+                    <textarea id="edit_notes" name="notes" rows="2" placeholder=" "></textarea>
+                    <label class="md-field-static">Catatan khusus</label>
+                </div>
+            </div>
+
+            <div class="md-row-between md-wrap" style="padding-top:4px;">
+                <button type="button" onclick="modal_edit_contact.close()" class="md-btn-text">Batal</button>
+                <button type="submit" class="md-btn">Perbarui data</button>
             </div>
         </form>
     </div>
-    <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
 
 <script>

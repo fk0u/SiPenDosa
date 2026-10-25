@@ -75,19 +75,19 @@ func NewViewRenderer(templateFS fs.FS, diskDir string) *ViewRenderer {
 			"statusBadge": func(status string) template.HTML {
 				switch status {
 				case "sent":
-					return `<span class="badge badge-success badge-sm gap-1">Terkirim</span>`
+					return `<span class="md-badge md-badge-success">Terkirim</span>`
 				case "pending":
-					return `<span class="badge badge-warning badge-sm gap-1">Menunggu</span>`
+					return `<span class="md-badge md-badge-warning">Menunggu</span>`
 				case "processing":
-					return `<span class="badge badge-info badge-sm gap-1 animate-pulse">Memproses</span>`
+					return `<span class="md-badge md-badge-tertiary">Memproses</span>`
 				case "failed":
-					return `<span class="badge badge-error badge-sm gap-1">Gagal</span>`
+					return `<span class="md-badge md-badge-error">Gagal</span>`
 				case "cancelled":
-					return `<span class="badge badge-neutral badge-sm gap-1">Dibatalkan</span>`
+					return `<span class="md-badge md-badge-neutral">Dibatalkan</span>`
 				case "dry_run":
-					return `<span class="badge badge-secondary badge-sm gap-1">Dry Run</span>`
+					return `<span class="md-badge md-badge-secondary">Dry run</span>`
 				default:
-					return template.HTML(fmt.Sprintf(`<span class="badge badge-ghost badge-sm">%s</span>`, status))
+					return template.HTML(fmt.Sprintf(`<span class="md-badge md-badge-neutral">%s</span>`, status))
 				}
 			},
 			"statVal": func(stats interface{}, field string) interface{} {
