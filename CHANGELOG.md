@@ -4,6 +4,36 @@ Semua perubahan penting pada proyek **SiPenDosa** didokumentasikan di sini denga
 
 ---
 
+## [1.3.0] — 2026-10-25
+
+### 🌟 Fitur Baru
+* **Akun Kelas (Multi-Tenant):**
+  * Peran baru `kelas` untuk penanggung jawab mata kuliah — kini default akun yang dibuat administrator.
+  * Setiap akun kelas memiliki **sesi WhatsApp terpisah** (`session/users/user_<id>.db`): pairing bisa memakai nomor pribadi PJ **atau** nomor WA khusus milik kelas.
+  * Data kontak, jadwal, template, dan antrian sepenuhnya terisolasi antar akun.
+* **Endpoint Token Login Companion:** `POST /api/auth/login` menukar username/password menjadi bearer token untuk aplikasi mobile.
+* **Mobile Companion Authenticating:** Flutter (`ApiService.login` + token persist), iOS (session cookie WebView + WS token), dan Android (cookie sesi untuk pair-phone) mengikuti skema autentikasi baru.
+
+### 🔒 Keamanan (Security Audit Fixes)
+* **IDOR Diperbaiki:** seluruh mutasi kontak/jadwal/template/antrian kini di-scope `user_id` pada store layer dan divalidasi kepemilikannya di handler — akun kelas tidak dapat mengubah data kelas lain.
+* **WebSocket & Mobile API Wajib Autentikasi:** `/ws`, `/api/ws`, dan seluruh endpoint `/api/*` companion tidak lagi terbuka; QR code dan pairing code tidak lagi broadcast ke klien tanpa sesi. Origin check WebSocket dikunci same-origin.
+* **Bypass Pair-Phone Ditambal:** `middleware.RealIP` dihapus (X-Forwarded-For tidak lagi dipercaya dari koneksi langsung), rate limiter hanya menerima XFF dari koneksi loopback (entri terakhir), dan saat tunnel publik aktif endpoint loopback menuntut sesi login.
+* **Self-Update Diperkuat:** hanya superadmin, URL unduhan dikunci ke host GitHub resmi (HTTPS), mencegah RCE via `download_url` arbitrer.
+* **Info Leak:** `/healthz` tidak lagi membocorkan nomor WhatsApp; `SESSION_SECRET` hardcoded dihapus dari konfigurasi; cookie sesi mendukung flag `Secure` (`COOKIE_SECURE=true`).
+* **Regresi Test Keamanan:** test baru untuk auth mobile API, token login, isolasi antar akun, dan kebocoran healthz.
+
+### 🐛 Perbaikan & Keandalan
+* Pembersihan otomatis sesi & tantangan 2FA kedaluwarsa setiap 24 jam (sebelumnya menumpuk selamanya).
+* Error store pada update/hapus kontak & jadwal tidak lagi disembunyikan sebagai toast "sukses".
+* Preview template di-escape HTML (mencegah XSS refleksi).
+* Repo hygiene: untrack `.DS_Store`, artefak kompilasi, dan berkas catatan agent yang memuat kredensial.
+
+### ⚠️ Catatan Migrasi
+* Aplikasi companion lama yang memanggil `/api/*` tanpa token akan menerima HTTP 401 — perbarui ke versi terbaru dan login melalui `POST /api/auth/login`.
+* Set `COOKIE_SECURE=true` pada `.env` bila dashboard disajikan lewat HTTPS/tunnel.
+
+---
+
 ## [1.2.1] — 2026-09-25
 
 ### 🚀 Peningkatan Utama & Fitur Baru
