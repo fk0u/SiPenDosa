@@ -160,6 +160,7 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 		protected.Route("/schedules", func(sr chi.Router) {
 			sr.Get("/", h.SchedulesHandler)
 			sr.Post("/create", h.CreateScheduleHandler)
+			sr.Post("/import", h.ImportSchedulesHandler)
 			sr.Post("/{id}/update", h.UpdateScheduleHandler)
 			sr.Post("/{id}/delete", h.DeleteScheduleHandler)
 			sr.Post("/{id}/toggle", h.ToggleScheduleHandler)

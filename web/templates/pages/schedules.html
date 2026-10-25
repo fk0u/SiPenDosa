@@ -12,8 +12,12 @@
                 <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                 Portal publik ↗
             </a>
+            <button onclick="modal_import_csv.showModal()" class="md-btn-tonal md-btn-sm">
+                <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                Import CSV
+            </button>
             <button onclick="modal_add_schedule.showModal()" class="md-btn md-btn-sm">
-                <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
                 Tambah jadwal baru
             </button>
         </div>
@@ -118,6 +122,43 @@
 </div>
 
 <!-- Modal Tambah Jadwal -->
+<!-- Modal Import Jadwal CSV -->
+<dialog id="modal_import_csv" class="md-dialog" style="width:min(92vw, 520px);">
+    <div class="md-dialog-header md-row-between">
+        <div>
+            <h3 class="md-title-large">Import jadwal dari CSV</h3>
+            <p class="md-body-small" style="color:var(--md-sys-color-on-surface-variant);">Isi satu baris per sesi kuliah — cocok untuk input jadwal seluruh semester sekaligus.</p>
+        </div>
+        <form method="dialog"><button class="md-icon-btn" aria-label="Tutup">✕</button></form>
+    </div>
+
+    <form action="/schedules/import" method="POST" enctype="multipart/form-data" class="md-dialog-body md-col" style="gap:16px;">
+        <div class="md-card-outlined md-stack" style="padding:14px;gap:8px;">
+            <div class="md-label-medium" style="font-weight:600;">Format kolom (baris pertama = header):</div>
+            <div class="md-code" style="user-select:all;">hari,matkul,jam_mulai,jam_selesai,dosen,telepon,ruangan,mode
+Senin,Algoritma,08:00,09:40,Dr. Budi Santoso,081234567890,Lab 1,H-1
+Selasa,Basis Data,10:10,12:40,Prof. Sari,081298765432,R.302,H-1</div>
+            <div class="md-body-small md-muted">
+                <strong>hari</strong>: Senin–Minggu atau angka 0–6 · <strong>mode</strong>: H-1 (ingatkan sehari sebelum) atau H-0 (hari-H) ·
+                <strong>dosen/telepon</strong>: otomatis tertaut bila cocok dengan kontak Anda · jam kirim default 20:00 (H-1) atau 06:30 (H-0).
+            </div>
+        </div>
+
+        <div class="md-field">
+            <div class="md-field-box" style="padding-top:0;">
+                <input type="file" name="csv_file" accept=".csv,text/csv" required style="padding-top:16px;" />
+                <label class="md-field-static">Berkas CSV</label>
+            </div>
+            <span class="md-field-support">Pilih berkas .csv hasil ekspor dari Excel/Google Sheets.</span>
+        </div>
+
+        <div class="md-row-between" style="padding-bottom:8px;">
+            <button type="button" onclick="modal_import_csv.close()" class="md-btn-text">Batal</button>
+            <button type="submit" class="md-btn">Import jadwal</button>
+        </div>
+    </form>
+</dialog>
+
 <dialog id="modal_add_schedule" class="md-dialog" style="width:min(92vw, 640px);">
     <div class="md-dialog-header md-row-between">
         <div>

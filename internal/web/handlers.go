@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"database/sql"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"html"
@@ -836,6 +837,190 @@ func (h *Handlers) DeleteScheduleHandler(w http.ResponseWriter, r *http.Request)
 		h.hub.BroadcastToast("info", "Jadwal telah dihapus.")
 	}
 	http.Redirect(w, r, "/schedules", http.StatusSeeOther)
+}
+
+
+// ImportSchedulesHandler menerima unggahan CSV jadwal dan membuatnya
+// sekaligus untuk akun yang sedang login. Format kolom (header wajib):
+// hari,matkul,jam_mulai,jam_selesai,dosen,telepon,ruangan,mode
+func (h *Handlers) ImportSchedulesHandler(w http.ResponseWriter, r *http.Request) {
+	userID := h.getActiveUserID(r)
+
+	file, _, err := r.FormFile("csv_file")
+	if err != nil {
+		h.hub.BroadcastToast("error", "Berkas CSV tidak terbaca. Pastikan memilih berkas terlebih dahulu.")
+		http.Redirect(w, r, "/schedules", http.StatusSeeOther)
+		return
+	}
+	defer file.Close()
+
+	reader := csv.NewReader(file)
+	reader.TrimLeadingSpace = true
+	reader.FieldsPerRecord = -1 // baris boleh bervariasi; validasi manual
+
+	records, err := reader.ReadAll()
+	if err != nil {
+		h.hub.BroadcastToast("error", "Format CSV tidak valid: "+err.Error())
+		http.Redirect(w, r, "/schedules", http.StatusSeeOther)
+		return
+	}
+	if len(records) < 2 {
+		h.hub.BroadcastToast("error", "CSV kosong — sertakan baris header dan minimal satu jadwal.")
+		http.Redirect(w, r, "/schedules", http.StatusSeeOther)
+		return
+	}
+
+	// Peta header -> index kolom (fleksibel terhadap urutan)
+	col := map[string]int{}
+	for i, name := range records[0] {
+		col[strings.ToLower(strings.TrimSpace(name))] = i
+	}
+	get := func(row []string, key string) string {
+		idx, ok := col[key]
+		if !ok || idx >= len(row) {
+			return ""
+		}
+		return strings.TrimSpace(row[idx])
+	}
+
+	// Muat kontak user sekali untuk pencocokan dosen/telepon
+	contacts, _ := h.store.ListContacts(userID, "")
+	byPhone := map[string]store.Contact{}
+	byName := map[string]store.Contact{}
+	for _, c := range contacts {
+		if c.Phone != "" {
+			byPhone[normalizePhoneCSV(c.Phone)] = c
+		}
+		byName[strings.ToLower(c.Name)] = c
+	}
+
+	dayIndex := map[string]int{
+		"minggu": 0, "senin": 1, "selasa": 2, "rabu": 3,
+		"kamis": 4, "jumat": 5, "jum'at": 5, "sabtu": 6,
+	}
+
+	created, skipped := 0, 0
+	var rowErrors []string
+	for lineNo, row := range records[1:] {
+		lineNum := lineNo + 2 // +1 header, +1 base-1
+		dayRaw := strings.ToLower(get(row, "hari"))
+		day, ok := dayIndex[dayRaw]
+		if !ok {
+			if n, err := strconv.Atoi(dayRaw); err == nil && n >= 0 && n <= 6 {
+				day = n
+				ok = true
+			}
+		}
+		matkul := get(row, "matkul")
+		start := get(row, "jam_mulai")
+		end := get(row, "jam_selesai")
+
+		if !ok || matkul == "" || start == "" {
+			rowErrors = append(rowErrors, fmt.Sprintf("baris %d: kolom hari/matkul/jam_mulai wajib diisi", lineNum))
+			skipped++
+			continue
+		}
+		if !isValidTimeCSV(start) || (end != "" && !isValidTimeCSV(end)) {
+			rowErrors = append(rowErrors, fmt.Sprintf("baris %d: format jam harus HH:MM", lineNum))
+			skipped++
+			continue
+		}
+
+		mode := strings.ToUpper(get(row, "mode"))
+		if mode != "H-0" {
+			mode = "H-1"
+		}
+		sendAt := get(row, "jam_kirim")
+		if !isValidTimeCSV(sendAt) {
+			if mode == "H-1" {
+				sendAt = "20:00"
+			} else {
+				sendAt = "06:30"
+			}
+		}
+
+		sc := &store.Schedule{
+			UserID:      userID,
+			Title:       matkul,
+			Matkul:      matkul,
+			DayOfWeek:   day,
+			StartTime:   start,
+			EndTime:     end,
+			Location:    get(row, "ruangan"),
+			Mode:        mode,
+			SendAtTime:  sendAt,
+			IsActive:    true,
+			TargetPhone: get(row, "telepon"),
+		}
+
+		// Tautkan dosen/penerima bila cocok dengan kontak yang ada
+		dosenName := get(row, "dosen")
+		phone := normalizePhoneCSV(get(row, "telepon"))
+		if c, found := byPhone[phone]; found && phone != "" {
+			sc.RecipientID = sql.NullInt64{Int64: c.ID, Valid: true}
+			sc.TargetPhone = c.Phone
+		}
+		if dosenName != "" {
+			if c, found := byName[strings.ToLower(dosenName)]; found {
+				sc.DosenID = sql.NullInt64{Int64: c.ID, Valid: true}
+				if !sc.RecipientID.Valid {
+					sc.RecipientID = sql.NullInt64{Int64: c.ID, Valid: true}
+					sc.TargetPhone = c.Phone
+				}
+			}
+		}
+
+		if _, err := h.store.CreateSchedule(sc); err != nil {
+			rowErrors = append(rowErrors, fmt.Sprintf("baris %d: gagal menyimpan (%v)", lineNum, err))
+			skipped++
+			continue
+		}
+		created++
+	}
+
+	h.store.AddActivityLog("scheduler", "Import Jadwal CSV",
+		fmt.Sprintf("Dibuat: %d, dilewati: %d", created, skipped))
+
+	msg := fmt.Sprintf("Import selesai: %d jadwal dibuat.", created)
+	if skipped > 0 {
+		msg += fmt.Sprintf(" %d baris dilewati.", skipped)
+	}
+	if created > 0 {
+		h.hub.BroadcastToast("success", msg)
+	} else {
+		h.hub.BroadcastToast("error", msg+" Periksa format CSV Anda.")
+	}
+	if len(rowErrors) > 0 {
+		maxDetail := 3
+		if len(rowErrors) < maxDetail {
+			maxDetail = len(rowErrors)
+		}
+		for i := 0; i < maxDetail; i++ {
+			h.hub.BroadcastToast("warning", rowErrors[i])
+		}
+	}
+	http.Redirect(w, r, "/schedules", http.StatusSeeOther)
+}
+
+// normalizePhoneCSV menyamakan format nomor untuk pencocokan kontak
+func normalizePhoneCSV(p string) string {
+	p = strings.ReplaceAll(p, " ", "")
+	p = strings.ReplaceAll(p, "-", "")
+	p = strings.TrimPrefix(p, "+")
+	if strings.HasPrefix(p, "0") && len(p) > 1 {
+		p = "62" + p[1:]
+	}
+	return p
+}
+
+// isValidTimeCSV memvalidasi format HH:MM sederhana
+func isValidTimeCSV(t string) bool {
+	if len(t) != 5 || t[2] != ':' {
+		return false
+	}
+	h, err1 := strconv.Atoi(t[:2])
+	m, err2 := strconv.Atoi(t[3:])
+	return err1 == nil && err2 == nil && h >= 0 && h < 24 && m >= 0 && m < 60
 }
 
 // ==========================================

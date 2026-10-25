@@ -1,8 +1,10 @@
 package web_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -241,4 +243,65 @@ func TestTwoFactorAPIFlow(t *testing.T) {
 
 	_ = context.Background
 	_ = time.Now
+}
+
+// Regresi: import CSV membuat jadwal untuk akun yang login, dengan
+// pencocokan kontak (dosen/telepon) dan normalisasi hari Indonesia.
+func TestScheduleCSVImport(t *testing.T) {
+	router, s, authSvc, adminUser := setupTestWeb(t)
+	defer s.Close()
+
+	// Kontak milik admin agar baris CSV bisa tertaut otomatis
+	contact, err := s.CreateContact(&store.Contact{
+		UserID:      adminUser.ID,
+		Name:        "Dr. Budi Santoso",
+		Phone:       "081234567890",
+		ContactType: "dosen",
+	})
+	if err != nil {
+		t.Fatalf("gagal membuat kontak: %v", err)
+	}
+
+	// Susun multipart body
+	csvContent := "hari,matkul,jam_mulai,jam_selesai,dosen,telepon,ruangan,mode\n" +
+		"Senin,Algoritma,08:00,09:40,Dr. Budi Santoso,081234567890,Lab 1,H-1\n" +
+		"7,BadRow,08:00,10:00,,, ,H-1\n"
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, _ := writer.CreateFormFile("csv_file", "jadwal.csv")
+	_, _ = part.Write([]byte(csvContent))
+	_ = writer.Close()
+
+	token, err := authSvc.CreateSession(adminUser.ID)
+	if err != nil {
+		t.Fatalf("gagal membuat sesi: %v", err)
+	}
+	req := httptest.NewRequest("POST", "/schedules/import", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Origin", "http://example.com")
+	req.AddCookie(&http.Cookie{Name: auth.CookieName, Value: token})
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusSeeOther {
+		t.Fatalf("import CSV: expected 303 redirect, got %d: %s", w.Code, w.Body.String())
+	}
+
+	schedules, _ := s.ListSchedules(adminUser.ID)
+	if len(schedules) != 1 {
+		t.Fatalf("expected 1 jadwal valid dibuat, got %d", len(schedules))
+	}
+	sc := schedules[0]
+	if sc.Matkul != "Algoritma" || sc.DayOfWeek != 1 || sc.Mode != "H-1" {
+		t.Errorf("jadwal tidak sesuai: %+v", sc.Schedule)
+	}
+	if !sc.RecipientID.Valid || sc.RecipientID.Int64 != contact.ID {
+		t.Errorf("penerima belum tertaut ke kontak dosen: %+v", sc.RecipientID)
+	}
+	if sc.TargetPhone != "081234567890" {
+		t.Errorf("target phone tidak sesuai: %q", sc.TargetPhone)
+	}
+	if sc.SendAtTime != "20:00" {
+		t.Errorf("jam kirim default H-1 harus 20:00, got %q", sc.SendAtTime)
+	}
 }
