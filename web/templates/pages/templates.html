@@ -2,32 +2,33 @@
 <div class="md-col md-enter" style="gap:24px;">
 
     <!-- Header Section -->
-    <div class="md-row-between md-wrap" style="align-items:flex-start; gap:16px;">
-        <div class="md-col" style="gap:4px; max-width:640px;">
-            <span class="md-badge md-badge-tertiary md-row md-gap-sm" style="align-self:flex-start;">
-                <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                Template engine &amp; live preview
-            </span>
-            <h2 class="md-headline-small md-balance" style="margin-top:8px;">Template pesan WhatsApp</h2>
-            <p class="md-body-small md-muted md-balance">Rancang format pesan pengingat kuliah dinamis dengan variabel otomatis dan pratinjau real-time.</p>
+    <div class="md-page-head">
+        <div>
+            <h1 class="md-page-title md-balance">Template pesan WhatsApp</h1>
+            <p class="md-page-sub">Rancang format pesan pengingat kuliah dinamis dengan variabel otomatis dan pratinjau real-time.</p>
         </div>
-        <button onclick="modal_add_template.showModal()" class="md-btn">
-            <svg style="width:18px;height:18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-            Buat template baru
-        </button>
+        <div class="md-row md-wrap">
+            <button onclick="modal_add_template.showModal()" class="md-btn md-btn-sm">
+                <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Buat template baru
+            </button>
+        </div>
     </div>
 
     <!-- Template Selector Chips -->
-    <div class="md-row md-wrap" style="padding-bottom:12px; border-bottom:1px solid var(--md-sys-color-outline-variant);">
-        {{range .Data.Templates}}
-        <a href="/templates?id={{.ID}}" class="md-chip {{if and $.Data.Selected (eq $.Data.Selected.ID .ID)}}md-chip-active{{end}}">
-            <span class="md-dot {{if and $.Data.Selected (eq $.Data.Selected.ID .ID)}}md-dot-primary{{else}}md-dot-neutral{{end}}"></span>
-            <span>{{.Name}}</span>
-            {{if .IsDefault}}
-            <span class="md-badge md-badge-success">Default</span>
+    <div class="md-col" style="gap:8px;">
+        <span class="md-rail-section" style="margin:0;">Template terdaftar</span>
+        <div class="md-row md-wrap">
+            {{range .Data.Templates}}
+            <a href="/templates?id={{.ID}}" class="md-chip {{if and $.Data.Selected (eq $.Data.Selected.ID .ID)}}md-chip-active{{end}}">
+                <span class="md-dot {{if and $.Data.Selected (eq $.Data.Selected.ID .ID)}}md-dot-primary{{else}}md-dot-neutral{{end}}"></span>
+                <span>{{.Name}}</span>
+                {{if .IsDefault}}
+                <span class="md-badge md-badge-success">Default</span>
+                {{end}}
+            </a>
             {{end}}
-        </a>
-        {{end}}
+        </div>
     </div>
 
     {{if .Data.Selected}}
@@ -37,19 +38,20 @@
         <div class="md-col" style="gap:16px;">
             <section class="md-card-outlined md-col" style="gap:20px;">
 
-                <div class="md-row-between md-wrap" style="padding-bottom:16px; border-bottom:1px solid var(--md-sys-color-outline-variant);">
-                    <div class="md-stack" style="gap:0;">
-                        <span class="md-label-small md-mono md-muted" style="text-transform:uppercase; letter-spacing:1px;">Template aktif</span>
-                        <h3 class="md-title-medium" style="margin-top:2px;">{{.Data.Selected.Name}}</h3>
+                <div class="md-card-header" style="margin-bottom:0;">
+                    <div class="md-card-header-icon" style="background:var(--md-sys-color-tertiary-container);color:var(--md-sys-color-on-tertiary-container);">
+                        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     </div>
-                    <div class="md-row md-gap-sm">
-                        <form action="/templates/{{.Data.Selected.ID}}/delete" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus template ini?')" class="inline">
-                            <button type="submit" class="md-btn-text md-btn-sm" style="color:var(--md-sys-color-error);">
-                                <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                Hapus
-                            </button>
-                        </form>
+                    <div class="md-grow">
+                        <div class="md-card-header-title">{{.Data.Selected.Name}}</div>
+                        <div class="md-card-header-sub">Template aktif — sunting naskah dan sisipkan variabel otomatis</div>
                     </div>
+                    <form action="/templates/{{.Data.Selected.ID}}/delete" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus template ini?')" class="inline">
+                        <button type="submit" class="md-btn-text md-btn-sm" style="color:var(--md-sys-color-error);">
+                            <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            Hapus
+                        </button>
+                    </form>
                 </div>
 
                 <!-- Variable Quick Chips -->
@@ -119,10 +121,13 @@
 
             <!-- Live Preview Card -->
             <section class="md-card-elevated md-col" style="gap:16px;">
-                <div class="md-row-between md-wrap" style="padding-bottom:12px; border-bottom:1px solid var(--md-sys-color-outline-variant);">
-                    <div class="md-row md-gap-sm">
-                        <span class="md-dot md-dot-success"></span>
-                        <span class="md-title-small">Pratinjau live WhatsApp</span>
+                <div class="md-card-header" style="margin-bottom:0;">
+                    <div class="md-card-header-icon" style="background:var(--md-sys-color-success-container);color:var(--md-sys-color-on-success-container);">
+                        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    </div>
+                    <div class="md-grow">
+                        <div class="md-card-header-title">Pratinjau live WhatsApp</div>
+                        <div class="md-card-header-sub">Render naskah dengan data perkuliahan sandbox</div>
                     </div>
                     <span class="md-badge md-badge-neutral">Sandbox data</span>
                 </div>
@@ -135,11 +140,16 @@
 
             <!-- Version History (Audit Checkpoint) Card -->
             <section class="md-card-elevated md-col" style="gap:12px;">
-                <div class="md-row-between" style="padding-bottom:8px; border-bottom:1px solid var(--md-sys-color-outline-variant);">
-                    <span class="md-title-small">Riwayat versi edit</span>
-                    <span class="md-label-small md-mono md-muted">{{len .Data.Versions}} checkpoint</span>
+                <div class="md-card-header" style="margin-bottom:0;">
+                    <div class="md-card-header-icon" style="background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);">
+                        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <div class="md-grow">
+                        <div class="md-card-header-title">Riwayat versi edit</div>
+                        <div class="md-card-header-sub">Setiap pembaruan tersimpan otomatis agar naskah tidak hilang</div>
+                    </div>
+                    <span class="md-badge md-badge-neutral md-mono">{{len .Data.Versions}} checkpoint</span>
                 </div>
-                <p class="md-body-small md-muted">Setiap pembaruan template disimpan otomatis untuk mencegah kehilangan naskah.</p>
 
                 <div class="md-col" style="gap:8px; max-height:208px; overflow-y:auto;">
                     {{if .Data.Versions}}

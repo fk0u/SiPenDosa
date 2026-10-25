@@ -22,61 +22,132 @@
     <link rel="stylesheet" href="/static/css/m3-accents.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        .login-shell {
+            min-height: 100dvh;
+            display: grid;
+            grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+        }
+        @media (max-width: 880px) {
+            .login-shell { grid-template-columns: 1fr; }
+            .login-brand { display: none; }
+        }
+        /* Panel brand: gradasi tonal M3 dengan glow ambient */
+        .login-brand {
+            position: relative;
+            display: flex; flex-direction: column; justify-content: space-between;
+            padding: 48px;
+            overflow: hidden;
+            background:
+                radial-gradient(120% 120% at 90% 10%, color-mix(in srgb, var(--md-sys-color-primary) 26%, transparent) 0%, transparent 55%),
+                radial-gradient(120% 120% at 10% 90%, color-mix(in srgb, var(--md-sys-color-tertiary) 20%, transparent) 0%, transparent 50%),
+                var(--md-sys-color-surface-container-low);
+        }
+        .login-brand-title {
+            font-family: var(--md-font-display);
+            font-size: clamp(36px, 4vw, 54px);
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            line-height: 1.08;
+            text-wrap: balance;
+            max-width: 12ch;
+        }
+        .login-feature {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 16px;
+            border-radius: 16px;
+            background: color-mix(in srgb, var(--md-sys-color-surface) 55%, transparent);
+            border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+            backdrop-filter: blur(8px);
+            font-size: 13px; font-weight: 500;
+        }
+        .login-feature span.dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--md-sys-color-primary); flex-shrink: 0;
+        }
+        .login-panel { display: flex; align-items: center; justify-content: center; padding: 24px; }
+    </style>
 </head>
-<body style="display:flex; align-items:center; justify-content:center; padding:24px;">
+<body>
 
-    <div style="width:100%; max-width:400px;" class="md-enter">
+    <div class="login-shell md-enter">
 
-        <!-- Brand header -->
-        <div class="md-col md-text-center" style="align-items:center; gap:4px; margin-bottom:24px;">
-            <div class="md-center" style="width:56px;height:56px;border-radius:var(--md-shape-lg);background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);box-shadow:var(--md-elev-2);margin-bottom:8px;">
-                <svg style="width:28px;height:28px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+        <!-- Panel brand (desktop) -->
+        <aside class="login-brand">
+            <div class="md-row" style="gap:12px;">
+                <div class="md-center" style="width:44px;height:44px;border-radius:14px;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);box-shadow:var(--md-elev-2);">
+                    <svg style="width:22px;height:22px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                </div>
+                <div>
+                    <div class="md-title-medium" style="font-family:var(--md-font-display);font-weight:600;">SiPenDosa</div>
+                    <div class="md-label-small md-muted">Sistem Pengingat Dosen Saatnya</div>
+                </div>
             </div>
-            <h1 class="md-headline-small">SiPenDosa</h1>
-            <p class="md-body-small" style="color:var(--md-sys-color-on-surface-variant);max-width:280px;">Sistem Pengingat Dosen Saatnya — rela "berdosa" demi kepastian perkuliahan.</p>
-        </div>
 
-        <!-- Login card (M3 elevated) -->
-        <div class="md-card-elevated md-card-xl md-col">
-            {{if .FlashError}}
-            <div class="md-row" style="align-items:flex-start;gap:10px;padding:12px;border-radius:var(--md-shape-md);background:var(--md-sys-color-error-container);color:var(--md-sys-color-on-error-container);font-size:13px;">
-                <svg style="width:18px;height:18px;flex-shrink:0;margin-top:1px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span>{{.FlashError}}</span>
+            <div>
+                <h1 class="login-brand-title">Pengingat dosen, tepat waktu, tanpa sungkan.</h1>
+                <p class="md-body-medium md-muted" style="margin-top:16px;max-width:38ch;">Asisten otomatis yang rela "berdosa" mengingatkan dosen secara terjadwal dan santun — agar jadwal kuliah tidak pernah jadi tebak-tebakan.</p>
             </div>
-            {{end}}
 
-            <form action="/login" method="POST" class="md-col" style="gap:16px;">
-                <div class="md-field">
-                    <div class="md-field-box">
-                        <input type="text" name="username" placeholder=" " required autofocus autocomplete="username" />
-                        <label for="username">Username</label>
+            <div class="md-col" style="gap:10px;">
+                <div class="login-feature"><span class="dot"></span>Pengiriman terjadwal H-1 &amp; hari-H dengan anti-ban</div>
+                <div class="login-feature"><span class="dot"></span>Multi akun kelas dengan sesi WhatsApp terpisah</div>
+                <div class="login-feature"><span class="dot"></span>Local-first — data tinggal di server kampusmu</div>
+            </div>
+        </aside>
+
+        <!-- Panel form -->
+        <main class="login-panel">
+            <div style="width:100%; max-width:400px;">
+                <div class="md-col md-text-center" style="align-items:center; gap:4px; margin-bottom:28px;">
+                    <div class="md-center" style="width:56px;height:56px;border-radius:18px;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);box-shadow:var(--md-elev-2);margin-bottom:10px;">
+                        <svg style="width:28px;height:28px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
                     </div>
+                    <h2 class="md-headline-small" style="font-family:var(--md-font-display);font-weight:600;">Selamat datang kembali</h2>
+                    <p class="md-body-small md-muted">Masuk untuk mengelola pengingat kelas Anda.</p>
                 </div>
 
-                <div class="md-field">
-                    <div class="md-field-box">
-                        <input type="password" name="password" placeholder=" " required autocomplete="current-password" />
-                        <label for="password">Kata sandi</label>
+                <div class="md-card-elevated md-col" style="border-radius:28px;gap:16px;">
+                    {{if .FlashError}}
+                    <div class="md-row" style="align-items:flex-start;gap:10px;padding:12px;border-radius:var(--md-shape-md);background:var(--md-sys-color-error-container);color:var(--md-sys-color-on-error-container);font-size:13px;">
+                        <svg style="width:18px;height:18px;flex-shrink:0;margin-top:1px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>{{.FlashError}}</span>
                     </div>
+                    {{end}}
+
+                    <form action="/login" method="POST" class="md-col" style="gap:16px;">
+                        <div class="md-field">
+                            <div class="md-field-box">
+                                <input type="text" name="username" placeholder=" " required autofocus autocomplete="username" />
+                                <label for="username">Username</label>
+                            </div>
+                        </div>
+
+                        <div class="md-field">
+                            <div class="md-field-box">
+                                <input type="password" name="password" placeholder=" " required autocomplete="current-password" />
+                                <label for="password">Kata sandi</label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="md-btn" style="width:100%;height:48px;">Masuk ke dasbor</button>
+                    </form>
                 </div>
 
-                <button type="submit" class="md-btn" style="width:100%;height:48px;">Masuk ke dasbor</button>
-            </form>
-
-            <hr class="md-divider" style="margin-top:8px;">
-            <div class="md-row md-wrap" style="justify-content:center;gap:12px;font-size:12px;color:var(--md-sys-color-on-surface-variant);">
-                <a href="/about">Tentang</a>
-                <span>&bull;</span>
-                <a href="/terms">Ketentuan layanan</a>
-                <span>&bull;</span>
-                <a href="/privacy">Privasi</a>
+                <div class="md-row md-wrap" style="justify-content:center;gap:12px;font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-top:20px;">
+                    <a href="/about">Tentang</a>
+                    <span>&bull;</span>
+                    <a href="/terms">Ketentuan layanan</a>
+                    <span>&bull;</span>
+                    <a href="/privacy">Privasi</a>
+                </div>
+                <p class="md-body-small md-mono md-text-center" style="margin-top:8px;color:var(--md-sys-color-on-surface-variant);">
+                    SiPenDosa daemon engine &copy; {{.CurrentYear}}
+                </p>
             </div>
-        </div>
-
-        <p class="md-body-small md-mono md-text-center" style="margin-top:20px;color:var(--md-sys-color-on-surface-variant);">
-            SiPenDosa daemon engine &copy; {{.CurrentYear}}
-        </p>
+        </main>
     </div>
 
 </body>

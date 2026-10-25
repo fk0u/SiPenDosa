@@ -2,27 +2,37 @@
 <div class="md-col md-enter" style="gap:24px;">
 
     <!-- Header Section -->
-    <div class="md-row-between md-wrap" style="align-items:flex-start; gap:16px;">
-        <div class="md-col" style="gap:4px; max-width:640px;">
-            <span class="md-badge md-badge-primary" style="align-self:flex-start;">Otomasi jadwal</span>
-            <h2 class="md-headline-small md-balance" style="margin-top:8px;">Jadwal kuliah &amp; pengingat</h2>
-            <p class="md-body-small md-muted md-balance">Atur jadwal perkuliahan mingguan, mode H-1, template pesan, dan penerima notifikasi otomatis.</p>
+    <div class="md-page-head">
+        <div>
+            <h1 class="md-page-title md-balance">Jadwal kuliah &amp; pengingat</h1>
+            <p class="md-page-sub">Atur jadwal perkuliahan mingguan, mode H-1, template pesan, dan penerima notifikasi otomatis.</p>
         </div>
         <div class="md-row md-wrap">
             <a href="/jadwal" target="_blank" class="md-btn-outlined md-btn-sm">
                 <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                 Portal publik ↗
             </a>
-            <button onclick="modal_add_schedule.showModal()" class="md-btn">
-                <svg style="width:18px;height:18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            <button onclick="modal_add_schedule.showModal()" class="md-btn md-btn-sm">
+                <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 Tambah jadwal baru
             </button>
         </div>
     </div>
 
     <!-- Schedules Table -->
-    <section class="md-card-outlined" style="padding:0; overflow:hidden;">
-        <div class="md-table-wrap">
+    <section class="md-card-elevated md-col" style="gap:12px;">
+        <div class="md-card-header" style="margin-bottom:0;">
+            <div class="md-card-header-icon" style="background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);">
+                <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+            <div class="md-grow">
+                <div class="md-card-header-title">Daftar jadwal perkuliahan</div>
+                <div class="md-card-header-sub">Jadwal mingguan beserta mode pengiriman dan penerima pengingat</div>
+            </div>
+            <span class="md-badge md-badge-primary md-mono">{{len .Data.Schedules}} jadwal</span>
+        </div>
+
+        <div class="md-table-wrap" style="border:1px solid var(--md-sys-color-outline-variant);border-radius:20px;">
             <table class="md-table">
                 <thead>
                     <tr>
@@ -47,7 +57,7 @@
                                 {{end}}
                             </div>
                             <div class="md-body-small md-muted">{{.Title}}</div>
-                            {{if .Location}}<div class="md-label-small md-muted" style="margin-top:2px;">📍 {{.Location}}</div>{{end}}
+                            {{if .Location}}<div class="md-label-small md-muted md-row md-gap-sm" style="margin-top:2px;align-items:center;"><svg style="width:12px;height:12px;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>{{.Location}}</div>{{end}}
                         </td>
                         <td style="white-space:nowrap;">
                             <div class="md-label-large" style="color:var(--md-sys-color-primary);">{{dayName .DayOfWeek}}</div>

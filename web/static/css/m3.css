@@ -25,6 +25,7 @@
 
     /* -- Typography scale (M3 type roles) -- */
     --md-font: 'Roboto', 'Google Sans Text', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --md-font-display: 'Outfit', 'Google Sans', var(--md-font);
     --md-font-mono: 'Roboto Mono', ui-monospace, 'JetBrains Mono', Menlo, monospace;
 
     /* -- Motion (M3 easing & duration) -- */
@@ -163,11 +164,20 @@ body {
     font-size: 14px;
     line-height: 1.5;
     color: var(--md-sys-color-on-surface);
-    background: var(--md-sys-color-surface);
+    background:
+        radial-gradient(90% 60% at 100% 0%, color-mix(in srgb, var(--md-sys-color-primary) 5%, transparent) 0%, transparent 60%),
+        radial-gradient(70% 50% at 0% 100%, color-mix(in srgb, var(--md-sys-color-tertiary) 4%, transparent) 0%, transparent 55%),
+        var(--md-sys-color-surface);
+    background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
     min-height: 100dvh;
     text-rendering: optimizeLegibility;
 }
+
+/* Display font untuk judul inti */
+h1, h2, h3, .md-topbar-title, .md-section-title, .md-title-large { font-family: var(--md-font-display); }
+.md-topbar-title { font-weight: 600; }
+.md-section-title { font-weight: 600; }
 
 ::selection { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
 
@@ -242,31 +252,102 @@ img { max-width: 100%; }
    ================================================================== */
 .md-card {
     background: var(--md-sys-color-surface-container-low);
-    border-radius: var(--md-shape-md);
-    padding: 20px;
+    border-radius: var(--md-shape-lg);
+    padding: 24px;
     transition: box-shadow var(--md-dur-med) var(--md-ease-standard);
 }
 .md-card-elevated {
     background: var(--md-sys-color-surface-container-low);
-    border-radius: var(--md-shape-md);
-    padding: 20px;
+    border-radius: 24px;
+    padding: 24px;
     box-shadow: var(--md-elev-1);
     transition: box-shadow var(--md-dur-med) var(--md-ease-standard);
 }
 .md-card-elevated:hover { box-shadow: var(--md-elev-2); }
 .md-card-filled {
     background: var(--md-sys-color-surface-container-highest);
-    border-radius: var(--md-shape-md);
-    padding: 20px;
+    border-radius: 24px;
+    padding: 24px;
 }
 .md-card-outlined {
     background: var(--md-sys-color-surface);
     border: 1px solid var(--md-sys-color-outline-variant);
-    border-radius: var(--md-shape-md);
-    padding: 20px;
+    border-radius: 24px;
+    padding: 24px;
 }
 /* Panel besar (hero/onboarding) memakai shape extra-large */
-.md-card-xl { border-radius: var(--md-shape-xl); padding: 28px; }
+.md-card-xl { border-radius: 32px; padding: 32px; }
+
+/* ---------- Header berikon untuk kartu (pola premium dashboard) ---------- */
+.md-card-header {
+    display: flex; align-items: center; gap: 12px;
+    padding-bottom: 14px; margin-bottom: 16px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+.md-card-header-icon {
+    width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+}
+.md-card-header-icon svg { width: 20px; height: 20px; }
+.md-card-header-title { font: 600 16px/1.3 var(--md-font); letter-spacing: 0.1px; }
+.md-card-header-sub { font: 400 12px/1.4 var(--md-font); color: var(--md-sys-color-on-surface-variant); }
+
+/* ---------- Angka display besar (KPI/hero) ---------- */
+.md-num {
+    font-family: var(--md-font-display);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.05;
+}
+.md-num-hero { font-size: clamp(40px, 6vw, 64px); }
+.md-num-kpi { font-size: 34px; }
+
+/* ---------- Delta / tren chip ---------- */
+.md-delta {
+    display: inline-flex; align-items: center; gap: 4px;
+    font: 600 12px/1 var(--md-font-mono);
+    padding: 4px 8px; border-radius: var(--md-shape-full);
+}
+.md-delta-up { color: var(--md-sys-color-success); background: color-mix(in srgb, var(--md-sys-color-success) 12%, transparent); }
+.md-delta-down { color: var(--md-sys-color-error); background: color-mix(in srgb, var(--md-sys-color-error) 12%, transparent); }
+
+/* ---------- Hero card: permukaan gradasi tonal ---------- */
+.md-hero {
+    position: relative;
+    border-radius: 32px;
+    padding: 32px;
+    overflow: hidden;
+    background:
+        radial-gradient(120% 160% at 100% 0%, color-mix(in srgb, var(--md-sys-color-primary) 16%, transparent) 0%, transparent 55%),
+        radial-gradient(120% 140% at 0% 100%, color-mix(in srgb, var(--md-sys-color-tertiary) 12%, transparent) 0%, transparent 50%),
+        var(--md-sys-color-surface-container-low);
+    box-shadow: var(--md-elev-1);
+}
+.md-hero .md-num { font-family: var(--md-font-display); }
+
+/* ---------- Section label (rail / kelompok) ---------- */
+.md-rail-section {
+    font: 600 10px/1 var(--md-font);
+    letter-spacing: 1.6px; text-transform: uppercase;
+    color: var(--md-sys-color-on-surface-variant);
+    opacity: 0.75;
+    margin: 14px 0 6px;
+}
+
+/* ---------- Greeting header halaman ---------- */
+.md-page-head {
+    display: flex; flex-wrap: wrap; align-items: flex-end;
+    justify-content: space-between; gap: 16px;
+    margin-bottom: 4px;
+}
+.md-page-title {
+    font-family: var(--md-font-display);
+    font-size: 30px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.15;
+}
+.md-page-sub { font-size: 14px; color: var(--md-sys-color-on-surface-variant); margin-top: 6px; }
 
 /* ==================================================================
    5. BUTTONS — common, filled / tonal / outlined / text / icon / FAB
@@ -689,11 +770,17 @@ dialog.md-dialog::backdrop { background: var(--md-sys-color-scrim); }
 /* Stat card (dashboard metric) */
 .md-stat {
     background: var(--md-sys-color-surface-container);
-    border-radius: var(--md-shape-lg);
-    padding: 16px 20px;
+    border-radius: 20px;
+    padding: 18px 20px;
     display: flex; flex-direction: column; gap: 4px;
+    transition: box-shadow var(--md-dur-med) var(--md-ease-standard), transform var(--md-dur-med) var(--md-ease-standard);
 }
-.md-stat-value { font-size: 32px; font-weight: 400; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.md-stat:hover { box-shadow: var(--md-elev-2); transform: translateY(-2px); }
+.md-stat-value {
+    font-family: var(--md-font-display);
+    font-size: 36px; font-weight: 600; letter-spacing: -0.02em;
+    line-height: 1.1; font-variant-numeric: tabular-nums;
+}
 .md-stat-icon {
     width: 40px; height: 40px; border-radius: var(--md-shape-full);
     display: flex; align-items: center; justify-content: center;

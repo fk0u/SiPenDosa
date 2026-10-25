@@ -513,7 +513,19 @@ func (h *Handlers) OverviewHandler(w http.ResponseWriter, r *http.Request) {
 	settings, _ := h.store.GetSettings()
 	tunnelStatus := h.tunnelMgr.Status()
 
+	// Salam sesuai waktu setempat untuk header dashboard
+	hour := time.Now().In(h.cfg.GetLocation()).Hour()
+	greeting := "Selamat malam"
+	if hour >= 4 && hour < 11 {
+		greeting = "Selamat pagi"
+	} else if hour >= 11 && hour < 15 {
+		greeting = "Selamat siang"
+	} else if hour >= 15 && hour < 18 {
+		greeting = "Selamat sore"
+	}
+
 	data := map[string]interface{}{
+		"Greeting":       greeting,
 		"Stats":          stats,
 		"WAState":        string(waState),
 		"WAPhone":        waPhone,
@@ -1912,4 +1924,3 @@ func (h *Handlers) APIQueueProcessHandler(w http.ResponseWriter, r *http.Request
 		"id":      id,
 	})
 }
-

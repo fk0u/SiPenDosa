@@ -1,93 +1,109 @@
 {{define "content"}}
 <div class="md-col md-enter" style="gap:24px;">
 
-    <!-- ============ Header & filter status ============ -->
-    <div class="md-row-between md-wrap" style="align-items:flex-start;gap:16px;">
-        <div class="md-col" style="gap:4px;max-width:640px;">
-            <span class="md-badge md-badge-tertiary" style="align-self:flex-start;">Audit & dispatch log</span>
-            <h1 class="md-headline-small md-balance" style="margin-top:8px;">Riwayat pengiriman pesan</h1>
-            <p class="md-body-small md-muted md-balance">Arsip lengkap seluruh pengiriman pengingat WhatsApp, simulasi dry-run, dan status kendala pengiriman.</p>
+    <!-- ============ Page head ============ -->
+    <div class="md-page-head">
+        <div>
+            <span class="md-label-small" style="text-transform:uppercase;letter-spacing:1.6px;font-weight:600;color:var(--md-sys-color-tertiary);">Audit &amp; dispatch log</span>
+            <h1 class="md-page-title md-balance">Riwayat pengiriman pesan</h1>
+            <p class="md-page-sub">Arsip lengkap seluruh pengiriman pengingat WhatsApp, simulasi dry-run, dan status kendala pengiriman.</p>
         </div>
+    </div>
 
-        <!-- Filter status (M3 filter chips) -->
-        <div class="md-row md-wrap" style="gap:8px;">
-            <a href="/history" class="md-chip {{if eq .Data.SelectedStatus ""}}md-chip-active{{end}}">Semua</a>
-            <a href="/history?status=sent" class="md-chip {{if eq .Data.SelectedStatus "sent"}}md-chip-active{{end}}">Terkirim</a>
-            <a href="/history?status=dry_run" class="md-chip {{if eq .Data.SelectedStatus "dry_run"}}md-chip-active{{end}}">Dry run</a>
-            <a href="/history?status=failed" class="md-chip {{if eq .Data.SelectedStatus "failed"}}md-chip-active{{end}}">Gagal</a>
-        </div>
+    <!-- ============ Filter status (M3 filter chips) ============ -->
+    <div class="md-row md-wrap" style="margin-top:-12px;">
+        <a href="/history" class="md-chip {{if eq .Data.SelectedStatus ""}}md-chip-active{{end}}">Semua</a>
+        <a href="/history?status=sent" class="md-chip {{if eq .Data.SelectedStatus "sent"}}md-chip-active{{end}}">Terkirim</a>
+        <a href="/history?status=dry_run" class="md-chip {{if eq .Data.SelectedStatus "dry_run"}}md-chip-active{{end}}">Dry run</a>
+        <a href="/history?status=failed" class="md-chip {{if eq .Data.SelectedStatus "failed"}}md-chip-active{{end}}">Gagal</a>
     </div>
 
     <!-- ============ Tabel riwayat ============ -->
-    <div class="md-table-wrap" style="border:1px solid var(--md-sys-color-outline-variant);background:var(--md-sys-color-surface-container-low);">
-        <table class="md-table">
-            <thead>
-                <tr>
-                    <th>Waktu eksekusi</th>
-                    <th>Penerima</th>
-                    <th>Isi naskah pesan</th>
-                    <th>Status</th>
-                    <th>Percobaan</th>
-                    <th style="text-align:right;">Tindakan</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{if .Data.Messages}}
-                {{range .Data.Messages}}
-                <tr>
-                    <td style="white-space:nowrap;">
-                        <div class="md-body-small md-mono">{{formatTime .SentAt "02 Jan 2006"}}</div>
-                        <div class="md-label-small md-mono md-muted">{{formatTime .SentAt "15:04:05 WITA"}}</div>
-                    </td>
-                    <td style="white-space:nowrap;">
-                        <div class="md-row" style="gap:10px;">
-                            <div class="md-center" style="width:34px;height:34px;border-radius:12px;background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);font-weight:600;font-size:13px;flex-shrink:0;">
-                                {{slice .RecipientName 0 1}}
+    <section class="md-card-elevated">
+        <div class="md-card-header">
+            <div class="md-card-header-icon">
+                <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="md-grow">
+                <div class="md-card-header-title">Arsip pengiriman</div>
+                <div class="md-card-header-sub">Catatan pesan terkirim, dry-run, dan gagal kirim</div>
+            </div>
+            <div style="text-align:right;">
+                <div class="md-num md-num-kpi">{{len .Data.Messages}}</div>
+                <div class="md-label-small md-muted">entri arsip</div>
+            </div>
+        </div>
+
+        <div class="md-table-wrap" style="border:1px solid var(--md-sys-color-outline-variant);border-radius:20px;background:var(--md-sys-color-surface-container-low);">
+            <table class="md-table">
+                <thead>
+                    <tr>
+                        <th>Waktu eksekusi</th>
+                        <th>Penerima</th>
+                        <th>Isi naskah pesan</th>
+                        <th>Status</th>
+                        <th>Percobaan</th>
+                        <th style="text-align:right;">Tindakan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{if .Data.Messages}}
+                    {{range .Data.Messages}}
+                    <tr>
+                        <td style="white-space:nowrap;">
+                            <div class="md-body-small md-mono">{{formatTime .SentAt "02 Jan 2006"}}</div>
+                            <div class="md-label-small md-mono md-muted">{{formatTime .SentAt "15:04:05 WITA"}}</div>
+                        </td>
+                        <td style="white-space:nowrap;">
+                            <div class="md-row" style="gap:10px;">
+                                <div class="md-center" style="width:34px;height:34px;border-radius:12px;background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);font-weight:600;font-size:13px;flex-shrink:0;">
+                                    {{slice .RecipientName 0 1}}
+                                </div>
+                                <div>
+                                    <div class="md-title-small">{{.RecipientName}}</div>
+                                    <div class="md-label-small md-mono md-muted">{{.RecipientJID}}</div>
+                                </div>
                             </div>
-                            <div>
-                                <div class="md-title-small">{{.RecipientName}}</div>
-                                <div class="md-label-small md-mono md-muted">{{.RecipientJID}}</div>
+                        </td>
+                        <td style="max-width:320px;">
+                            <div class="md-body-small md-muted md-truncate">{{truncate .Message 70}}</div>
+                            {{if .ErrorMessage}}
+                            <div class="md-row md-mono" style="gap:4px;margin-top:4px;font-size:11px;color:var(--md-sys-color-error);">
+                                <svg style="width:12px;height:12px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                <span class="md-truncate">{{.ErrorMessage}}</span>
                             </div>
-                        </div>
-                    </td>
-                    <td style="max-width:320px;">
-                        <div class="md-body-small md-muted md-truncate">{{truncate .Message 70}}</div>
-                        {{if .ErrorMessage}}
-                        <div class="md-row md-mono" style="gap:4px;margin-top:4px;font-size:11px;color:var(--md-sys-color-error);">
-                            <svg style="width:12px;height:12px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                            <span class="md-truncate">{{.ErrorMessage}}</span>
-                        </div>
-                        {{end}}
-                    </td>
-                    <td style="white-space:nowrap;">
-                        {{statusBadge .Status}}
-                    </td>
-                    <td style="white-space:nowrap;">
-                        <span class="md-badge md-badge-neutral md-mono">{{.RetryCount}}/{{.MaxRetries}}</span>
-                    </td>
-                    <td style="text-align:right;white-space:nowrap;">
-                        <button onclick="viewMessageModal(`{{.RecipientName}}`, `{{.RecipientJID}}`, `{{formatTime .SentAt "02 Jan 2006 15:04 WITA"}}`, `{{.Status}}`, `{{.Message}}`, `{{.ErrorMessage}}`)"
-                                class="md-btn-text md-btn-sm">
-                            Detail
-                            <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                        </button>
-                    </td>
-                </tr>
-                {{end}}
-                {{else}}
-                <tr>
-                    <td colspan="6" style="padding:0;">
-                        <div class="md-empty md-body-small">
-                            <svg fill="none" stroke="currentColor" stroke-width="1.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                            <div class="md-title-small">Belum ada riwayat</div>
-                            <div class="md-body-small" style="max-width:400px;">Tidak ada arsip pesan yang sesuai dengan filter yang dipilih saat ini.</div>
-                        </div>
-                    </td>
-                </tr>
-                {{end}}
-            </tbody>
-        </table>
-    </div>
+                            {{end}}
+                        </td>
+                        <td style="white-space:nowrap;">
+                            {{statusBadge .Status}}
+                        </td>
+                        <td style="white-space:nowrap;">
+                            <span class="md-badge md-badge-neutral md-mono">{{.RetryCount}}/{{.MaxRetries}}</span>
+                        </td>
+                        <td style="text-align:right;white-space:nowrap;">
+                            <button onclick="viewMessageModal(`{{.RecipientName}}`, `{{.RecipientJID}}`, `{{formatTime .SentAt "02 Jan 2006 15:04 WITA"}}`, `{{.Status}}`, `{{.Message}}`, `{{.ErrorMessage}}`)"
+                                    class="md-btn-text md-btn-sm">
+                                Detail
+                                <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                            </button>
+                        </td>
+                    </tr>
+                    {{end}}
+                    {{else}}
+                    <tr>
+                        <td colspan="6" style="padding:0;">
+                            <div class="md-empty md-body-small">
+                                <svg fill="none" stroke="currentColor" stroke-width="1.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                <div class="md-title-small">Belum ada riwayat</div>
+                                <div class="md-body-small" style="max-width:400px;">Tidak ada arsip pesan yang sesuai dengan filter yang dipilih saat ini.</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </section>
 
 </div>
 
@@ -109,7 +125,7 @@
                 <div id="modal-msg-jid" class="md-label-small md-mono" style="color:var(--md-sys-color-tertiary);"></div>
             </div>
             <div class="md-stack" style="gap:2px;">
-                <span class="md-label-small md-muted" style="text-transform:uppercase;letter-spacing:0.5px;">Waktu & status</span>
+                <span class="md-label-small md-muted" style="text-transform:uppercase;letter-spacing:0.5px;">Waktu &amp; status</span>
                 <div id="modal-msg-time" class="md-body-small md-mono"></div>
                 <div id="modal-msg-status" style="padding-top:2px;"></div>
             </div>

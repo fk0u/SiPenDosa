@@ -2,40 +2,55 @@
 <div class="md-col md-enter" style="gap:24px;">
 
     <!-- Header Section -->
-    <div class="md-row-between md-wrap" style="align-items:flex-start; gap:16px;">
-        <div class="md-col" style="gap:4px; max-width:640px;">
-            <span class="md-badge md-badge-primary" style="align-self:flex-start;">Direktori kontak</span>
-            <h2 class="md-headline-small md-balance" style="margin-top:8px;">Dosen &amp; kontak tujuan</h2>
-            <p class="md-body-small md-muted md-balance">Kelola nomor telepon dosen pengampu, ketua tingkat (komti), mahasiswa, atau grup WhatsApp kelas.</p>
+    <div class="md-page-head">
+        <div>
+            <h1 class="md-page-title md-balance">Dosen &amp; kontak tujuan</h1>
+            <p class="md-page-sub">Kelola nomor telepon dosen pengampu, ketua tingkat (komti), mahasiswa, atau grup WhatsApp kelas.</p>
         </div>
-        <button onclick="modal_add_contact.showModal()" class="md-btn">
-            <svg style="width:18px;height:18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-            Tambah kontak baru
-        </button>
+        <div class="md-row md-wrap">
+            <button onclick="modal_add_contact.showModal()" class="md-btn md-btn-sm">
+                <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Tambah kontak baru
+            </button>
+        </div>
     </div>
 
     <!-- Filter Type Chips -->
-    <div class="md-row md-wrap">
-        <a href="/contacts" class="md-chip {{if eq .Data.FilterType ""}}md-chip-active{{end}}">
-            Semua kontak
-        </a>
-        <a href="/contacts?type=dosen" class="md-chip {{if eq .Data.FilterType "dosen"}}md-chip-active{{end}}">
-            Dosen
-        </a>
-        <a href="/contacts?type=komti" class="md-chip {{if eq .Data.FilterType "komti"}}md-chip-active{{end}}">
-            Ketua tingkat (komti)
-        </a>
-        <a href="/contacts?type=mahasiswa" class="md-chip {{if eq .Data.FilterType "mahasiswa"}}md-chip-active{{end}}">
-            Mahasiswa
-        </a>
-        <a href="/contacts?type=group" class="md-chip {{if eq .Data.FilterType "group"}}md-chip-active{{end}}">
-            Grup WhatsApp
-        </a>
+    <div class="md-col" style="gap:8px;">
+        <span class="md-rail-section" style="margin:0;">Filter kategori</span>
+        <div class="md-row md-wrap">
+            <a href="/contacts" class="md-chip {{if eq .Data.FilterType ""}}md-chip-active{{end}}">
+                Semua kontak
+            </a>
+            <a href="/contacts?type=dosen" class="md-chip {{if eq .Data.FilterType "dosen"}}md-chip-active{{end}}">
+                Dosen
+            </a>
+            <a href="/contacts?type=komti" class="md-chip {{if eq .Data.FilterType "komti"}}md-chip-active{{end}}">
+                Ketua tingkat (komti)
+            </a>
+            <a href="/contacts?type=mahasiswa" class="md-chip {{if eq .Data.FilterType "mahasiswa"}}md-chip-active{{end}}">
+                Mahasiswa
+            </a>
+            <a href="/contacts?type=group" class="md-chip {{if eq .Data.FilterType "group"}}md-chip-active{{end}}">
+                Grup WhatsApp
+            </a>
+        </div>
     </div>
 
     <!-- Contacts Table -->
-    <section class="md-card-outlined" style="padding:0; overflow:hidden;">
-        <div class="md-table-wrap">
+    <section class="md-card-elevated md-col" style="gap:12px;">
+        <div class="md-card-header" style="margin-bottom:0;">
+            <div class="md-card-header-icon" style="background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);">
+                <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            </div>
+            <div class="md-grow">
+                <div class="md-card-header-title">Direktori kontak</div>
+                <div class="md-card-header-sub">Penerima pesan pengingat — dosen, komti, mahasiswa, dan grup WhatsApp</div>
+            </div>
+            <span class="md-badge md-badge-primary md-mono">{{len .Data.Contacts}} kontak</span>
+        </div>
+
+        <div class="md-table-wrap" style="border:1px solid var(--md-sys-color-outline-variant);border-radius:20px;">
             <table class="md-table">
                 <thead>
                     <tr>

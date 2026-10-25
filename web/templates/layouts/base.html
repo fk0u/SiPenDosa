@@ -56,7 +56,7 @@
     <link rel="stylesheet" href="/static/css/m3-accents.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Roboto:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <!-- HTMX (live template preview) -->
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
@@ -98,6 +98,7 @@
 
             <div style="flex:1"></div>
 
+            <div class="md-rail-section">Sistem</div>
             <a href="/terminal" class="md-rail-item {{if eq .ActivePage "terminal"}}md-rail-item-active{{end}}">
                 <span class="md-rail-pill"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></span>
                 Terminal
@@ -113,6 +114,15 @@
             <a href="/changelog" class="md-rail-item {{if eq .ActivePage "changelog"}}md-rail-item-active{{end}}">
                 <span class="md-rail-pill"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg></span>
                 Rilis
+            </a>
+
+            <!-- Kartu pengguna mini di dasar rail -->
+            <a href="/settings" class="md-rail-user" title="{{if .User}}{{.User.Username}}{{else}}Administrator{{end}}">
+                <span class="md-list-item-leading" style="width:34px;height:34px;font-size:14px;">{{if .User}}{{slice .User.Username 0 1}}{{else}}U{{end}}</span>
+                <span class="md-rail-user-meta">
+                    <span class="md-rail-user-name md-truncate">{{if .User}}{{.User.Username}}{{else}}Administrator{{end}}</span>
+                    <span class="md-rail-user-role md-truncate">{{if .User}}{{.User.Role}}{{else}}superadmin{{end}}</span>
+                </span>
             </a>
         </nav>
 
@@ -514,6 +524,20 @@
             display: flex; flex-direction: column;
         }
         .md-menu-sheet .md-list-item { padding: 10px 12px; border-radius: var(--md-shape-sm); font-size: 14px; }
+
+        .md-rail-user {
+            margin-top: 12px; width: 100%;
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 10px;
+            border-radius: var(--md-shape-md);
+            background: var(--md-sys-color-surface-container);
+            text-decoration: none !important;
+            transition: background-color var(--md-dur-short) var(--md-ease-standard);
+        }
+        .md-rail-user:hover { background: var(--md-sys-color-surface-container-high); }
+        .md-rail-user-meta { display: flex; flex-direction: column; min-width: 0; }
+        .md-rail-user-name { font: 600 12px/1.3 var(--md-font); color: var(--md-sys-color-on-surface); }
+        .md-rail-user-role { font: 500 10px/1.3 var(--md-font); letter-spacing: 0.5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); }
 
         .md-accent-dot {
             width: 22px; height: 22px; border-radius: 50%;

@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="/static/css/m3-accents.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Roboto:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <style>
         .md-public-header {
@@ -40,6 +40,21 @@
         }
         @media (max-width: 720px) {
             .md-public-header .md-container { flex-wrap: wrap; }
+        }
+        /* Feature pills ala panel brand login (M3 tonal glass) */
+        .portal-feature {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 14px;
+            border-radius: 14px;
+            background: color-mix(in srgb, var(--md-sys-color-surface) 55%, transparent);
+            border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+            backdrop-filter: blur(8px);
+            font-size: 12px; font-weight: 500;
+            color: var(--md-sys-color-on-surface-variant);
+        }
+        .portal-feature span.dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--md-sys-color-primary); flex-shrink: 0;
         }
     </style>
 </head>
@@ -77,8 +92,8 @@
 
     <main class="md-container md-enter" style="max-width:960px; padding-top:24px; padding-bottom:48px;">
 
-        <!-- ============ Hero & hitung mundur (M3 elevated card) ============ -->
-        <section class="md-card-elevated md-card-xl md-col" style="gap:20px;">
+        <!-- ============ Hero & hitung mundur (M3 tonal gradient hero) ============ -->
+        <section class="md-hero md-col" style="gap:20px;">
 
             <div class="md-row-between md-wrap" style="align-items:flex-start;">
                 <div class="md-col" style="gap:6px;">
@@ -86,31 +101,36 @@
                         <span class="md-dot md-dot-primary" style="width:6px;height:6px;"></span>
                         Portal akademik publik
                     </span>
-                    <h1 class="md-headline-small md-balance" style="margin-top:4px;">Jadwal kuliah &amp; ruangan</h1>
-                    <p class="md-body-medium md-muted md-balance">Informasi waktu, ruangan, dan dosen pengampu perkuliahan secara transparan.</p>
+                    <h1 class="md-page-title md-balance" style="margin-top:8px;">Jadwal kuliah &amp; ruangan</h1>
+                    <p class="md-page-sub md-balance">Informasi waktu, ruangan, dan dosen pengampu perkuliahan secara transparan.</p>
+                    <div class="md-row md-wrap" style="gap:8px; margin-top:12px;">
+                        <span class="portal-feature"><span class="dot"></span>Real-time tanpa login</span>
+                        <span class="portal-feature"><span class="dot"></span>Hitung mundur kuliah berikutnya</span>
+                        <span class="portal-feature"><span class="dot"></span>Ekspor kalender .ics</span>
+                    </div>
                 </div>
 
                 <!-- Jam live -->
-                <div class="md-card-outlined md-col" style="padding:12px 16px; gap:2px; align-items:flex-end; text-align:right;">
+                <div class="md-card-outlined md-col" style="padding:12px 16px; gap:2px; align-items:flex-end; text-align:right; background:color-mix(in srgb, var(--md-sys-color-surface) 70%, transparent);">
                     <span class="md-label-small md-muted" style="text-transform:uppercase;letter-spacing:1.2px;">Waktu sekarang</span>
-                    <span id="live-clock" class="md-mono md-title-large">--:--:--</span>
+                    <span id="live-clock" class="md-mono md-num md-num-kpi" style="font-size:24px;">--:--:--</span>
                     <span id="live-date" class="md-body-small md-muted">Memuat tanggal...</span>
                 </div>
             </div>
 
             <!-- Kuliah berikutnya -->
-            <div id="next-class-banner" class="md-row-between md-wrap" style="padding:16px; border-radius:var(--md-shape-lg); background:var(--md-sys-color-tertiary-container); color:var(--md-sys-color-on-tertiary-container); gap:16px;">
+            <div id="next-class-banner" class="md-row-between md-wrap" style="padding:18px; border-radius:20px; background:color-mix(in srgb, var(--md-sys-color-tertiary) 14%, var(--md-sys-color-surface-container-lowest)); color:var(--md-sys-color-on-surface); box-shadow:var(--md-elev-1); gap:16px;">
                 <div class="md-col" style="gap:4px;">
                     <div class="md-row" style="gap:8px;">
-                        <span class="md-badge md-badge-neutral" style="background:color-mix(in srgb, var(--md-sys-color-on-tertiary-container) 12%, transparent); color:inherit;">Kuliah berikutnya</span>
+                        <span class="md-badge md-badge-neutral">Kuliah berikutnya</span>
                         <span id="next-class-day" class="md-body-small" style="font-weight:600;"></span>
                     </div>
                     <h3 id="next-class-title" class="md-title-medium" style="margin-top:2px;">Menghitung jadwal...</h3>
-                    <p id="next-class-meta" class="md-body-small" style="opacity:0.85;">Lokasi &amp; dosen pengampu</p>
+                    <p id="next-class-meta" class="md-body-small md-muted">Lokasi &amp; dosen pengampu</p>
                 </div>
                 <div class="md-col" style="gap:2px; align-items:flex-end; text-align:right;">
-                    <span class="md-label-small md-mono" style="opacity:0.8;">Dimulai dalam</span>
-                    <span id="next-class-countdown" class="md-mono md-title-large" style="font-weight:700;">--:--:--</span>
+                    <span class="md-label-small md-muted md-mono">Dimulai dalam</span>
+                    <span id="next-class-countdown" class="md-mono md-num md-num-kpi" style="font-size:26px;">--:--:--</span>
                 </div>
             </div>
         </section>

@@ -1,14 +1,14 @@
 {{define "content"}}
 <div class="md-col md-enter" style="gap:24px;">
 
-    <!-- ============ Header halaman ============ -->
-    <div class="md-row-between md-wrap" style="align-items:flex-start;gap:16px;">
-        <div class="md-col" style="gap:4px;max-width:640px;">
-            <span class="md-badge md-badge-tertiary" style="align-self:flex-start;">Pipeline pengiriman live</span>
-            <h1 class="md-headline-small md-balance" style="margin-top:8px;">Antrian pesan</h1>
-            <p class="md-body-small md-muted md-balance">Daftar pesan terencana yang siap dikirimkan melalui WhatsApp engine dengan jeda anti-ban dan retry otomatis.</p>
+    <!-- ============ Page head ============ -->
+    <div class="md-page-head">
+        <div>
+            <span class="md-label-small" style="text-transform:uppercase;letter-spacing:1.6px;font-weight:600;color:var(--md-sys-color-tertiary);">Pipeline pengiriman live</span>
+            <h1 class="md-page-title md-balance">Antrian pesan</h1>
+            <p class="md-page-sub">Daftar pesan terencana yang siap dikirimkan melalui WhatsApp engine dengan jeda anti-ban dan retry otomatis.</p>
         </div>
-        <div class="md-row md-wrap" style="gap:8px;">
+        <div class="md-row md-wrap">
             <button onclick="window.location.reload()" class="md-btn-outlined md-btn-sm">
                 <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 Segarkan antrian
@@ -16,101 +16,125 @@
         </div>
     </div>
 
-    <!-- ============ Alert pemrosesan aktif ============ -->
+    <!-- ============ Banner pemrosesan aktif (tinted) ============ -->
     {{if .Data.Processing}}
-    <div class="md-row-between md-wrap" style="padding:14px 16px;border-radius:var(--md-shape-md);background:var(--md-sys-color-error-container);color:var(--md-sys-color-on-error-container);">
-        <div class="md-row" style="gap:12px;">
-            <span class="md-dot" style="background:var(--md-sys-color-error);"></span>
+    <div class="md-row-between md-wrap" style="gap:16px;padding:18px 24px;border-radius:20px;background:var(--md-sys-color-error-container);color:var(--md-sys-color-on-error-container);">
+        <div class="md-row" style="gap:16px;">
+            <div class="md-center" style="width:44px;height:44px;border-radius:14px;background:color-mix(in srgb, var(--md-sys-color-on-error-container) 14%, transparent);flex-shrink:0;">
+                <svg style="width:22px;height:22px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
             <div>
                 <div class="md-title-small">Memproses pengiriman aktif</div>
-                <div class="md-body-small" style="opacity:0.8;">{{len .Data.Processing}} pesan sedang didispatch ke WhatsApp engine dengan jitter random anti-ban.</div>
+                <div class="md-body-small" style="opacity:0.8;">Pesan sedang didispatch ke WhatsApp engine dengan jitter random anti-ban.</div>
             </div>
         </div>
-        <span class="md-badge md-mono" style="background:color-mix(in srgb, var(--md-sys-color-on-error-container) 14%, transparent);">In progress</span>
+        <div class="md-row" style="gap:16px;">
+            <div style="text-align:right;">
+                <div class="md-num md-num-kpi">{{len .Data.Processing}}</div>
+                <div class="md-label-small" style="opacity:0.75;">sedang diproses</div>
+            </div>
+            <span class="md-badge md-mono" style="background:color-mix(in srgb, var(--md-sys-color-on-error-container) 14%, transparent);">In progress</span>
+        </div>
     </div>
     {{end}}
 
     <!-- ============ Tabel antrian ============ -->
-    <div class="md-table-wrap" style="border:1px solid var(--md-sys-color-outline-variant);background:var(--md-sys-color-surface-container-low);">
-        <table class="md-table">
-            <thead>
-                <tr>
-                    <th>Jadwal kirim</th>
-                    <th>Penerima</th>
-                    <th>Ringkasan pesan</th>
-                    <th>Status</th>
-                    <th>Percobaan</th>
-                    <th style="text-align:right;">Aksi cepat</th>
-                </tr>
-            </thead>
-            <tbody id="queue-table-body">
-                {{if .Data.Pending}}
-                {{range .Data.Pending}}
-                <tr>
-                    <td class="md-mono md-body-small" style="white-space:nowrap;">{{formatTime .ScheduledFor "02 Jan 15:04"}} WITA</td>
-                    <td style="white-space:nowrap;">
-                        <div class="md-row" style="gap:10px;">
-                            <div class="md-center" style="width:34px;height:34px;border-radius:12px;background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);font-weight:600;font-size:13px;flex-shrink:0;">
-                                {{slice .RecipientName 0 1}}
+    <section class="md-card-elevated">
+        <div class="md-card-header">
+            <div class="md-card-header-icon">
+                <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="md-grow">
+                <div class="md-card-header-title">Antrian pengiriman</div>
+                <div class="md-card-header-sub">Pesan menunggu jadwal, lengkap dengan status retry</div>
+            </div>
+            <div style="text-align:right;">
+                <div class="md-num md-num-kpi">{{len .Data.Pending}}</div>
+                <div class="md-label-small md-muted">pesan menunggu</div>
+            </div>
+        </div>
+
+        <div class="md-table-wrap" style="border:1px solid var(--md-sys-color-outline-variant);border-radius:20px;background:var(--md-sys-color-surface-container-low);">
+            <table class="md-table">
+                <thead>
+                    <tr>
+                        <th>Jadwal kirim</th>
+                        <th>Penerima</th>
+                        <th>Ringkasan pesan</th>
+                        <th>Status</th>
+                        <th>Percobaan</th>
+                        <th style="text-align:right;">Aksi cepat</th>
+                    </tr>
+                </thead>
+                <tbody id="queue-table-body">
+                    {{if .Data.Pending}}
+                    {{range .Data.Pending}}
+                    <tr>
+                        <td class="md-mono md-body-small" style="white-space:nowrap;">{{formatTime .ScheduledFor "02 Jan 15:04"}} WITA</td>
+                        <td style="white-space:nowrap;">
+                            <div class="md-row" style="gap:10px;">
+                                <div class="md-center" style="width:34px;height:34px;border-radius:12px;background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);font-weight:600;font-size:13px;flex-shrink:0;">
+                                    {{slice .RecipientName 0 1}}
+                                </div>
+                                <div>
+                                    <div class="md-title-small">{{.RecipientName}}</div>
+                                    <div class="md-label-small md-mono md-muted">{{.RecipientJID}}</div>
+                                </div>
                             </div>
-                            <div>
-                                <div class="md-title-small">{{.RecipientName}}</div>
-                                <div class="md-label-small md-mono md-muted">{{.RecipientJID}}</div>
+                        </td>
+                        <td style="max-width:320px;">
+                            <div class="md-body-small md-muted md-truncate">{{truncate .Message 70}}</div>
+                            {{if .ErrorMessage}}
+                            <div class="md-row md-mono" style="gap:4px;margin-top:4px;font-size:11px;color:var(--md-sys-color-warning);">
+                                <svg style="width:12px;height:12px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                <span class="md-truncate">Percobaan sebelumnya gagal: {{.ErrorMessage}}</span>
                             </div>
-                        </div>
-                    </td>
-                    <td style="max-width:320px;">
-                        <div class="md-body-small md-muted md-truncate">{{truncate .Message 70}}</div>
-                        {{if .ErrorMessage}}
-                        <div class="md-row md-mono" style="gap:4px;margin-top:4px;font-size:11px;color:var(--md-sys-color-warning);">
-                            <svg style="width:12px;height:12px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                            <span class="md-truncate">Percobaan sebelumnya gagal: {{.ErrorMessage}}</span>
-                        </div>
-                        {{end}}
-                    </td>
-                    <td style="white-space:nowrap;">
-                        {{statusBadge .Status}}
-                    </td>
-                    <td style="white-space:nowrap;">
-                        <span class="md-badge md-badge-neutral md-mono">{{.RetryCount}}/{{.MaxRetries}}</span>
-                    </td>
-                    <td style="text-align:right;white-space:nowrap;">
-                        <div class="md-row md-wrap" style="gap:4px;justify-content:flex-end;">
-                            <!-- Kirim sekarang -->
-                            <form action="/queue/{{.ID}}/send-now" method="POST" style="display:inline-flex;">
-                                <button type="submit" class="md-btn-tonal md-btn-sm" title="Kirim sekarang tanpa menunggu jadwal">
-                                    <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                    Kirim sekarang
-                                </button>
-                            </form>
-                            <!-- Batalkan -->
-                            <form action="/queue/{{.ID}}/cancel" method="POST" style="display:inline-flex;">
-                                <button type="submit" class="md-btn-text md-btn-sm">Batalkan</button>
-                            </form>
-                            <!-- Hapus -->
-                            <form action="/queue/{{.ID}}/delete" method="POST" onsubmit="return confirm('Hapus pesan ini dari antrian?')" style="display:inline-flex;">
-                                <button type="submit" class="md-icon-btn" style="width:32px;height:32px;color:var(--md-sys-color-error);" title="Hapus permanen">
-                                    <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                {{end}}
-                {{else}}
-                <tr>
-                    <td colspan="6" style="padding:0;">
-                        <div class="md-empty md-body-small">
-                            <svg fill="none" stroke="currentColor" stroke-width="1.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <div class="md-title-small">Antrian kosong</div>
-                            <div class="md-body-small" style="max-width:400px;">Semua pesan terjadwal telah diproses. Antrian baru akan terisi otomatis sesuai evaluasi jadwal H-1 atau manual trigger.</div>
-                        </div>
-                    </td>
-                </tr>
-                {{end}}
-            </tbody>
-        </table>
-    </div>
+                            {{end}}
+                        </td>
+                        <td style="white-space:nowrap;">
+                            {{statusBadge .Status}}
+                        </td>
+                        <td style="white-space:nowrap;">
+                            <span class="md-badge md-badge-neutral md-mono">{{.RetryCount}}/{{.MaxRetries}}</span>
+                        </td>
+                        <td style="text-align:right;white-space:nowrap;">
+                            <div class="md-row md-wrap" style="gap:4px;justify-content:flex-end;">
+                                <!-- Kirim sekarang -->
+                                <form action="/queue/{{.ID}}/send-now" method="POST" style="display:inline-flex;">
+                                    <button type="submit" class="md-btn-tonal md-btn-sm" title="Kirim sekarang tanpa menunggu jadwal">
+                                        <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                        Kirim sekarang
+                                    </button>
+                                </form>
+                                <!-- Batalkan -->
+                                <form action="/queue/{{.ID}}/cancel" method="POST" style="display:inline-flex;">
+                                    <button type="submit" class="md-btn-text md-btn-sm">Batalkan</button>
+                                </form>
+                                <!-- Hapus -->
+                                <form action="/queue/{{.ID}}/delete" method="POST" onsubmit="return confirm('Hapus pesan ini dari antrian?')" style="display:inline-flex;">
+                                    <button type="submit" class="md-icon-btn" style="width:32px;height:32px;color:var(--md-sys-color-error);" title="Hapus permanen">
+                                        <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {{end}}
+                    {{else}}
+                    <tr>
+                        <td colspan="6" style="padding:0;">
+                            <div class="md-empty md-body-small">
+                                <svg fill="none" stroke="currentColor" stroke-width="1.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <div class="md-title-small">Antrian kosong</div>
+                                <div class="md-body-small" style="max-width:400px;">Semua pesan terjadwal telah diproses. Antrian baru akan terisi otomatis sesuai evaluasi jadwal H-1 atau manual trigger.</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </section>
 
 </div>
 {{end}}

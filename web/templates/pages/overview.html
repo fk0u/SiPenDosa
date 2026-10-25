@@ -1,177 +1,120 @@
 {{define "content"}}
 <div class="md-col md-enter" style="gap:24px;">
 
-    <!-- ============ Panduan cepat 3 langkah (M3 filled card, shape XL) ============ -->
-    <section class="md-card-filled md-card-xl">
-        <div class="md-row-between md-wrap" style="align-items:flex-start;">
-            <div class="md-col" style="gap:4px; max-width:640px;">
-                <span class="md-badge md-badge-tertiary" style="align-self:flex-start;">Panduan cepat operasional</span>
-                <h2 class="md-headline-small md-balance" style="margin-top:8px;">Cara kerja SiPenDosa dalam 3 langkah</h2>
-                <p class="md-body-small md-muted md-balance">Asisten otomatis yang rela "berdosa" mengingatkan dosen secara terjadwal dan santun, agar mahasiswa tidak perlu merasa sungkan.</p>
-            </div>
+    <!-- ============ Greeting header ============ -->
+    <div class="md-page-head">
+        <div>
+            <h1 class="md-page-title md-balance">{{.Data.Greeting}}, {{if .User}}{{.User.Username}}{{else}}Admin{{end}}</h1>
+            <p class="md-page-sub">Pantau engine pengingat dosen — semua jalan otomatis di latar belakang.</p>
+        </div>
+        <div class="md-row md-wrap">
             <button onclick="document.getElementById('help_modal').showModal()" class="md-btn-outlined md-btn-sm">
                 <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 Pusat bantuan
             </button>
+            <a href="/schedules" class="md-btn md-btn-sm">
+                <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                Jadwal baru
+            </a>
         </div>
+    </div>
 
-        <div class="md-grid-3" style="margin-top:20px;">
-            <!-- Langkah 1: tautkan WA -->
-            <div class="md-card-outlined md-col" style="padding:16px; justify-content:space-between; gap:12px; {{if eq .Data.WAState "connected"}}border-color:var(--md-sys-color-success);{{else}}border-color:var(--md-sys-color-warning);{{end}}">
-                <div class="md-stack" style="gap:4px;">
-                    <div class="md-row-between">
-                        <span class="md-label-small md-mono" style="{{if eq .Data.WAState "connected"}}color:var(--md-sys-color-success){{else}}color:var(--md-sys-color-warning){{end}};">LANGKAH 01</span>
-                        {{if eq .Data.WAState "connected"}}
-                        <span class="md-badge md-badge-success">Terhubung</span>
-                        {{else}}
-                        <span class="md-badge md-badge-warning">Wajib</span>
-                        {{end}}
-                    </div>
-                    <h4 class="md-title-small">Tautkan akun WhatsApp</h4>
-                    <p class="md-body-small md-muted">Hubungkan nomor WA pengirim pesan melalui QR code atau kode pairing.</p>
+    <!-- ============ Hero: countdown & engine (2 kolom asimetris) ============ -->
+    <div class="md-grid" style="grid-template-columns:minmax(0, 3fr) minmax(280px, 2fr);align-items:stretch;">
+        <!-- Hero countdown -->
+        <section class="md-hero md-col" style="justify-content:space-between;gap:20px;">
+            <div class="md-row-between md-wrap">
+                <div class="md-row md-gap-sm">
+                    <span class="md-dot md-dot-primary"></span>
+                    <span class="md-label-medium md-muted" style="text-transform:uppercase;letter-spacing:1.4px;font-weight:600;">Pengiriman berikutnya</span>
+                    {{if .Data.Settings.GlobalDryRun}}<span class="md-badge md-badge-warning">Dry-run</span>{{end}}
                 </div>
-                <button onclick="openWhatsAppModal()" class="md-btn md-btn-sm {{if eq .Data.WAState "connected"}}md-btn-outlined{{end}}" style="width:100%;">
-                    {{if eq .Data.WAState "connected"}}Periksa status WA{{else}}Tautkan WA (QR / HP){{end}}
-                </button>
+                {{if .Data.NextDelivery}}<span class="md-badge md-badge-primary md-mono">{{.Data.NextDelivery.TargetTime}}</span>{{end}}
             </div>
 
-            <!-- Langkah 2: kontak dosen -->
-            <div class="md-card-outlined md-col" style="padding:16px; justify-content:space-between; gap:12px;">
-                <div class="md-stack" style="gap:4px;">
-                    <div class="md-row-between">
-                        <span class="md-label-small md-mono md-muted">LANGKAH 02</span>
-                        <span class="md-label-small md-mono md-muted">{{statVal .Data.Stats "TotalContacts"}} dosen</span>
-                    </div>
-                    <h4 class="md-title-small">Daftarkan kontak dosen</h4>
-                    <p class="md-body-small md-muted">Simpan nama lengkap, gelar, dan nomor WhatsApp dosen tujuan.</p>
+            <div>
+                <div id="countdown-timer" class="md-num md-num-hero">
+                    {{if .Data.NextDelivery}}{{.Data.NextDelivery.RemainingHuman}}{{else}}Tidak ada jadwal aktif{{end}}
                 </div>
-                <a href="/contacts" class="md-btn-outlined md-btn-sm md-text-center" style="width:100%;">Kelola kontak dosen</a>
-            </div>
-
-            <!-- Langkah 3: jadwal -->
-            <div class="md-card-outlined md-col" style="padding:16px; justify-content:space-between; gap:12px;">
-                <div class="md-stack" style="gap:4px;">
-                    <div class="md-row-between">
-                        <span class="md-label-small md-mono md-muted">LANGKAH 03</span>
-                        <span class="md-label-small md-mono md-muted">{{statVal .Data.Stats "ActiveSchedules"}} aktif</span>
-                    </div>
-                    <h4 class="md-title-small">Pasang jadwal kuliah</h4>
-                    <p class="md-body-small md-muted">Pilih mata kuliah, hari, jam, dan mode pengingat H-1 atau hari-H.</p>
-                </div>
-                <a href="/schedules" class="md-btn md-btn-sm md-text-center" style="width:100%;">Buat jadwal pengingat</a>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============ Engine status & countdown ============ -->
-    <div class="md-grid" style="grid-template-columns:repeat(auto-fit, minmax(340px, 1fr));">
-
-        <!-- WhatsApp engine -->
-        <section class="md-card-elevated md-col" style="gap:20px; justify-content:space-between;">
-            <div class="md-stack" style="gap:12px;">
-                <div class="md-row-between">
-                    <div class="md-row md-gap-sm">
-                        <span class="md-dot {{if eq .Data.WAState "connected"}}md-dot-success{{else}}md-dot-warning{{end}}"></span>
-                        <span class="md-label-small md-muted" style="text-transform:uppercase;letter-spacing:1.2px;">WhatsApp engine</span>
+                <div class="md-row md-wrap" style="gap:20px;margin-top:14px;">
+                    <div>
+                        <div class="md-label-small md-muted">Mata kuliah</div>
+                        <div id="countdown-matkul" class="md-title-small md-truncate" style="max-width:220px;">{{if .Data.NextDelivery}}{{.Data.NextDelivery.Matkul}}{{else}}—{{end}}</div>
                     </div>
                     <div>
-                        {{if eq .Data.WAState "connected"}}
-                        <span class="md-badge md-badge-success">Terhubung</span>
-                        {{else if eq .Data.WAState "need_qr"}}
-                        <span class="md-badge md-badge-warning">Perlu scan QR</span>
-                        {{else if eq .Data.WAState "connecting"}}
-                        <span class="md-badge md-badge-warning">Menyambungkan</span>
-                        {{else}}
-                        <span class="md-badge md-badge-error">Terputus</span>
-                        {{end}}
-                    </div>
-                </div>
-
-                <!-- Identitas nomor -->
-                <div class="md-row md-card-outlined" style="padding:16px;gap:16px;">
-                    <div class="md-center" style="width:48px;height:48px;border-radius:var(--md-shape-md);background:var(--md-sys-color-success-container);color:var(--md-sys-color-on-success-container);flex-shrink:0;">
-                        <svg style="width:24px;height:24px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                    </div>
-                    <div class="md-grow md-truncate">
-                        <div class="md-label-medium md-muted">Nomor akun tertaut</div>
-                        <div class="md-title-medium md-mono md-truncate">
-                            {{if .Data.WAPhone}}{{.Data.WAPhone}}{{else}}<span class="md-body-small md-muted" style="font-style:italic;">Belum ada perangkat ditautkan</span>{{end}}
-                        </div>
-                        {{if .Data.WAPushName}}<div class="md-body-small md-muted md-truncate">Nama WhatsApp: <strong>{{.Data.WAPushName}}</strong></div>{{end}}
+                        <div class="md-label-small md-muted">Dosen penerima</div>
+                        <div id="countdown-recipient" class="md-title-small md-truncate" style="max-width:220px;">{{if .Data.NextDelivery}}{{.Data.NextDelivery.RecipientName}}{{else}}—{{end}}</div>
                     </div>
                 </div>
             </div>
 
-            <div class="md-row md-wrap" style="border-top:1px solid var(--md-sys-color-outline-variant);padding-top:16px;">
-                <button onclick="openWhatsAppModal()" class="md-btn md-btn-sm">
-                    <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
-                    Tautkan WhatsApp
-                </button>
+            <div class="md-stack" style="gap:6px;">
+                <span class="md-label-small md-muted" style="text-transform:uppercase;letter-spacing:1px;">Preview pesan</span>
+                <div id="countdown-preview" class="md-code" style="background:color-mix(in srgb, var(--md-sys-color-on-surface) 5%, transparent);max-height:88px;overflow-y:auto;white-space:pre-wrap;">
+                    {{if .Data.NextDelivery}}{{.Data.NextDelivery.MessagePreview}}{{else}}Belum ada jadwal yang mendekati waktu pengiriman. Atur jadwal pada menu Jadwal kuliah.{{end}}
+                </div>
+            </div>
+        </section>
+
+        <!-- WhatsApp engine -->
+        <section class="md-card-elevated md-col" style="gap:16px;">
+            <div class="md-card-header" style="margin-bottom:0;">
+                <div class="md-card-header-icon" style="{{if eq .Data.WAState "connected"}}background:var(--md-sys-color-success-container);color:var(--md-sys-color-on-success-container);{{end}}">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                </div>
+                <div class="md-grow">
+                    <div class="md-card-header-title">WhatsApp engine</div>
+                    <div class="md-card-header-sub">Koneksi pengirim pesan</div>
+                </div>
+                {{if eq .Data.WAState "connected"}}
+                <span class="md-badge md-badge-success">Terhubung</span>
+                {{else if eq .Data.WAState "need_qr"}}
+                <span class="md-badge md-badge-warning">Perlu QR</span>
+                {{else if eq .Data.WAState "connecting"}}
+                <span class="md-badge md-badge-warning">Menyambung</span>
+                {{else}}
+                <span class="md-badge md-badge-error">Terputus</span>
+                {{end}}
+            </div>
+
+            <div>
+                <div class="md-label-small md-muted">Nomor akun tertaut</div>
+                <div class="md-num md-num-kpi md-truncate" style="font-size:26px;">
+                    {{if .Data.WAPhone}}{{.Data.WAPhone}}{{else}}<span class="md-body-small md-muted" style="font-style:italic;font-family:var(--md-font);">Belum ada perangkat</span>{{end}}
+                </div>
+                {{if .Data.WAPushName}}<div class="md-body-small md-muted">Nama WhatsApp: <strong>{{.Data.WAPushName}}</strong></div>{{end}}
+            </div>
+
+            <div class="md-row md-wrap" style="margin-top:auto;">
+                <button onclick="openWhatsAppModal()" class="md-btn md-btn-sm">Tautkan WhatsApp</button>
                 <form action="/api/wa/reconnect" method="POST" class="md-row" style="gap:0;">
                     <button type="submit" class="md-btn-tonal md-btn-sm">Rekoneksi</button>
                 </form>
                 {{if eq .Data.WAState "connected"}}
                 <form action="/api/wa/disconnect" method="POST" class="md-right md-row" style="gap:0;">
-                    <button type="submit" class="md-btn-text md-btn-sm" style="color:var(--md-sys-color-error);">Putuskan sesi</button>
+                    <button type="submit" class="md-btn-text md-btn-sm" style="color:var(--md-sys-color-error);">Putuskan</button>
                 </form>
                 {{end}}
             </div>
         </section>
-
-        <!-- Countdown realtime -->
-        <section class="md-card-elevated md-col" style="gap:20px; justify-content:space-between;">
-            <div class="md-stack" style="gap:12px;">
-                <div class="md-row-between">
-                    <div class="md-row md-gap-sm">
-                        <span class="md-dot md-dot-primary"></span>
-                        <span class="md-label-small" style="color:var(--md-sys-color-primary);text-transform:uppercase;letter-spacing:1.2px;">Countdown pengiriman berikutnya</span>
-                    </div>
-                    {{if .Data.Settings.GlobalDryRun}}
-                    <span class="md-badge md-badge-warning">Dry-run mode</span>
-                    {{end}}
-                </div>
-
-                <div class="md-grid" style="grid-template-columns:1fr;gap:12px;">
-                    <div class="md-stack" style="gap:2px;">
-                        <div id="countdown-timer" class="md-display-small md-mono" style="font-weight:700;">
-                            {{if .Data.NextDelivery}}{{.Data.NextDelivery.RemainingHuman}}{{else}}Tidak ada jadwal aktif{{end}}
-                        </div>
-                        <div class="md-body-small md-muted">Target kirim: <span class="md-mono" style="color:var(--md-sys-color-primary);font-weight:600;">{{if .Data.NextDelivery}}{{.Data.NextDelivery.TargetTime}}{{else}}-{{end}}</span></div>
-                    </div>
-                    <div class="md-card-outlined md-stack" style="padding:14px;gap:4px;">
-                        <div class="md-label-small md-muted">Mata kuliah:</div>
-                        <div id="countdown-matkul" class="md-title-small md-truncate">{{if .Data.NextDelivery}}{{.Data.NextDelivery.Matkul}}{{else}}-{{end}}</div>
-                        <div class="md-label-small md-muted" style="margin-top:4px;">Dosen penerima:</div>
-                        <div id="countdown-recipient" class="md-title-small md-truncate" style="color:var(--md-sys-color-primary);">{{if .Data.NextDelivery}}{{.Data.NextDelivery.RecipientName}}{{else}}-{{end}}</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="md-stack" style="border-top:1px solid var(--md-sys-color-outline-variant);padding-top:12px;gap:6px;">
-                <span class="md-label-small md-muted" style="text-transform:uppercase;">Preview pesan terjadwal</span>
-                <div id="countdown-preview" class="md-code" style="max-height:96px;overflow-y:auto;white-space:pre-wrap;">
-                    {{if .Data.NextDelivery}}{{.Data.NextDelivery.MessagePreview}}{{else}}Belum ada jadwal yang mendekati waktu pengiriman. Atur jadwal pada menu Jadwal kuliah.{{end}}
-                </div>
-            </div>
-        </section>
     </div>
 
-    <!-- ============ Statistik ============ -->
+    <!-- ============ KPI row ============ -->
     <div class="md-grid-stats">
-        <div class="md-stat" style="grid-column:span 2 / span 2;">
+        <div class="md-stat" style="grid-column:span 2 / span 2;background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);">
             <div class="md-row-between">
-                <span class="md-label-medium md-muted" style="text-transform:uppercase;letter-spacing:1px;">Tingkat keberhasilan</span>
-                <span class="md-badge md-badge-success">Stabil</span>
+                <span class="md-label-medium" style="text-transform:uppercase;letter-spacing:1px;opacity:0.85;">Tingkat keberhasilan</span>
+                <span class="md-delta md-delta-up">stabil</span>
             </div>
-            <div class="md-stat-value md-mono">{{printf "%.1f" (statVal .Data.Stats "SuccessRate")}}%</div>
-            <div class="md-body-small md-muted">Rasio pengiriman sukses tanpa kendala jaringan.</div>
+            <div class="md-stat-value md-num">{{printf "%.1f" (statVal .Data.Stats "SuccessRate")}}<span style="font-size:0.5em;opacity:0.7;">%</span></div>
+            <div class="md-body-small" style="opacity:0.8;">Rasio pengiriman sukses tanpa kendala jaringan.</div>
         </div>
         <div class="md-stat">
             <div class="md-stat-icon" style="background:var(--md-sys-color-success-container);color:var(--md-sys-color-on-success-container);">
                 <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
             </div>
             <span class="md-label-medium md-muted">Hari ini</span>
-            <div class="md-stat-value md-mono" style="color:var(--md-sys-color-success);">{{statVal .Data.Stats "TotalSentToday"}}</div>
+            <div class="md-stat-value md-num" style="color:var(--md-sys-color-success);">{{statVal .Data.Stats "TotalSentToday"}}</div>
             <span class="md-body-small md-muted">Pesan sukses</span>
         </div>
         <div class="md-stat">
@@ -179,7 +122,7 @@
                 <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
             </div>
             <span class="md-label-medium md-muted">Total kirim</span>
-            <div class="md-stat-value md-mono">{{statVal .Data.Stats "TotalSentAll"}}</div>
+            <div class="md-stat-value md-num">{{statVal .Data.Stats "TotalSentAll"}}</div>
             <span class="md-body-small md-muted">Sepanjang masa</span>
         </div>
         <div class="md-stat">
@@ -187,7 +130,7 @@
                 <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
             <span class="md-label-medium md-muted">Antrian</span>
-            <div class="md-stat-value md-mono" style="color:var(--md-sys-color-warning);">{{statVal .Data.Stats "TotalPending"}}</div>
+            <div class="md-stat-value md-num" style="color:var(--md-sys-color-warning);">{{statVal .Data.Stats "TotalPending"}}</div>
             <span class="md-body-small md-muted">Menunggu jam kirim</span>
         </div>
         <div class="md-stat">
@@ -195,20 +138,61 @@
                 <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
             </div>
             <span class="md-label-medium md-muted">Gagal</span>
-            <div class="md-stat-value md-mono" style="color:var(--md-sys-color-error);">{{statVal .Data.Stats "TotalFailedAll"}}</div>
+            <div class="md-stat-value md-num" style="color:var(--md-sys-color-error);">{{statVal .Data.Stats "TotalFailedAll"}}</div>
             <span class="md-body-small md-muted">Ditinjau otomatis</span>
         </div>
     </div>
 
-    <!-- ============ Uji kirim & riwayat terkini ============ -->
-    <div class="md-grid" style="grid-template-columns:minmax(300px, 4fr) minmax(0, 8fr);align-items:start;">
-        <section class="md-card-elevated md-stack" style="gap:16px;">
-            <div class="md-stack" style="gap:4px;">
-                <div class="md-row md-gap-sm md-label-medium" style="color:var(--md-sys-color-primary);text-transform:uppercase;letter-spacing:1px;font-weight:600;">
-                    <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                    Uji kirim pesan cepat
+    <!-- ============ Onboarding ringkas: 3 langkah ============ -->
+    <section class="md-card-outlined md-col" style="gap:16px;">
+        <div class="md-card-header" style="margin-bottom:0;">
+            <div class="md-card-header-icon" style="background:var(--md-sys-color-tertiary-container);color:var(--md-sys-color-on-tertiary-container);">
+                <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+            <div class="md-grow">
+                <div class="md-card-header-title">Mulai dalam 3 langkah</div>
+                <div class="md-card-header-sub">Tautkan WA, daftarkan dosen, pasang jadwal — sisanya otomatis.</div>
+            </div>
+        </div>
+        <div class="md-grid-3">
+            <a href="/contacts" class="md-list-item" style="border:1px solid var(--md-sys-color-outline-variant);border-radius:20px;padding:16px;">
+                <span class="md-list-item-leading md-mono">01</span>
+                <div class="md-grow">
+                    <div class="md-title-small">Daftarkan kontak dosen</div>
+                    <div class="md-body-small md-muted">{{statVal .Data.Stats "TotalContacts"}} dosen terdaftar</div>
                 </div>
-                <p class="md-body-small md-muted">Kirim pesan instan via antrian bersimulasi anti-ban untuk memverifikasi koneksi WhatsApp aktif.</p>
+                <span class="md-muted">→</span>
+            </a>
+            <a href="/schedules" class="md-list-item" style="border:1px solid var(--md-sys-color-outline-variant);border-radius:20px;padding:16px;">
+                <span class="md-list-item-leading md-mono">02</span>
+                <div class="md-grow">
+                    <div class="md-title-small">Pasang jadwal kuliah</div>
+                    <div class="md-body-small md-muted">{{statVal .Data.Stats "ActiveSchedules"}} jadwal aktif</div>
+                </div>
+                <span class="md-muted">→</span>
+            </a>
+            <a href="/templates" class="md-list-item" style="border:1px solid var(--md-sys-color-outline-variant);border-radius:20px;padding:16px;">
+                <span class="md-list-item-leading md-mono">03</span>
+                <div class="md-grow">
+                    <div class="md-title-small">Sesuaikan template pesan</div>
+                    <div class="md-body-small md-muted">Santun & personal per dosen</div>
+                </div>
+                <span class="md-muted">→</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- ============ Uji kirim & riwayat terkini (asimetris) ============ -->
+    <div class="md-grid" style="grid-template-columns:minmax(300px, 4fr) minmax(0, 8fr);align-items:start;">
+        <section class="md-card-filled md-stack" style="gap:16px;">
+            <div class="md-card-header" style="margin-bottom:0;">
+                <div class="md-card-header-icon" style="background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                </div>
+                <div class="md-grow">
+                    <div class="md-card-header-title">Uji kirim cepat</div>
+                    <div class="md-card-header-sub">Verifikasi koneksi via antrian anti-ban</div>
+                </div>
             </div>
 
             <form action="/api/wa/test-send" method="POST" class="md-col" style="gap:12px;">
@@ -225,20 +209,23 @@
                         <label class="md-field-static">Isi pesan uji coba</label>
                     </div>
                 </div>
-                <button type="submit" class="md-btn" style="width:100%;">Kirim via antrian anti-ban</button>
+                <button type="submit" class="md-btn" style="width:100%;">Kirim pesan uji</button>
             </form>
         </section>
 
         <section class="md-card-elevated md-stack" style="gap:12px;">
-            <div class="md-row-between">
-                <div class="md-stack" style="gap:0;">
-                    <h3 class="md-title-medium">Riwayat pengiriman terkini</h3>
-                    <p class="md-body-small md-muted">Status pengiriman pesan real-time.</p>
+            <div class="md-card-header" style="margin-bottom:0;">
+                <div class="md-card-header-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div class="md-grow">
+                    <div class="md-card-header-title">Riwayat pengiriman terkini</div>
+                    <div class="md-card-header-sub">Status pengiriman pesan real-time</div>
                 </div>
                 <a href="/history" class="md-btn-text md-btn-sm">Lihat semua →</a>
             </div>
 
-            <div class="md-table-wrap" style="border:1px solid var(--md-sys-color-outline-variant);">
+            <div class="md-table-wrap" style="border:1px solid var(--md-sys-color-outline-variant);border-radius:20px;">
                 <table class="md-table">
                     <thead>
                         <tr>

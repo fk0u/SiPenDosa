@@ -1,13 +1,13 @@
 {{define "content"}}
-<div class="md-col md-enter" style="max-width:720px; margin:0 auto; gap:24px; padding-top:8px;">
+<div class="md-col md-enter" style="max-width:760px; margin:0 auto; gap:24px; padding-top:8px;">
 
     <!-- ============ Hero: filosofi & kisah di balik nama ============ -->
-    <section class="md-card-filled md-card-xl md-col" style="gap:12px;">
-        <span class="md-badge md-badge-tertiary" style="align-self:flex-start;">Filosofi &amp; kisah di balik nama</span>
-        <div class="md-col" style="gap:8px;">
-            <h1 class="md-headline-small md-balance">SiPenDosa</h1>
+    <section class="md-hero md-col" style="gap:14px;">
+        <span class="md-badge md-badge-tertiary" style="align-self:flex-start; background:color-mix(in srgb, var(--md-sys-color-surface) 60%, var(--md-sys-color-tertiary-container));">Filosofi &amp; kisah di balik nama</span>
+        <div class="md-col" style="gap:10px;">
+            <h1 class="md-page-title md-balance">SiPenDosa</h1>
             <p class="md-body-large md-muted md-balance" style="font-style:italic;">
-                "Asisten yang rela <strong>'berdosa'</strong> demi kepastian jadwal perkuliahan, agar mahasiswa tidak perlu merasa sungkan."
+                "Asisten yang rela <strong style="color:var(--md-sys-color-on-surface);">'berdosa'</strong> demi kepastian jadwal perkuliahan, agar mahasiswa tidak perlu merasa sungkan."
             </p>
         </div>
         <div class="md-row md-wrap" style="gap:8px; padding-top:4px;">
@@ -26,8 +26,8 @@
                 <span class="md-dot md-dot-primary"></span>
                 <span class="md-label-small md-muted" style="text-transform:uppercase;letter-spacing:1.2px;">Versi asli &amp; jiwa mahasiswa</span>
             </div>
-            <h2 class="md-title-large md-balance">Lahir dari realita rasa sungkan</h2>
-            <div class="md-col md-body-medium" style="gap:12px; color:var(--md-sys-color-on-surface-variant); line-height:1.6;">
+            <h2 class="md-title-large md-balance" style="font-family:var(--md-font-display);font-weight:600;">Lahir dari realita rasa sungkan</h2>
+            <div class="md-col md-body-medium" style="gap:12px; color:var(--md-sys-color-on-surface-variant); line-height:1.65;">
                 <p>
                     Mengingatkan dosen berkali-kali tentang kepastian jadwal kuliah, ruangan, atau kelas pengganti kadang terasa seperti <em>"berdosa"</em> bagi mahasiswa.
                 </p>
@@ -44,11 +44,11 @@
         <section class="md-card-outlined md-col" style="gap:12px; justify-content:space-between;">
             <div class="md-col" style="gap:12px;">
                 <div class="md-row" style="gap:8px;">
-                    <span class="md-dot md-dot-tertiary" style="background:var(--md-sys-color-tertiary);"></span>
+                    <span class="md-dot" style="background:var(--md-sys-color-tertiary);"></span>
                     <span class="md-label-small md-muted" style="text-transform:uppercase;letter-spacing:1.2px;">Versi formal (SRS / dokumentasi)</span>
                 </div>
-                <h2 class="md-title-large md-balance">Sistem Pengingat Dosen Saatnya</h2>
-                <div class="md-col md-body-medium" style="gap:12px; color:var(--md-sys-color-on-surface-variant); line-height:1.6;">
+                <h2 class="md-title-large md-balance" style="font-family:var(--md-font-display);font-weight:600;">Sistem Pengingat Dosen Saatnya</h2>
+                <div class="md-col md-body-medium" style="gap:12px; color:var(--md-sys-color-on-surface-variant); line-height:1.65;">
                     <p>
                         Untuk keperluan administrasi, proposal, dan Software Requirements Specification (SRS), <strong>SiPenDosa</strong> didefinisikan secara resmi sebagai <em>Sistem Pengingat Dosen Saatnya</em>.
                     </p>
@@ -66,24 +66,24 @@
     <!-- ============ Arsitektur rekayasa sistem ============ -->
     <section class="md-card-outlined md-col" style="gap:16px;">
         <div class="md-col" style="gap:4px;">
-            <h2 class="md-title-large">Arsitektur rekayasa sistem</h2>
+            <h2 class="md-title-large" style="font-family:var(--md-font-display);font-weight:600;">Arsitektur rekayasa sistem</h2>
             <p class="md-body-small md-muted">Dirancang untuk keandalan maksimal di server mandiri (VPS) dengan konsumsi RAM di bawah 50 MB.</p>
         </div>
 
         <div class="md-grid-stats">
-            <div class="md-col" style="padding:16px; border-radius:var(--md-shape-md); background:var(--md-sys-color-surface-container); gap:4px;">
+            <div class="md-col" style="padding:16px; border-radius:16px; background:var(--md-sys-color-surface-container); gap:4px;">
                 <div class="md-title-small">Golang core</div>
                 <div class="md-body-small md-muted">Daemon statis berkecepatan tinggi tanpa runtime VM.</div>
             </div>
-            <div class="md-col" style="padding:16px; border-radius:var(--md-shape-md); background:var(--md-sys-color-surface-container); gap:4px;">
+            <div class="md-col" style="padding:16px; border-radius:16px; background:var(--md-sys-color-surface-container); gap:4px;">
                 <div class="md-title-small" style="color:var(--md-sys-color-success);">Zero-CGO SQLite</div>
                 <div class="md-body-small md-muted">modernc.org/sqlite WAL isolated database.</div>
             </div>
-            <div class="md-col" style="padding:16px; border-radius:var(--md-shape-md); background:var(--md-sys-color-surface-container); gap:4px;">
+            <div class="md-col" style="padding:16px; border-radius:16px; background:var(--md-sys-color-surface-container); gap:4px;">
                 <div class="md-title-small" style="color:var(--md-sys-color-warning);">whatsmeow engine</div>
                 <div class="md-body-small md-muted">WhatsApp Multi-Device dengan typing presence.</div>
             </div>
-            <div class="md-col" style="padding:16px; border-radius:var(--md-shape-md); background:var(--md-sys-color-surface-container); gap:4px;">
+            <div class="md-col" style="padding:16px; border-radius:16px; background:var(--md-sys-color-surface-container); gap:4px;">
                 <div class="md-title-small" style="color:var(--md-sys-color-error);">HTMX + WebSocket</div>
                 <div class="md-body-small md-muted">Interaktivitas reaktif tanpa bloated client JS.</div>
             </div>

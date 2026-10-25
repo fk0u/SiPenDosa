@@ -1,84 +1,100 @@
 {{define "content"}}
 <div class="md-col md-enter" style="gap:24px;">
 
-    <!-- ============ Header & filter kategori ============ -->
-    <div class="md-row-between md-wrap" style="align-items:flex-start;gap:16px;">
-        <div class="md-col" style="gap:4px;max-width:640px;">
-            <span class="md-badge md-badge-tertiary" style="align-self:flex-start;">System telemetry & audit trail</span>
-            <h1 class="md-headline-small md-balance" style="margin-top:8px;">Log audit & aktivitas sistem</h1>
-            <p class="md-body-small md-muted md-balance">Pencatatan real-time untuk audit autentikasi, status konektivitas WhatsApp, penjadwalan, dan transaksi pesan.</p>
+    <!-- ============ Page head ============ -->
+    <div class="md-page-head">
+        <div>
+            <span class="md-label-small" style="text-transform:uppercase;letter-spacing:1.6px;font-weight:600;color:var(--md-sys-color-tertiary);">System telemetry &amp; audit trail</span>
+            <h1 class="md-page-title md-balance">Log audit &amp; aktivitas sistem</h1>
+            <p class="md-page-sub">Pencatatan real-time untuk audit autentikasi, status konektivitas WhatsApp, penjadwalan, dan transaksi pesan.</p>
         </div>
+    </div>
 
-        <!-- Filter kategori (M3 filter chips) -->
-        <div class="md-row md-wrap" style="gap:8px;">
-            <a href="/logs" class="md-chip {{if eq .Data.SelectedCategory ""}}md-chip-active{{end}}">Semua</a>
-            <a href="/logs?category=auth" class="md-chip {{if eq .Data.SelectedCategory "auth"}}md-chip-active{{end}}">Auth</a>
-            <a href="/logs?category=scheduler" class="md-chip {{if eq .Data.SelectedCategory "scheduler"}}md-chip-active{{end}}">Scheduler</a>
-            <a href="/logs?category=queue" class="md-chip {{if eq .Data.SelectedCategory "queue"}}md-chip-active{{end}}">Queue/WA</a>
-            <a href="/logs?category=contacts" class="md-chip {{if eq .Data.SelectedCategory "contacts"}}md-chip-active{{end}}">Kontak</a>
-            <a href="/logs?category=template" class="md-chip {{if eq .Data.SelectedCategory "template"}}md-chip-active{{end}}">Template</a>
-        </div>
+    <!-- ============ Filter kategori (M3 filter chips) ============ -->
+    <div class="md-row md-wrap" style="margin-top:-12px;">
+        <a href="/logs" class="md-chip {{if eq .Data.SelectedCategory ""}}md-chip-active{{end}}">Semua</a>
+        <a href="/logs?category=auth" class="md-chip {{if eq .Data.SelectedCategory "auth"}}md-chip-active{{end}}">Auth</a>
+        <a href="/logs?category=scheduler" class="md-chip {{if eq .Data.SelectedCategory "scheduler"}}md-chip-active{{end}}">Scheduler</a>
+        <a href="/logs?category=queue" class="md-chip {{if eq .Data.SelectedCategory "queue"}}md-chip-active{{end}}">Queue/WA</a>
+        <a href="/logs?category=contacts" class="md-chip {{if eq .Data.SelectedCategory "contacts"}}md-chip-active{{end}}">Kontak</a>
+        <a href="/logs?category=template" class="md-chip {{if eq .Data.SelectedCategory "template"}}md-chip-active{{end}}">Template</a>
     </div>
 
     <!-- ============ Tabel log ============ -->
-    <div class="md-table-wrap" style="border:1px solid var(--md-sys-color-outline-variant);background:var(--md-sys-color-surface-container-low);">
-        <table class="md-table">
-            <thead>
-                <tr>
-                    <th>Waktu ({{.Data.Timezone}})</th>
-                    <th>Kategori</th>
-                    <th>Aktivitas</th>
-                    <th>Detail telemetri</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{if .Data.Logs}}
-                {{range .Data.Logs}}
-                <tr>
-                    <td class="md-mono md-body-small md-muted" style="white-space:nowrap;">
-                        {{formatTime .CreatedAt "02 Jan 15:04:05"}}
-                    </td>
-                    <td style="white-space:nowrap;">
-                        {{if eq .Category "auth"}}
-                        <span class="md-badge md-badge-primary">Auth</span>
-                        {{else if eq .Category "scheduler"}}
-                        <span class="md-badge md-badge-warning">Scheduler</span>
-                        {{else if eq .Category "queue"}}
-                        <span class="md-badge md-badge-success">Queue</span>
-                        {{else if eq .Category "contacts"}}
-                        <span class="md-badge md-badge-warning">Kontak</span>
-                        {{else if eq .Category "template"}}
-                        <span class="md-badge md-badge-tertiary">Template</span>
-                        {{else}}
-                        <span class="md-badge md-badge-neutral">{{.Category}}</span>
-                        {{end}}
-                    </td>
-                    <td>
-                        <span class="md-body-small" style="font-weight:600;">{{.Message}}</span>
-                    </td>
-                    <td class="md-body-small" style="max-width:420px;">
-                        {{if .Details}}
-                        <span class="md-code" style="display:inline-block;padding:4px 10px;font-size:11px;">{{.Details}}</span>
-                        {{else}}
-                        <span class="md-muted">-</span>
-                        {{end}}
-                    </td>
-                </tr>
-                {{end}}
-                {{else}}
-                <tr>
-                    <td colspan="4" style="padding:0;">
-                        <div class="md-empty md-body-small">
-                            <svg fill="none" stroke="currentColor" stroke-width="1.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <div class="md-title-small">Log bersih</div>
-                            <div class="md-body-small" style="max-width:400px;">Belum ada catatan log aktivitas yang tercatat untuk filter kategori ini.</div>
-                        </div>
-                    </td>
-                </tr>
-                {{end}}
-            </tbody>
-        </table>
-    </div>
+    <section class="md-card-elevated">
+        <div class="md-card-header">
+            <div class="md-card-header-icon" style="background:var(--md-sys-color-tertiary-container);color:var(--md-sys-color-on-tertiary-container);">
+                <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <div class="md-grow">
+                <div class="md-card-header-title">Telemetri sistem</div>
+                <div class="md-card-header-sub">Jejak audit autentikasi, scheduler, dan antrean pesan</div>
+            </div>
+            <div style="text-align:right;">
+                <div class="md-num md-num-kpi">{{len .Data.Logs}}</div>
+                <div class="md-label-small md-muted">catatan log</div>
+            </div>
+        </div>
+
+        <div class="md-table-wrap" style="border:1px solid var(--md-sys-color-outline-variant);border-radius:20px;background:var(--md-sys-color-surface-container-low);">
+            <table class="md-table">
+                <thead>
+                    <tr>
+                        <th>Waktu ({{.Data.Timezone}})</th>
+                        <th>Kategori</th>
+                        <th>Aktivitas</th>
+                        <th>Detail telemetri</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{if .Data.Logs}}
+                    {{range .Data.Logs}}
+                    <tr>
+                        <td class="md-mono md-body-small md-muted" style="white-space:nowrap;">
+                            {{formatTime .CreatedAt "02 Jan 15:04:05"}}
+                        </td>
+                        <td style="white-space:nowrap;">
+                            {{if eq .Category "auth"}}
+                            <span class="md-badge md-badge-primary">Auth</span>
+                            {{else if eq .Category "scheduler"}}
+                            <span class="md-badge md-badge-warning">Scheduler</span>
+                            {{else if eq .Category "queue"}}
+                            <span class="md-badge md-badge-success">Queue</span>
+                            {{else if eq .Category "contacts"}}
+                            <span class="md-badge md-badge-warning">Kontak</span>
+                            {{else if eq .Category "template"}}
+                            <span class="md-badge md-badge-tertiary">Template</span>
+                            {{else}}
+                            <span class="md-badge md-badge-neutral">{{.Category}}</span>
+                            {{end}}
+                        </td>
+                        <td>
+                            <span class="md-body-small" style="font-weight:600;">{{.Message}}</span>
+                        </td>
+                        <td class="md-body-small" style="max-width:420px;">
+                            {{if .Details}}
+                            <span class="md-code" style="display:inline-block;padding:4px 10px;font-size:11px;">{{.Details}}</span>
+                            {{else}}
+                            <span class="md-muted">-</span>
+                            {{end}}
+                        </td>
+                    </tr>
+                    {{end}}
+                    {{else}}
+                    <tr>
+                        <td colspan="4" style="padding:0;">
+                            <div class="md-empty md-body-small">
+                                <svg fill="none" stroke="currentColor" stroke-width="1.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <div class="md-title-small">Log bersih</div>
+                                <div class="md-body-small" style="max-width:400px;">Belum ada catatan log aktivitas yang tercatat untuk filter kategori ini.</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </section>
 
 </div>
 {{end}}

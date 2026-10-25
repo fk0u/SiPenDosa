@@ -22,23 +22,23 @@
     <link rel="stylesheet" href="/static/css/m3-accents.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body style="display:flex; align-items:center; justify-content:center; padding:24px;">
 
-    <div style="width:100%; max-width:400px;" class="md-enter">
+    <div style="width:100%; max-width:420px;" class="md-enter">
 
         <!-- Brand header -->
-        <div class="md-col md-text-center" style="align-items:center; gap:4px; margin-bottom:24px;">
-            <div class="md-center" style="width:56px;height:56px;border-radius:var(--md-shape-lg);background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);box-shadow:var(--md-elev-2);margin-bottom:8px;">
+        <div class="md-col md-text-center" style="align-items:center; gap:4px; margin-bottom:28px;">
+            <div class="md-center" style="width:56px;height:56px;border-radius:18px;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);box-shadow:var(--md-elev-2);margin-bottom:10px;">
                 <svg style="width:28px;height:28px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
             </div>
-            <h1 class="md-headline-small">Verifikasi 2FA</h1>
-            <p class="md-body-small" style="color:var(--md-sys-color-on-surface-variant);max-width:280px;">Akun ini dilindungi autentikasi dua faktor. Masukkan 6 digit kode dari aplikasi autentikator Anda.</p>
+            <h1 class="md-headline-small" style="font-family:var(--md-font-display);font-weight:600;">Verifikasi 2FA</h1>
+            <p class="md-body-small md-muted" style="max-width:300px;">Akun ini dilindungi autentikasi dua faktor. Masukkan 6 digit kode dari aplikasi autentikator Anda.</p>
         </div>
 
-        <!-- 2FA card (M3 elevated) -->
-        <div class="md-card-elevated md-card-xl md-col">
+        <!-- 2FA card (M3 elevated, premium tier) -->
+        <div class="md-card-elevated md-card-xl md-col" style="border-radius:28px;">
             {{if .FlashError}}
             <div class="md-row" style="align-items:flex-start;gap:10px;padding:12px;border-radius:var(--md-shape-md);background:var(--md-sys-color-error-container);color:var(--md-sys-color-on-error-container);font-size:13px;">
                 <svg style="width:18px;height:18px;flex-shrink:0;margin-top:1px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
