@@ -499,6 +499,12 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
             conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            // Saat tunnel publik aktif, endpoint loopback juga menuntut sesi
+            // login — lampirkan cookie sesi dari WebView.
+            String sessionCookie = android.webkit.CookieManager.getInstance().getCookie(SERVER_URL);
+            if (sessionCookie != null && !sessionCookie.isEmpty()) {
+                conn.setRequestProperty("Cookie", sessionCookie);
+            }
             String postData = "phone=" + Uri.encode(phone);
             OutputStream os = conn.getOutputStream();
             os.write(postData.getBytes());

@@ -76,8 +76,8 @@ func (s *Service) RegisterUser(username, password, role string, allowOverride bo
 		}
 	}
 
-	if role != "superadmin" && role != "admin" && role != "user" {
-		role = "user"
+	if role != "superadmin" && role != "admin" && role != "user" && role != "kelas" {
+		role = "kelas"
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -144,14 +144,16 @@ func (s *Service) RevokeSession(token string) error {
 	return s.store.DeleteSession(token)
 }
 
-// SetSessionCookie sets the secure HTTP cookie
-func SetSessionCookie(w http.ResponseWriter, token string) {
+// SetSessionCookie sets the secure HTTP cookie. secure harus true jika
+// aplikasi disajikan lewat HTTPS (mis. di belakang tunnel Cloudflare).
+func SetSessionCookie(w http.ResponseWriter, token string, secure bool) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     CookieName,
 		Value:    token,
 		Path:     "/",
 		Expires:  time.Now().Add(7 * 24 * time.Hour),
 		HttpOnly: true,
+		Secure:   secure,
 		SameSite: http.SameSiteLaxMode,
 	})
 }
@@ -165,6 +167,7 @@ func ClearSessionCookie(w http.ResponseWriter) {
 		Expires:  time.Unix(0, 0),
 		MaxAge:   -1,
 		HttpOnly: true,
+		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	})
 }
@@ -205,6 +208,35 @@ func (s *Service) RequireAuth(next http.Handler) http.Handler {
 				return
 			}
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), UserContextKey, user)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// RequireAuthWS protects WebSocket upgrade requests. Accepts session cookie,
+// ?token= query parameter (iOS URLSession cannot set custom headers), or Bearer header.
+// Unlike RequireAuth it never redirects — failed handshakes get a plain 401.
+func (s *Service) RequireAuthWS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token := r.URL.Query().Get("token")
+		if token == "" {
+			if cookie, err := r.Cookie(CookieName); err == nil {
+				token = cookie.Value
+			}
+		}
+		if token == "" {
+			authHeader := r.Header.Get("Authorization")
+			if strings.HasPrefix(authHeader, "Bearer ") {
+				token = strings.TrimPrefix(authHeader, "Bearer ")
+			}
+		}
+
+		user, err := s.ValidateSession(token)
+		if err != nil || user == nil {
+			http.Error(w, "Unauthorized: WebSocket memerlukan sesi yang valid", http.StatusUnauthorized)
 			return
 		}
 

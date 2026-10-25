@@ -193,18 +193,22 @@ func (rl *RateLimiter) Middleware(next http.Handler) http.Handler {
 }
 
 func extractIP(r *http.Request) string {
-	ip := r.Header.Get("X-Forwarded-For")
-	if ip != "" {
-		parts := strings.Split(ip, ",")
-		return strings.TrimSpace(parts[0])
-	}
-	ip = r.Header.Get("X-Real-IP")
-	if ip != "" {
-		return strings.TrimSpace(ip)
-	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err == nil {
-		return host
+	if err != nil {
+		host = r.RemoteAddr
 	}
-	return r.RemoteAddr
+
+	// Header X-Forwarded-For hanya dipercaya jika koneksi datang dari loopback
+	// (di belakang cloudflared / reverse proxy lokal). Data XFF yang di-inject
+	// langsung oleh klien dari luar tidak pernah dipakai, dan meskipun lewat
+	// proxy kita ambil entri TERAKHIR (yang diisi oleh proxy, bukan klien).
+	if host == "127.0.0.1" || host == "::1" {
+		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+			parts := strings.Split(xff, ",")
+			if candidate := strings.TrimSpace(parts[len(parts)-1]); candidate != "" {
+				return candidate
+			}
+		}
+	}
+	return host
 }

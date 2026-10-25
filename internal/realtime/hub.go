@@ -3,6 +3,8 @@ package realtime
 import (
 	"log/slog"
 	"net/http"
+	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -12,8 +14,18 @@ import (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	// Same-origin check: origin harus cocok dengan host server, atau kosong
+	// (client native seperti URLSession/iOS tidak mengirim header Origin).
 	CheckOrigin: func(r *http.Request) bool {
-		return true // Allow all local / reverse-proxied origins
+		origin := r.Header.Get("Origin")
+		if origin == "" {
+			return true
+		}
+		u, err := url.Parse(origin)
+		if err != nil {
+			return false
+		}
+		return strings.EqualFold(u.Host, r.Host)
 	},
 }
 

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"sipen/internal/auth"
+	"sipen/internal/tunnel"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -20,8 +21,10 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 	r := chi.NewRouter()
 
 	// Standard middlewares
+	// CATATAN: middleware.RealIP sengaja TIDAK dipakai. RealIP memercayai
+	// X-Forwarded-For dari siapapun pengirimnya sehingga memalsukan IP klien
+	// (dan melewati guard loopback pair-phone) cukup dengan satu header.
 	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Compress(5))
@@ -52,17 +55,30 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 	// Public routes
 	r.Get("/healthz", h.HealthzHandler)
 	r.Get("/api/health", h.HealthzHandler) // Alias for Android MainActivity health check
-	r.Get("/ws", h.hub.HandleWS)
-	r.Get("/api/ws", h.hub.HandleWS)       // Alias for Mobile & Companion WebSocket telemetry
 
-	// Mobile Companion & IoT REST JSON API (BUG-05 Fix)
-	r.Get("/api/stats", h.APIStatsHandler)
-	r.Get("/api/whatsapp/status", h.APIWhatsAppStatusHandler)
-	r.Get("/api/contacts", h.APIContactsHandler)
-	r.Get("/api/schedules", h.APISchedulesHandler)
-	r.Get("/api/queue", h.APIQueueHandler)
-	r.Post("/api/queue/process", h.APIQueueProcessHandler)
-	r.Post("/api/queue/{id}/process", h.APIQueueProcessHandler)
+	// Token exchange untuk aplikasi companion mobile (Flutter/iOS/Android)
+	r.With(authRateLimiter.Middleware).Post("/api/auth/login", h.APITokenLoginHandler)
+
+	// WebSocket — terproteksi: broadcast QR code / pairing code / status WA
+	// tidak boleh bisa diakses tanpa sesi.
+	r.Group(func(ws chi.Router) {
+		ws.Use(h.authSvc.RequireAuthWS)
+		ws.Get("/ws", h.hub.HandleWS)
+		ws.Get("/api/ws", h.hub.HandleWS) // Alias for Mobile & Companion WebSocket telemetry
+	})
+
+	// Mobile Companion & IoT REST JSON API (BUG-05 Fix) — kini wajib
+	// autentikasi (cookie sesi atau Bearer token dari /api/auth/login).
+	r.Group(func(api chi.Router) {
+		api.Use(h.authSvc.RequireAuth)
+		api.Get("/api/stats", h.APIStatsHandler)
+		api.Get("/api/whatsapp/status", h.APIWhatsAppStatusHandler)
+		api.Get("/api/contacts", h.APIContactsHandler)
+		api.Get("/api/schedules", h.APISchedulesHandler)
+		api.Get("/api/queue", h.APIQueueHandler)
+		api.Post("/api/queue/process", h.APIQueueProcessHandler)
+		api.Post("/api/queue/{id}/process", h.APIQueueProcessHandler)
+	})
 
 	// Issue #4: Public Academic Schedule Portal & iCalendar .ics download
 	r.Get("/jadwal", h.PublicScheduleHandler)
@@ -74,15 +90,22 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 	r.Get("/api/system/update/check", h.CheckUpdateHandler)
 	r.Get("/api/system/update/apk", h.DownloadApkHandler)
 
-	// Internal loopback API for local CLI / Android / Termux commands
+	// Internal loopback API for local CLI / Android / Termux commands.
+	// Saat tunnel publik aktif, trafik internet juga datang dari 127.0.0.1
+	// (lewat cloudflared) — maka selain loopback, sesi login valid juga wajib.
 	loopbackPairPhone := func(w http.ResponseWriter, r *http.Request) {
 		host, _, _ := net.SplitHostPort(r.RemoteAddr)
 		if host == "" {
 			host = r.RemoteAddr
 		}
-		if host != "127.0.0.1" && host != "::1" && host != "localhost" {
-			http.Error(w, "Forbidden: loopback only", http.StatusForbidden)
-			return
+		isLoopback := host == "127.0.0.1" || host == "::1" || host == "localhost"
+		tunnelActive := h.tunnelMgr.Status().State == tunnel.StateActive
+
+		if !isLoopback || tunnelActive {
+			if auth.GetUserFromContext(r.Context()) == nil {
+				http.Error(w, "Forbidden: loopback only", http.StatusForbidden)
+				return
+			}
 		}
 		h.WhatsAppPairPhoneHandler(w, r)
 	}
@@ -189,8 +212,11 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 		// Logs
 		protected.Get("/logs", h.LogsHandler)
 
-		// System Update Apply (Protected)
-		protected.Post("/api/system/update/apply", h.ApplyUpdateHandler)
+		// System Update Apply (SuperAdmin only — unduhan binary adalah risiko RCE)
+		protected.Group(func(super chi.Router) {
+			super.Use(auth.RequireSuperAdmin)
+			super.Post("/api/system/update/apply", h.ApplyUpdateHandler)
+		})
 
 		// WhatsApp Actions API (Scoped to User)
 		protected.Route("/api/wa", func(war chi.Router) {

@@ -145,6 +145,24 @@ func main() {
 		}
 	}()
 
+	// 15b. Bersihkan sesi & tantangan 2FA kedaluwarsa setiap 24 jam
+	ctx, stopCleanup := context.WithCancel(context.Background())
+	defer stopCleanup()
+	go func() {
+		ticker := time.NewTicker(24 * time.Hour)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				if err := appStore.CleanExpiredSessions(); err != nil {
+					slog.Warn("Gagal membersihkan sesi kedaluwarsa", "error", err)
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
 	// 16. Tangani Sinyal Shutdown (Graceful Termination)
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)

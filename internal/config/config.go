@@ -15,7 +15,7 @@ type Config struct {
 	Port            string
 	Host            string
 	AppEnv          string
-	SessionSecret   string
+	CookieSecure    bool
 	DBPath          string
 	WASessionPath   string
 	DefaultTimezone string
@@ -87,7 +87,7 @@ func Load() (*Config, error) {
 		Port:            getEnv("PORT", "8473"),
 		Host:            getEnv("HOST", "0.0.0.0"),
 		AppEnv:          getEnv("APP_ENV", "production"),
-		SessionSecret:   getEnv("SESSION_SECRET", "sipen-secure-session-key-must-be-changed-in-production"),
+		CookieSecure:    getEnvBool("COOKIE_SECURE", false),
 		DBPath:          resolvePath(rawDBPath, envDir),
 		WASessionPath:   resolvePath(rawWASessionPath, envDir),
 		DefaultTimezone: getEnv("DEFAULT_TIMEZONE", "Asia/Makassar"),

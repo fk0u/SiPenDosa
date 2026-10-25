@@ -32,6 +32,7 @@ backups/
 cmd/installer/sipen.exe
 cmd/installer/*.syso
 *.syso
+*.o
 
 # Android Keystore
 mobile/android/keystore/
@@ -40,3 +41,12 @@ mobile/android/keystore/
 # macOS metadata
 .DS_Store
 *.DS_Store
+
+# AI-agent working state (boleh berisi info sensitif)
+.agents/session-briefing.md
+
+# Flutter/Dart generated artifacts
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock

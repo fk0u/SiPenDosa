@@ -281,13 +281,13 @@ func (s *Store) CreateContact(c *Contact) (*Contact, error) {
 func (s *Store) UpdateContact(c *Contact) error {
 	now := time.Now()
 	_, err := s.db.Exec(`UPDATE contacts SET name = ?, phone = ?, contact_type = ?, nim = ?, email = ?, notes = ?, updated_at = ? 
-		WHERE id = ?`,
-		c.Name, c.Phone, c.ContactType, c.NIM, c.Email, c.Notes, now, c.ID)
+		WHERE id = ? AND user_id = ?`,
+		c.Name, c.Phone, c.ContactType, c.NIM, c.Email, c.Notes, now, c.ID, c.UserID)
 	return err
 }
 
-func (s *Store) DeleteContact(id int64) error {
-	_, err := s.db.Exec("DELETE FROM contacts WHERE id = ?", id)
+func (s *Store) DeleteContact(id, userID int64) error {
+	_, err := s.db.Exec("DELETE FROM contacts WHERE id = ? AND user_id = ?", id, userID)
 	return err
 }
 
@@ -695,10 +695,10 @@ func (s *Store) UpdateSchedule(sc *Schedule) error {
 		title = ?, matkul = ?, dosen_id = ?, recipient_id = ?, target_phone = ?, template_id = ?,
 		day_of_week = ?, start_time = ?, end_time = ?, location = ?, link_group = ?, mode = ?, send_at_time = ?,
 		is_active = ?, is_public = ?, dry_run = ?, updated_at = ?
-		WHERE id = ?`,
+		WHERE id = ? AND user_id = ?`,
 		sc.Title, sc.Matkul, sc.DosenID, sc.RecipientID, sc.TargetPhone, sc.TemplateID,
 		sc.DayOfWeek, sc.StartTime, sc.EndTime, sc.Location, sc.LinkGroup, sc.Mode, sc.SendAtTime,
-		isActive, isPublic, dryRun, now, sc.ID)
+		isActive, isPublic, dryRun, now, sc.ID, sc.UserID)
 	return err
 }
 
@@ -707,17 +707,17 @@ func (s *Store) UpdateScheduleLastSent(id int64, t time.Time) error {
 	return err
 }
 
-func (s *Store) ToggleScheduleActive(id int64, active bool) error {
+func (s *Store) ToggleScheduleActive(id, userID int64, active bool) error {
 	val := 0
 	if active {
 		val = 1
 	}
-	_, err := s.db.Exec("UPDATE schedules SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", val, id)
+	_, err := s.db.Exec("UPDATE schedules SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?", val, id, userID)
 	return err
 }
 
-func (s *Store) DeleteSchedule(id int64) error {
-	_, err := s.db.Exec("DELETE FROM schedules WHERE id = ?", id)
+func (s *Store) DeleteSchedule(id, userID int64) error {
+	_, err := s.db.Exec("DELETE FROM schedules WHERE id = ? AND user_id = ?", id, userID)
 	return err
 }
 
@@ -908,15 +908,15 @@ func (s *Store) IncrementRetry(id int64, nextTime time.Time, errorMsg string) er
 	return err
 }
 
-func (s *Store) CancelQueueMessage(id int64) error {
+func (s *Store) CancelQueueMessage(id, userID int64) error {
 	now := time.Now()
-	_, err := s.db.Exec(`UPDATE queue_messages SET status = 'cancelled', updated_at = ? WHERE id = ? AND status = 'pending'`,
-		now, id)
+	_, err := s.db.Exec(`UPDATE queue_messages SET status = 'cancelled', updated_at = ? WHERE id = ? AND user_id = ? AND status = 'pending'`,
+		now, id, userID)
 	return err
 }
 
-func (s *Store) DeleteQueueMessage(id int64) error {
-	_, err := s.db.Exec("DELETE FROM queue_messages WHERE id = ?", id)
+func (s *Store) DeleteQueueMessage(id, userID int64) error {
+	_, err := s.db.Exec("DELETE FROM queue_messages WHERE id = ? AND user_id = ?", id, userID)
 	return err
 }
 

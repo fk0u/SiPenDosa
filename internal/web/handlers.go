@@ -5,9 +5,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"runtime"
 	"strconv"
@@ -73,27 +75,37 @@ func NewHandlers(
 	}
 }
 
-// Helper to retrieve the isolated WhatsApp client for the authenticated user
+// Helper to retrieve the isolated WhatsApp client for the authenticated user.
+// Returns nil when there is no authenticated user — never falls back to another account.
 func (h *Handlers) getActiveWAClient(r *http.Request) *whatsapp.Client {
 	user := auth.GetUserFromContext(r.Context())
-	var uid int64 = 1
-	if user != nil && user.ID > 0 {
-		uid = user.ID
+	if user == nil || user.ID <= 0 {
+		return nil
 	}
-	client, err := h.waManager.GetClient(uid)
+	client, err := h.waManager.GetClient(user.ID)
 	if err != nil {
-		slog.Error("Failed to get WA client for user", "user_id", uid, "err", err)
+		slog.Error("Failed to get WA client for user", "user_id", user.ID, "err", err)
 	}
 	return client
 }
 
-// Helper to retrieve the current user ID
+// Helper to retrieve the current user ID (0 when unauthenticated)
 func (h *Handlers) getActiveUserID(r *http.Request) int64 {
 	user := auth.GetUserFromContext(r.Context())
 	if user != nil && user.ID > 0 {
 		return user.ID
 	}
-	return 1
+	return 0
+}
+
+// currentUser returns the authenticated user (nil-safe shorthand)
+func (h *Handlers) currentUser(r *http.Request) *store.User {
+	return auth.GetUserFromContext(r.Context())
+}
+
+// isPrivileged reports whether the user can manage resources across accounts
+func isPrivileged(user *store.User) bool {
+	return user != nil && (user.Role == "admin" || user.Role == "superadmin")
 }
 
 // ==========================================
@@ -158,7 +170,7 @@ func (h *Handlers) LoginPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	auth.SetSessionCookie(w, token)
+	auth.SetSessionCookie(w, token, h.cfg.CookieSecure)
 	h.store.AddActivityLog("auth", "User Login Berhasil", "Username: "+user.Username)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
@@ -207,7 +219,7 @@ func (h *Handlers) Login2FAPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	auth.SetSessionCookie(w, token)
+	auth.SetSessionCookie(w, token, h.cfg.CookieSecure)
 	h.store.AddActivityLog("auth", "User Login 2FA Berhasil", "Username: "+user.Username)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
@@ -421,14 +433,20 @@ func (h *Handlers) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	username := strings.TrimSpace(r.FormValue("username"))
 	password := r.FormValue("password")
 	role := strings.TrimSpace(r.FormValue("role"))
-	if role != "admin" {
-		role = "user"
-	}
 
 	currentUser := auth.GetUserFromContext(r.Context())
 	if currentUser == nil || (currentUser.Role != "admin" && currentUser.Role != "superadmin") {
 		http.Error(w, "Akses ditolak: Hanya administrator yang dapat membuat akun", http.StatusForbidden)
 		return
+	}
+
+	// Peran default untuk akun baru adalah "kelas" (penanggung jawab kelas).
+	// Peran admin hanya boleh diberikan oleh superadmin.
+	if role != "kelas" && role != "user" && role != "admin" {
+		role = "kelas"
+	}
+	if role == "admin" && currentUser.Role != "superadmin" {
+		role = "kelas"
 	}
 
 	if username == "" || len(password) < 6 {
@@ -586,9 +604,13 @@ func (h *Handlers) UpdateContactHandler(w http.ResponseWriter, r *http.Request) 
 		Notes:       strings.TrimSpace(r.FormValue("notes")),
 	}
 
-	_ = h.store.UpdateContact(c)
-	h.store.AddActivityLog("contacts", "Kontak Diperbarui", fmt.Sprintf("ID: %d, Nama: %s", id, c.Name))
-	h.hub.BroadcastToast("success", "Kontak berhasil diperbarui!")
+	if err := h.store.UpdateContact(c); err != nil {
+		slog.Error("Gagal memperbarui kontak", "id", id, "err", err)
+		h.hub.BroadcastToast("error", "Gagal memperbarui kontak.")
+	} else {
+		h.store.AddActivityLog("contacts", "Kontak Diperbarui", fmt.Sprintf("ID: %d, Nama: %s", id, c.Name))
+		h.hub.BroadcastToast("success", "Kontak berhasil diperbarui!")
+	}
 	http.Redirect(w, r, "/contacts", http.StatusSeeOther)
 }
 
@@ -596,9 +618,13 @@ func (h *Handlers) DeleteContactHandler(w http.ResponseWriter, r *http.Request) 
 	idStr := chi.URLParam(r, "id")
 	id, _ := strconv.ParseInt(idStr, 10, 64)
 
-	_ = h.store.DeleteContact(id)
-	h.store.AddActivityLog("contacts", "Kontak Dihapus", fmt.Sprintf("ID: %d", id))
-	h.hub.BroadcastToast("info", "Kontak telah dihapus.")
+	userID := h.getActiveUserID(r)
+	if err := h.store.DeleteContact(id, userID); err != nil {
+		h.hub.BroadcastToast("error", "Gagal menghapus kontak.")
+	} else {
+		h.store.AddActivityLog("contacts", "Kontak Dihapus", fmt.Sprintf("ID: %d", id))
+		h.hub.BroadcastToast("info", "Kontak telah dihapus.")
+	}
 	http.Redirect(w, r, "/contacts", http.StatusSeeOther)
 }
 
@@ -652,9 +678,21 @@ func (h *Handlers) CreateScheduleHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	if dosenID > 0 {
+		c, err := h.store.GetContactByID(dosenID)
+		if err != nil || c.UserID != userID {
+			h.hub.BroadcastToast("error", "Kontak dosen tidak ditemukan pada akun Anda.")
+			http.Redirect(w, r, "/schedules", http.StatusSeeOther)
+			return
+		}
 		sc.DosenID = sql.NullInt64{Int64: dosenID, Valid: true}
 	}
 	if recipientID > 0 {
+		c, err := h.store.GetContactByID(recipientID)
+		if err != nil || c.UserID != userID {
+			h.hub.BroadcastToast("error", "Kontak tujuan tidak ditemukan pada akun Anda.")
+			http.Redirect(w, r, "/schedules", http.StatusSeeOther)
+			return
+		}
 		sc.RecipientID = sql.NullInt64{Int64: recipientID, Valid: true}
 	}
 	if templateID > 0 {
@@ -702,18 +740,34 @@ func (h *Handlers) UpdateScheduleHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	if dosenID > 0 {
+		c, err := h.store.GetContactByID(dosenID)
+		if err != nil || c.UserID != userID {
+			h.hub.BroadcastToast("error", "Kontak dosen tidak ditemukan pada akun Anda.")
+			http.Redirect(w, r, "/schedules", http.StatusSeeOther)
+			return
+		}
 		sc.DosenID = sql.NullInt64{Int64: dosenID, Valid: true}
 	}
 	if recipientID > 0 {
+		c, err := h.store.GetContactByID(recipientID)
+		if err != nil || c.UserID != userID {
+			h.hub.BroadcastToast("error", "Kontak tujuan tidak ditemukan pada akun Anda.")
+			http.Redirect(w, r, "/schedules", http.StatusSeeOther)
+			return
+		}
 		sc.RecipientID = sql.NullInt64{Int64: recipientID, Valid: true}
 	}
 	if templateID > 0 {
 		sc.TemplateID = sql.NullInt64{Int64: templateID, Valid: true}
 	}
 
-	_ = h.store.UpdateSchedule(sc)
-	h.store.AddActivityLog("scheduler", "Jadwal Diperbarui", fmt.Sprintf("ID: %d, Matkul: %s", id, sc.Matkul))
-	h.hub.BroadcastToast("success", "Jadwal berhasil diperbarui!")
+	if err := h.store.UpdateSchedule(sc); err != nil {
+		slog.Error("Gagal memperbarui jadwal", "id", id, "err", err)
+		h.hub.BroadcastToast("error", "Gagal memperbarui jadwal.")
+	} else {
+		h.store.AddActivityLog("scheduler", "Jadwal Diperbarui", fmt.Sprintf("ID: %d, Matkul: %s", id, sc.Matkul))
+		h.hub.BroadcastToast("success", "Jadwal berhasil diperbarui!")
+	}
 	http.Redirect(w, r, "/schedules", http.StatusSeeOther)
 }
 
@@ -722,8 +776,8 @@ func (h *Handlers) ToggleScheduleHandler(w http.ResponseWriter, r *http.Request)
 	id, _ := strconv.ParseInt(idStr, 10, 64)
 
 	sc, err := h.store.GetScheduleByID(id)
-	if err == nil {
-		_ = h.store.ToggleScheduleActive(id, !sc.IsActive)
+	if err == nil && sc.UserID == h.getActiveUserID(r) {
+		_ = h.store.ToggleScheduleActive(id, h.getActiveUserID(r), !sc.IsActive)
 		statusStr := "diaktifkan"
 		if sc.IsActive {
 			statusStr = "dinonaktifkan"
@@ -740,6 +794,13 @@ func (h *Handlers) TriggerScheduleHandler(w http.ResponseWriter, r *http.Request
 	_ = r.ParseForm()
 	dryRun := r.FormValue("dry_run") == "true" || r.FormValue("dry_run") == "1"
 
+	sc, err := h.store.GetScheduleByID(id)
+	if err != nil || sc.UserID != h.getActiveUserID(r) {
+		h.hub.BroadcastToast("error", "Akses ditolak: jadwal ini bukan milik akun Anda.")
+		http.Redirect(w, r, "/schedules", http.StatusSeeOther)
+		return
+	}
+
 	msg, err := h.scheduler.TriggerScheduleManually(id, dryRun)
 	if err != nil {
 		h.hub.BroadcastToast("error", "Gagal memicu jadwal: "+err.Error())
@@ -755,9 +816,13 @@ func (h *Handlers) DeleteScheduleHandler(w http.ResponseWriter, r *http.Request)
 	idStr := chi.URLParam(r, "id")
 	id, _ := strconv.ParseInt(idStr, 10, 64)
 
-	_ = h.store.DeleteSchedule(id)
-	h.store.AddActivityLog("scheduler", "Jadwal Dihapus", fmt.Sprintf("ID: %d", id))
-	h.hub.BroadcastToast("info", "Jadwal telah dihapus.")
+	userID := h.getActiveUserID(r)
+	if err := h.store.DeleteSchedule(id, userID); err != nil {
+		h.hub.BroadcastToast("error", "Gagal menghapus jadwal.")
+	} else {
+		h.store.AddActivityLog("scheduler", "Jadwal Dihapus", fmt.Sprintf("ID: %d", id))
+		h.hub.BroadcastToast("info", "Jadwal telah dihapus.")
+	}
 	http.Redirect(w, r, "/schedules", http.StatusSeeOther)
 }
 
@@ -832,16 +897,32 @@ func (h *Handlers) UpdateTemplateHandler(w http.ResponseWriter, r *http.Request)
 	id, _ := strconv.ParseInt(idStr, 10, 64)
 	userID := h.getActiveUserID(r)
 
+	existing, err := h.store.GetTemplateByID(id)
+	if err != nil {
+		h.hub.BroadcastToast("error", "Template tidak ditemukan.")
+		http.Redirect(w, r, "/templates", http.StatusSeeOther)
+		return
+	}
+	if existing.UserID.Valid && existing.UserID.Int64 != userID && !isPrivileged(h.currentUser(r)) {
+		h.hub.BroadcastToast("error", "Akses ditolak: template ini bukan milik akun Anda.")
+		http.Redirect(w, r, "/templates", http.StatusSeeOther)
+		return
+	}
+
 	_ = r.ParseForm()
 	t := &store.Template{
 		ID:        id,
-		UserID:    sql.NullInt64{Int64: userID, Valid: true},
+		UserID:    existing.UserID,
 		Name:      strings.TrimSpace(r.FormValue("name")),
 		Content:   strings.TrimSpace(r.FormValue("content")),
 		IsDefault: r.FormValue("is_default") == "on" || r.FormValue("is_default") == "1",
 	}
 
-	_ = h.store.UpdateTemplate(t)
+	if err := h.store.UpdateTemplate(t); err != nil {
+		h.hub.BroadcastToast("error", "Gagal memperbarui template.")
+		http.Redirect(w, r, fmt.Sprintf("/templates?id=%d", id), http.StatusSeeOther)
+		return
+	}
 	h.store.AddActivityLog("template", "Template Diperbarui (Versi Baru Disimpan)", fmt.Sprintf("ID: %d, Nama: %s", id, t.Name))
 	h.hub.BroadcastToast("success", "Template dan riwayat versi berhasil diperbarui!")
 	http.Redirect(w, r, fmt.Sprintf("/templates?id=%d", id), http.StatusSeeOther)
@@ -850,6 +931,14 @@ func (h *Handlers) UpdateTemplateHandler(w http.ResponseWriter, r *http.Request)
 func (h *Handlers) DeleteTemplateHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, _ := strconv.ParseInt(idStr, 10, 64)
+
+	userID := h.getActiveUserID(r)
+	if existing, err := h.store.GetTemplateByID(id); err == nil &&
+		existing.UserID.Valid && existing.UserID.Int64 != userID && !isPrivileged(h.currentUser(r)) {
+		h.hub.BroadcastToast("error", "Akses ditolak: template ini bukan milik akun Anda.")
+		http.Redirect(w, r, "/templates", http.StatusSeeOther)
+		return
+	}
 
 	_ = h.store.DeleteTemplate(id)
 	h.store.AddActivityLog("template", "Template Dihapus", fmt.Sprintf("ID: %d", id))
@@ -865,12 +954,12 @@ func (h *Handlers) PreviewTemplateHandler(w http.ResponseWriter, r *http.Request
 	rendered, err := h.tmplEngine.Render(content, dummyCtx)
 	if err != nil {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		fmt.Fprintf(w, `<div class="alert alert-error text-xs p-3"><strong>Format Error:</strong> %s</div>`, err.Error())
+		fmt.Fprintf(w, `<div class="alert alert-error text-xs p-3"><strong>Format Error:</strong> %s</div>`, html.EscapeString(err.Error()))
 		return
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprintf(w, `<div class="whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-200 bg-slate-900/90 p-4 rounded-xl border border-slate-800 shadow-inner">%s</div>`, rendered)
+	fmt.Fprintf(w, `<div class="whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-200 bg-slate-900/90 p-4 rounded-xl border border-slate-800 shadow-inner">%s</div>`, html.EscapeString(rendered))
 }
 
 // ==========================================
@@ -919,6 +1008,12 @@ func (h *Handlers) QueueSendNowHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, _ := strconv.ParseInt(idStr, 10, 64)
 
+	if msg, err := h.store.GetQueueMessageByID(id); err != nil || msg.UserID != h.getActiveUserID(r) {
+		h.hub.BroadcastToast("error", "Pesan antrian tidak ditemukan pada akun Anda.")
+		http.Redirect(w, r, "/queue", http.StatusSeeOther)
+		return
+	}
+
 	_ = h.queueMgr.ProcessImmediate(id)
 	h.hub.BroadcastToast("info", "Pesan sedang diproses untuk dikirim sekarang...")
 	http.Redirect(w, r, "/queue", http.StatusSeeOther)
@@ -928,7 +1023,13 @@ func (h *Handlers) QueueCancelHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, _ := strconv.ParseInt(idStr, 10, 64)
 
-	_ = h.store.CancelQueueMessage(id)
+	userID := h.getActiveUserID(r)
+	if msg, err := h.store.GetQueueMessageByID(id); err != nil || msg.UserID != userID {
+		h.hub.BroadcastToast("error", "Pesan antrian tidak ditemukan pada akun Anda.")
+		http.Redirect(w, r, "/queue", http.StatusSeeOther)
+		return
+	}
+	_ = h.store.CancelQueueMessage(id, userID)
 	h.hub.BroadcastToast("info", "Pesan dalam antrian telah dibatalkan.")
 	http.Redirect(w, r, "/queue", http.StatusSeeOther)
 }
@@ -937,7 +1038,12 @@ func (h *Handlers) QueueDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, _ := strconv.ParseInt(idStr, 10, 64)
 
-	_ = h.store.DeleteQueueMessage(id)
+	userID := h.getActiveUserID(r)
+	if msg, err := h.store.GetQueueMessageByID(id); err != nil || msg.UserID != userID {
+		http.Redirect(w, r, "/queue", http.StatusSeeOther)
+		return
+	}
+	_ = h.store.DeleteQueueMessage(id, userID)
 	http.Redirect(w, r, "/queue", http.StatusSeeOther)
 }
 
@@ -1402,19 +1508,11 @@ func (h *Handlers) WhatsAppContactsHandler(w http.ResponseWriter, r *http.Reques
 // ==========================================
 
 func (h *Handlers) HealthzHandler(w http.ResponseWriter, r *http.Request) {
-	waClient := h.getActiveWAClient(r)
-	var state whatsapp.State = whatsapp.StateDisconnected
-	var phone string
-	if waClient != nil {
-		state, phone, _, _ = waClient.Status()
-	}
-
+	// Endpoint publik: jangan buat client WA dan jangan bocorkan nomor telepon.
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":          "ok",
-		"timestamp":       time.Now().Unix(),
-		"whatsapp_status": string(state),
-		"whatsapp_phone":  phone,
+		"status":    "ok",
+		"timestamp": time.Now().Unix(),
 	})
 }
 
@@ -1624,6 +1722,12 @@ func (h *Handlers) ApplyUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	u, err := url.Parse(req.DownloadURL)
+	if err != nil || u.Scheme != "https" || !isTrustedUpdateHost(u.Host) {
+		http.Error(w, `{"error":"URL pembaruan tidak tepercaya (hanya GitHub releases resmi yang diizinkan)"}`, http.StatusBadRequest)
+		return
+	}
+
 	go func(dlURL string) {
 		time.Sleep(500 * time.Millisecond)
 		err := h.updater.ApplyBinarySelfUpdate(context.Background(), dlURL)
@@ -1640,9 +1744,56 @@ func (h *Handlers) ApplyUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// isTrustedUpdateHost membatasi sumber binary update ke GitHub resmi proyek
+func isTrustedUpdateHost(host string) bool {
+	switch host {
+	case "github.com", "api.github.com", "objects.githubusercontent.com", "release-assets.githubusercontent.com":
+		return true
+	}
+	return strings.HasSuffix(host, ".github.com") || strings.HasSuffix(host, ".githubusercontent.com")
+}
+
 // ==========================================
 // Mobile & External REST JSON API Handlers
 // ==========================================
+
+// APITokenLoginHandler menukar username/password menjadi session bearer token
+// untuk aplikasi companion mobile (Flutter/iOS/Android).
+func (h *Handlers) APITokenLoginHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	var req struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&req)
+	if req.Username == "" || req.Password == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "username dan password wajib diisi"})
+		return
+	}
+
+	user, err := h.authSvc.Authenticate(req.Username, req.Password)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "username atau password salah"})
+		return
+	}
+
+	token, err := h.authSvc.CreateSession(user.ID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "gagal membuat sesi"})
+		return
+	}
+
+	h.store.AddActivityLog("auth", "Login API Companion", "User: "+user.Username)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"token":    token,
+		"username": user.Username,
+		"role":     user.Role,
+	})
+}
 
 // APIStatsHandler provides JSON overview metrics for Flutter & iOS companion apps
 func (h *Handlers) APIStatsHandler(w http.ResponseWriter, r *http.Request) {
@@ -1736,6 +1887,14 @@ func (h *Handlers) APIQueueProcessHandler(w http.ResponseWriter, r *http.Request
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode(map[string]string{"error": "ID antrian tidak valid"})
+		return
+	}
+
+	userID := h.getActiveUserID(r)
+	if msg, err := h.store.GetQueueMessageByID(id); err != nil || msg.UserID != userID {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusForbidden)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Pesan antrian tidak ditemukan pada akun Anda"})
 		return
 	}
 

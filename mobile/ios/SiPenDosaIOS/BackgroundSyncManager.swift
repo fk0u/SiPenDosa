@@ -155,6 +155,26 @@ public final class BackgroundSyncManager: NSObject, ObservableObject {
     }
     #endif
 
+    // MARK: - Session Authentication
+    // Server mewajibkan autentikasi pada /api/*. Sesi login diambil dari
+    // cookie "sipen_session" yang di-set WebView setelah user login.
+    private func sessionToken(for serverUrl: String) -> String? {
+        guard let base = URL(string: serverUrl),
+              let cookies = HTTPCookieStorage.shared.cookies(for: base) else {
+            return nil
+        }
+        return cookies.first(where: { $0.name == "sipen_session" })?.value
+    }
+
+    private func authenticatedRequest(_ url: URL, serverUrl: String) -> URLRequest {
+        var req = URLRequest(url: url)
+        req.timeoutInterval = 8.0
+        if let token = sessionToken(for: serverUrl) {
+            req.setValue("sipen_session=\(token)", forHTTPHeaderField: "Cookie")
+        }
+        return req
+    }
+
     // MARK: - Core Background Sync Operation
     public func performBackgroundSync(completion: @escaping (Bool) -> Void) {
         let serverUrl = UserDefaults.standard.string(forKey: "sipendosa_server_url") ?? "http://localhost:8473"
@@ -163,8 +183,7 @@ public final class BackgroundSyncManager: NSObject, ObservableObject {
             return
         }
 
-        var req = URLRequest(url: url)
-        req.timeoutInterval = 8.0
+        let req = authenticatedRequest(url, serverUrl: serverUrl)
 
         let startTime = DispatchTime.now()
         let task = urlSession.dataTask(with: req) { [weak self] data, response, error in
@@ -205,8 +224,7 @@ public final class BackgroundSyncManager: NSObject, ObservableObject {
             return
         }
 
-        var req = URLRequest(url: url)
-        req.timeoutInterval = 8.0
+        let req = authenticatedRequest(url, serverUrl: serverUrl)
 
         let task = urlSession.dataTask(with: req) { data, _, _ in
             guard let data = data else {
@@ -232,7 +250,17 @@ public final class BackgroundSyncManager: NSObject, ObservableObject {
 
         guard let httpUrl = URL(string: serverUrl) else { return }
         let wsScheme = (httpUrl.scheme == "https") ? "wss" : "ws"
-        guard let wsUrl = URL(string: "\(wsScheme)://\(httpUrl.host ?? "localhost"):\(httpUrl.port ?? 8473)/api/ws") else {
+        var components = URLComponents()
+        components.scheme = wsScheme
+        components.host = httpUrl.host ?? "localhost"
+        components.port = httpUrl.port ?? 8473
+        components.path = "/api/ws"
+        // iOS URLSessionWebSocketTask tidak bisa set header custom —
+        // token sesi dikirim sebagai query param.
+        if let token = sessionToken(for: serverUrl) {
+            components.queryItems = [URLQueryItem(name: "token", value: token)]
+        }
+        guard let wsUrl = components.url else {
             return
         }
 
