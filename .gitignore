@@ -50,3 +50,6 @@ mobile/android/keystore/
 .flutter-plugins
 .flutter-plugins-dependencies
 pubspec.lock
+
+# Go build output of scripts/publish
+/publish
