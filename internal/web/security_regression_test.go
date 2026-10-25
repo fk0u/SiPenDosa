@@ -97,8 +97,18 @@ func TestContactDeletionIsScopedToOwner(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "/contacts/"+itoa(contact.ID)+"/delete", nil)
 	req.AddCookie(&http.Cookie{Name: "sipen_session", Value: tokenB})
+	req.Header.Set("Origin", "http://example.com")
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
+
+	// Regresi CSRF fail-closed: POST ber-cookie TANPA Origin harus ditolak
+	reqNoOrigin := httptest.NewRequest("POST", "/contacts/"+itoa(contact.ID)+"/delete", nil)
+	reqNoOrigin.AddCookie(&http.Cookie{Name: "sipen_session", Value: tokenB})
+	wNoOrigin := httptest.NewRecorder()
+	router.ServeHTTP(wNoOrigin, reqNoOrigin)
+	if wNoOrigin.Code != http.StatusForbidden {
+		t.Errorf("POST ber-cookie tanpa Origin: expected 403 (fail-closed), got %d", wNoOrigin.Code)
+	}
 
 	if got, err := s.GetContactByID(contact.ID); err != nil || got.ID != contact.ID {
 		t.Errorf("Kontak milik A terhapus oleh B (IDOR): err=%v", err)
@@ -108,6 +118,7 @@ func TestContactDeletionIsScopedToOwner(t *testing.T) {
 	tokenA, _ := authSvc.CreateSession(userA.ID)
 	req2 := httptest.NewRequest("POST", "/contacts/"+itoa(contact.ID)+"/delete", nil)
 	req2.AddCookie(&http.Cookie{Name: "sipen_session", Value: tokenA})
+	req2.Header.Set("Origin", "http://example.com")
 	w2 := httptest.NewRecorder()
 	router.ServeHTTP(w2, req2)
 

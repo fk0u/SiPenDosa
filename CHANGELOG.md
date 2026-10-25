@@ -4,7 +4,7 @@ Semua perubahan penting pada proyek **SiPenDosa** didokumentasikan di sini denga
 
 ---
 
-## [Unreleased]
+## [1.4.0] — 2026-10-25
 
 ### 🌟 Fitur Baru
 * **Mode Akses First-Class — `SIPEN_UI=terminal|web|desktop`:**

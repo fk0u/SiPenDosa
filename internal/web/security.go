@@ -83,11 +83,36 @@ func CSRFOriginMiddleware(next http.Handler) http.Handler {
 					http.Error(w, "Forbidden: CSRF Referer validation failed", http.StatusForbidden)
 					return
 				}
+			} else if !isCSRFExempt(r) {
+				// Fail-closed: permintaan state-changing yang diautentikasi cookie
+				// WAJIB membawa Origin/Referer (browser selalu mengirimkannya).
+				// Permintaan Bearer token (API mobile) bebas CSRF karena tidak
+				// memakai cookie, dan loopback internal dipercaya secara desain.
+				http.Error(w, "Forbidden: permintaan state-changing memerlukan header Origin", http.StatusForbidden)
+				return
 			}
 		}
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+// isCSRFExempt melonggarkan validasi untuk klien non-browser yang aman dari CSRF:
+// auth Bearer (tanpa cookie) dan koneksi loopback internal.
+func isCSRFExempt(r *http.Request) bool {
+	if authHeader := r.Header.Get("Authorization"); strings.HasPrefix(authHeader, "Bearer ") {
+		return true
+	}
+	// Cookie session ada? Jika tidak ada sama sekali (anon/loopback CLI), tidak
+	// ada sesi yang bisa diserang via CSRF.
+	if _, err := r.Cookie("sipen_session"); err != nil {
+		return true
+	}
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		host = r.RemoteAddr
+	}
+	return host == "127.0.0.1" || host == "::1"
 }
 
 func isAllowedHost(clientHost, serverHost string) bool {

@@ -176,6 +176,7 @@ func TestAdminCanCreateNewUserAndIsolatedSession(t *testing.T) {
 	req := httptest.NewRequest("POST", "/settings/users/create", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.AddCookie(&http.Cookie{Name: auth.CookieName, Value: token})
+	req.Header.Set("Origin", "http://example.com")
 
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -205,6 +206,7 @@ func TestTwoFactorAPIFlow(t *testing.T) {
 	// 1. GET /api/2fa/setup
 	req := httptest.NewRequest("GET", "/api/2fa/setup", nil)
 	req.AddCookie(&http.Cookie{Name: auth.CookieName, Value: token})
+	req.Header.Set("Origin", "http://example.com")
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
@@ -229,6 +231,7 @@ func TestTwoFactorAPIFlow(t *testing.T) {
 	reqInvalid := httptest.NewRequest("POST", "/api/2fa/enable", strings.NewReader(invalidBody))
 	reqInvalid.Header.Set("Content-Type", "application/json")
 	reqInvalid.AddCookie(&http.Cookie{Name: auth.CookieName, Value: token})
+	reqInvalid.Header.Set("Origin", "http://example.com")
 	wInvalid := httptest.NewRecorder()
 	router.ServeHTTP(wInvalid, reqInvalid)
 

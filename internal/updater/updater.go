@@ -249,7 +249,10 @@ func (m *Manager) ApplyBinarySelfUpdate(ctx context.Context, downloadURL string)
 
 	// If Termux environment detected, can run updater script
 	if os.Getenv("TERMUX_VERSION") != "" || strings.Contains(os.Getenv("PREFIX"), "com.termux") {
-		cmd := exec.CommandContext(ctx, "bash", "-c", "curl -fsSL https://raw.githubusercontent.com/fk0u/SiPenDosa/master/install-android-termux.sh | bash")
+		// Pin ke tag rilis saat ini — jangan pernah mengeksekusi kode yang
+		// berubah-ubah dari master di mesin pengguna.
+		scriptURL := fmt.Sprintf("https://raw.githubusercontent.com/fk0u/SiPenDosa/v%s/install-android-termux.sh", version.CurrentVersion)
+		cmd := exec.CommandContext(ctx, "bash", "-c", "curl -fsSL "+scriptURL+" | bash")
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("termux updater failed: %w (output: %s)", err, string(out))

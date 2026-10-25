@@ -3,7 +3,9 @@ package tunnel
 import (
 	"bufio"
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -14,6 +16,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -254,10 +257,65 @@ func (m *Manager) ensureCloudflared() (string, error) {
 	if _, err := io.Copy(outFile, resp.Body); err != nil {
 		return "", fmt.Errorf("failed writing cloudflared binary: %w", err)
 	}
+	outFile.Close()
+
+	// Verifikasi integritas terhadap checksums.txt resmi di release yang sama.
+	// Bila checksums tidak tersedia, unduhan gagal — jangan eksekusi binary tak terverifikasi.
+	if err := verifyCloudflaredChecksum(downloadURL, localPath); err != nil {
+		_ = os.Remove(localPath)
+		return "", fmt.Errorf("cloudflared checksum verification failed: %w", err)
+	}
 
 	_ = os.Chmod(localPath, 0755)
-	slog.Info("cloudflared binary ready", "path", localPath)
+	slog.Info("cloudflared binary ready (checksum verified)", "path", localPath)
 	return localPath, nil
+}
+
+// verifyCloudflaredChecksum membandingkan SHA256 file hasil unduhan dengan
+// entri di checksums.txt pada release cloudflared yang sama.
+func verifyCloudflaredChecksum(downloadURL, localPath string) error {
+	checksumURL := strings.Replace(downloadURL, "/cloudflared-", "/checksums.txt", 1)
+	if checksumURL == downloadURL {
+		return fmt.Errorf("cannot derive checksum URL")
+	}
+
+	resp, err := http.Get(checksumURL)
+	if err != nil {
+		return fmt.Errorf("fetching checksums failed: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("checksums.txt unavailable (status %d)", resp.StatusCode)
+	}
+
+	expected := ""
+	base := filepath.Base(downloadURL)
+	scanner := bufio.NewScanner(resp.Body)
+	for scanner.Scan() {
+		fields := strings.Fields(scanner.Text())
+		if len(fields) == 2 && fields[1] == base {
+			expected = strings.ToLower(fields[0])
+			break
+		}
+	}
+	if expected == "" {
+		return fmt.Errorf("no checksum entry for %s", base)
+	}
+
+	f, err := os.Open(localPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return err
+	}
+	actual := hex.EncodeToString(h.Sum(nil))
+	if actual != expected {
+		return fmt.Errorf("sha256 mismatch: got %s want %s", actual, expected)
+	}
+	return nil
 }
 
 func getCloudflaredDownloadURL() (string, error) {
