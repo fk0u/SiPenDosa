@@ -29,6 +29,8 @@ type Workspace struct {
 	GatewayMode    string        `json:"gateway_mode"` // "personal" (individual WA) or "workspace_shared" (shared bot)
 	SharedWAUserID sql.NullInt64 `json:"shared_wa_user_id"` // User ID whose WA connection is shared
 	SharedPhone    string        `json:"shared_phone,omitempty"`
+	Role           string        `json:"role,omitempty"`
+	UserRole       string        `json:"user_role,omitempty"`
 	CreatedAt      time.Time     `json:"created_at"`
 	UpdatedAt      time.Time     `json:"updated_at"`
 }
@@ -40,6 +42,14 @@ type WorkspaceMember struct {
 	UserID      int64     `json:"user_id"`
 	Role        string    `json:"role"` // "owner", "admin", "member", "viewer"
 	CreatedAt   time.Time `json:"created_at"`
+}
+
+// WorkspaceMemberInfo represents a workspace member enriched with user details
+type WorkspaceMemberInfo struct {
+	UserID    int64     `json:"user_id"`
+	Username  string    `json:"username"`
+	Role      string    `json:"role"` // "owner", "admin", "member", "viewer"
+	CreatedAt time.Time `json:"created_at"`
 }
 
 // WorkspaceDetail provides workspace info along with owner username and member count

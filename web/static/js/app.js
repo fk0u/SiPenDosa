@@ -182,14 +182,18 @@
     }
 
     function updateWhatsAppQR(qrDataUrl) {
+        if (typeof qrDataUrl === 'object' && qrDataUrl !== null) {
+            qrDataUrl = qrDataUrl.qr || qrDataUrl.dataURL || '';
+        }
         const qrImg = document.getElementById('modal-qr-image');
         const qrPlaceholder = document.getElementById('modal-qr-placeholder');
         if (qrImg) {
-            if (qrDataUrl) {
+            if (qrDataUrl && typeof qrDataUrl === 'string' && qrDataUrl.startsWith('data:image')) {
                 qrImg.src = qrDataUrl;
                 qrImg.classList.remove('hidden');
                 if (qrPlaceholder) qrPlaceholder.classList.add('hidden');
             } else {
+                qrImg.removeAttribute('src');
                 qrImg.classList.add('hidden');
                 if (qrPlaceholder) qrPlaceholder.classList.remove('hidden');
             }

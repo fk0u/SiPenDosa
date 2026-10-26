@@ -27,6 +27,10 @@ func (h *Handlers) WorkspacesPageHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	activeWs, _ := h.store.GetActiveWorkspace(user.ID)
+	var activeMembers []store.WorkspaceMemberInfo
+	if activeWs != nil {
+		activeMembers, _ = h.store.ListWorkspaceMembers(activeWs.ID)
+	}
 
 	pd := PageData{
 		Title:      "Ruang Kerja (Workspaces) — SiPenDosa Server",
@@ -35,6 +39,7 @@ func (h *Handlers) WorkspacesPageHandler(w http.ResponseWriter, r *http.Request)
 		Data: map[string]interface{}{
 			"Workspaces":      workspaces,
 			"ActiveWorkspace": activeWs,
+			"ActiveMembers":   activeMembers,
 			"IsSuperadmin":    isSuper,
 		},
 	}
@@ -256,4 +261,47 @@ func (h *Handlers) AddWorkspaceMemberHandler(w http.ResponseWriter, r *http.Requ
 
 	h.store.AddActivityLog("system", "Menambahkan Anggota Workspace", fmt.Sprintf("User: %s ditambahkan ke Workspace ID %d sebagai %s", targetUsername, id, role))
 	http.Redirect(w, r, "/workspaces?success=Anggota+berhasil+ditambahkan", http.StatusSeeOther)
+}
+
+// RemoveWorkspaceMemberHandler removes a user from the workspace
+func (h *Handlers) RemoveWorkspaceMemberHandler(w http.ResponseWriter, r *http.Request) {
+	user := h.currentUser(r)
+	if user == nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	wsID, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	targetUserID, _ := strconv.ParseInt(chi.URLParam(r, "userId"), 10, 64)
+	if wsID <= 0 || targetUserID <= 0 {
+		http.Redirect(w, r, "/workspaces", http.StatusSeeOther)
+		return
+	}
+
+	ws, err := h.store.GetWorkspaceByID(wsID)
+	if err != nil || ws == nil {
+		http.Redirect(w, r, "/workspaces?error=Workspace+tidak+ditemukan", http.StatusSeeOther)
+		return
+	}
+
+	// Cannot remove the owner of the workspace
+	if targetUserID == ws.OwnerID {
+		http.Redirect(w, r, "/workspaces?error=Pemilik+workspace+tidak+dapat+dikeluarkan", http.StatusSeeOther)
+		return
+	}
+
+	// Must be owner, admin, or superadmin, or removing oneself
+	callerRole, _ := h.store.GetWorkspaceMemberRole(wsID, user.ID)
+	if ws.OwnerID != user.ID && callerRole != "admin" && !isPrivileged(user) && user.ID != targetUserID {
+		http.Error(w, "Forbidden: Anda tidak memiliki wewenang untuk mengeluarkan anggota ini", http.StatusForbidden)
+		return
+	}
+
+	if err := h.store.RemoveWorkspaceMember(wsID, targetUserID); err != nil {
+		http.Redirect(w, r, "/workspaces?error="+err.Error(), http.StatusSeeOther)
+		return
+	}
+
+	h.store.AddActivityLog("system", "Mengeluarkan Anggota Workspace", fmt.Sprintf("User ID %d dikeluarkan dari Workspace ID %d oleh %s", targetUserID, wsID, user.Username))
+	http.Redirect(w, r, "/workspaces?success=Anggota+berhasil+dikeluarkan", http.StatusSeeOther)
 }

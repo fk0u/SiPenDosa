@@ -1187,6 +1187,30 @@ func (s *Store) RemoveWorkspaceMember(workspaceID, userID int64) error {
 	return err
 }
 
+func (s *Store) ListWorkspaceMembers(workspaceID int64) ([]WorkspaceMemberInfo, error) {
+	rows, err := s.db.Query(`
+		SELECT wm.user_id, u.username, wm.role, wm.created_at
+		FROM workspace_members wm
+		JOIN users u ON u.id = wm.user_id
+		WHERE wm.workspace_id = ?
+		ORDER BY CASE wm.role WHEN 'owner' THEN 1 WHEN 'admin' THEN 2 ELSE 3 END, wm.created_at ASC
+	`, workspaceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var members []WorkspaceMemberInfo
+	for rows.Next() {
+		var m WorkspaceMemberInfo
+		if err := rows.Scan(&m.UserID, &m.Username, &m.Role, &m.CreatedAt); err != nil {
+			continue
+		}
+		members = append(members, m)
+	}
+	return members, nil
+}
+
 func (s *Store) GetWorkspaceMemberRole(workspaceID, userID int64) (string, error) {
 	var role string
 	err := s.db.QueryRow("SELECT role FROM workspace_members WHERE workspace_id = ? AND user_id = ?", workspaceID, userID).Scan(&role)

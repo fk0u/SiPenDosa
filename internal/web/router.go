@@ -202,6 +202,7 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 			wr.Post("/{id}/update", h.UpdateWorkspaceHandler)
 			wr.Post("/{id}/delete", h.DeleteWorkspaceHandler)
 			wr.Post("/{id}/members/add", h.AddWorkspaceMemberHandler)
+			wr.Post("/{id}/members/{userId}/remove", h.RemoveWorkspaceMemberHandler)
 		})
 
 		// Contacts

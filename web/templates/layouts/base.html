@@ -150,32 +150,46 @@
                 </div>
 
                 <div class="md-right md-row" style="gap:8px;">
-                    <!-- Workspace Switcher Pill Dropdown -->
+                    <!-- Workspace Switcher Dropdown (Linear/SaaS tier) -->
                     {{if .CurrentWorkspace}}
                     <details class="md-menu" style="position:relative;">
-                        <summary class="md-chip md-chip-assist" style="cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:18px;border:1px solid var(--md-sys-color-outline-variant);background:var(--md-sys-color-surface-container-low);" title="Ganti Ruang Kerja Aktif">
-                            <svg style="width:14px;height:14px;color:var(--md-sys-color-primary);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                            <span class="md-label-medium md-truncate" style="max-width:140px;font-weight:600;">{{.CurrentWorkspace.Name}}</span>
-                            <span class="md-badge {{if eq .CurrentWorkspace.GatewayMode "shared"}}md-badge-secondary{{else}}md-badge-neutral{{end}}" style="font-size:10px;padding:1px 6px;">
-                                {{if eq .CurrentWorkspace.GatewayMode "shared"}}Bot Bersama{{else}}Pribadi{{end}}
+                        <summary class="md-chip" style="height:36px;cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:8px;padding:4px 12px 4px 8px;border-radius:12px;border:1px solid var(--md-sys-color-outline-variant);background:var(--md-sys-color-surface-container-low);transition:all 0.2s ease;" title="Ganti Ruang Kerja Aktif">
+                            <span class="md-center" style="width:22px;height:22px;border-radius:6px;background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);font-size:11px;font-weight:700;flex-shrink:0;">
+                                {{slice .CurrentWorkspace.Name 0 1}}
                             </span>
-                            <svg style="width:12px;height:12px;color:var(--md-sys-color-on-surface-variant);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            <span class="md-label-medium md-truncate" style="max-width:160px;font-weight:600;letter-spacing:-0.01em;">{{.CurrentWorkspace.Name}}</span>
+                            <span class="md-badge {{if eq .CurrentWorkspace.GatewayMode "shared"}}md-badge-secondary{{else}}md-badge-neutral{{end}}" style="font-size:10px;padding:1px 6px;line-height:1.2;border-radius:6px;">
+                                {{if eq .CurrentWorkspace.GatewayMode "shared"}}WA Bot{{else}}WA Pribadi{{end}}
+                            </span>
+                            <svg style="width:12px;height:12px;opacity:0.6;margin-left:2px;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                         </summary>
-                        <div class="md-menu-sheet" style="min-width:240px;right:0;left:auto;">
-                            <div style="padding:10px 14px 6px;border-bottom:1px solid var(--md-sys-color-outline-variant);">
-                                <div class="md-label-small" style="color:var(--md-sys-color-on-surface-variant);text-transform:uppercase;letter-spacing:0.5px;">Ganti Ruang Kerja</div>
+                        <div class="md-menu-sheet" style="min-width:260px;right:0;left:auto;padding:6px;border-radius:14px;box-shadow:var(--md-elev-3);border:1px solid var(--md-sys-color-outline-variant);background:var(--md-sys-color-surface-container-high);">
+                            <div style="padding:8px 12px 6px;border-bottom:1px solid var(--md-sys-color-outline-variant);margin-bottom:4px;">
+                                <div class="md-label-small" style="color:var(--md-sys-color-on-surface-variant);font-weight:700;letter-spacing:0.8px;font-size:10px;">RUANG KERJA ANDA</div>
                             </div>
-                            {{range .UserWorkspaces}}
-                            <form action="/workspaces/switch/{{.ID}}" method="POST" style="margin:0;">
-                                <button type="submit" class="md-list-item md-row-between" style="width:100%;border:none;background:none;text-align:left;cursor:pointer;padding:8px 14px;font:inherit;{{if and $.CurrentWorkspace (eq $.CurrentWorkspace.ID .ID)}}font-weight:bold;color:var(--md-sys-color-primary);background:var(--md-sys-color-surface-container);{{end}}">
-                                    <span class="md-truncate">{{.Name}}</span>
-                                    <span class="md-badge md-badge-neutral" style="font-size:10px;">{{if .UserRole}}{{.UserRole}}{{else if .Role}}{{.Role}}{{else}}member{{end}}</span>
-                                </button>
-                            </form>
-                            {{end}}
+                            <div class="md-col" style="gap:2px;max-height:240px;overflow-y:auto;">
+                                {{range .UserWorkspaces}}
+                                <form action="/workspaces/switch/{{.ID}}" method="POST" style="margin:0;">
+                                    <button type="submit" class="md-row-between" style="width:100%;border:none;background:{{if and $.CurrentWorkspace (eq $.CurrentWorkspace.ID .ID)}}var(--md-sys-color-surface-container){{else}}transparent{{end}};text-align:left;cursor:pointer;padding:8px 10px;border-radius:8px;font:inherit;display:flex;align-items:center;gap:8px;transition:background 0.15s ease;">
+                                        <div class="md-row md-gap-sm" style="align-items:center;min-width:0;flex:1;">
+                                            <span class="md-center" style="width:24px;height:24px;border-radius:6px;background:{{if and $.CurrentWorkspace (eq $.CurrentWorkspace.ID .ID)}}var(--md-sys-color-primary){{else}}var(--md-sys-color-surface-container-highest){{end}};color:{{if and $.CurrentWorkspace (eq $.CurrentWorkspace.ID .ID)}}var(--md-sys-color-on-primary){{else}}var(--md-sys-color-on-surface-variant){{end}};font-size:11px;font-weight:700;flex-shrink:0;">
+                                                {{slice .Name 0 1}}
+                                            </span>
+                                            <span class="md-truncate" style="font-size:13px;{{if and $.CurrentWorkspace (eq $.CurrentWorkspace.ID .ID)}}font-weight:600;color:var(--md-sys-color-primary);{{end}}">{{.Name}}</span>
+                                        </div>
+                                        <div class="md-row" style="align-items:center;gap:4px;">
+                                            <span class="md-badge md-badge-neutral" style="font-size:9px;padding:1px 5px;text-transform:capitalize;">{{if .UserRole}}{{.UserRole}}{{else if .Role}}{{.Role}}{{else}}member{{end}}</span>
+                                            {{if and $.CurrentWorkspace (eq $.CurrentWorkspace.ID .ID)}}
+                                            <svg style="width:14px;height:14px;color:var(--md-sys-color-primary);" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                            {{end}}
+                                        </div>
+                                    </button>
+                                </form>
+                                {{end}}
+                            </div>
                             <hr class="md-divider" style="margin:4px 0;">
-                            <a href="/workspaces" class="md-list-item" style="font-size:12px;color:var(--md-sys-color-primary);display:flex;align-items:center;gap:6px;">
-                                <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                            <a href="/workspaces" class="md-row" style="padding:8px 10px;border-radius:8px;font-size:12px;font-weight:600;color:var(--md-sys-color-primary);text-decoration:none;align-items:center;gap:8px;">
+                                <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                                 Kelola &amp; Buat Ruang Kerja
                             </a>
                         </div>
