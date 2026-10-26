@@ -1,14 +1,17 @@
 package whatsapp
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"sipen/internal/realtime"
+	"sipen/internal/store"
 )
 
 // Manager coordinates WhatsApp clients for multiple user accounts
@@ -17,10 +20,11 @@ type Manager struct {
 	hub         *realtime.Hub
 	port        string
 	clients     map[int64]*Client
+	stopChan    chan struct{}
 	mu          sync.RWMutex
 }
 
-// NewManager creates a WhatsApp multi-account manager
+// NewManager creates a WhatsApp multi-account manager with auto idle reaper
 func NewManager(sessionsDir string, hub *realtime.Hub, port string) *Manager {
 	baseDir := sessionsDir
 	if strings.HasSuffix(strings.ToLower(sessionsDir), ".db") {
@@ -32,12 +36,53 @@ func NewManager(sessionsDir string, hub *realtime.Hub, port string) *Manager {
 	_ = os.MkdirAll(baseDir, 0755)
 	_ = os.MkdirAll(filepath.Join(baseDir, "users"), 0755)
 
-	return &Manager{
+	m := &Manager{
 		sessionsDir: baseDir,
 		hub:         hub,
 		port:        port,
 		clients:     make(map[int64]*Client),
+		stopChan:    make(chan struct{}),
 	}
+
+	// Server Edition Optimization: Start periodic idle client reaper (hibernates sockets after 15m idle)
+	go m.idleReaperLoop()
+
+	return m
+}
+
+// idleReaperLoop checks active WhatsApp connections every 5 minutes and hibernates idle ones
+func (m *Manager) idleReaperLoop() {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-m.stopChan:
+			return
+		case <-ticker.C:
+			m.mu.RLock()
+			var idleClients []*Client
+			for _, c := range m.clients {
+				if c.IsIdle(15 * time.Minute) {
+					idleClients = append(idleClients, c)
+				}
+			}
+			m.mu.RUnlock()
+
+			for _, c := range idleClients {
+				c.Hibernate()
+			}
+		}
+	}
+}
+
+// GetClientForWorkspace returns the designated WhatsApp client for a workspace
+// (either the shared workspace bot gateway or the user's personal WhatsApp account)
+func (m *Manager) GetClientForWorkspace(ws *store.Workspace, userID int64) (*Client, error) {
+	if ws != nil && ws.GatewayMode == "workspace_shared" && ws.SharedWAUserID.Valid && ws.SharedWAUserID.Int64 > 0 {
+		return m.GetClient(ws.SharedWAUserID.Int64)
+	}
+	return m.GetClient(userID)
 }
 
 // GetClient retrieves or initializes the WhatsApp client for a specific user ID
@@ -51,6 +96,14 @@ func (m *Manager) GetClient(userID int64) (*Client, error) {
 	m.mu.RUnlock()
 
 	if exists {
+		client.Touch()
+		if client.state == StateHibernated {
+			go func() {
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+				_ = client.EnsureConnected(ctx)
+			}()
+		}
 		return client, nil
 	}
 
@@ -118,6 +171,12 @@ func (m *Manager) CloseClient(userID int64) {
 func (m *Manager) CloseAll() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
+	select {
+	case <-m.stopChan:
+	default:
+		close(m.stopChan)
+	}
 
 	for uid, c := range m.clients {
 		slog.Info("Closing WhatsApp client for user", "user_id", uid)

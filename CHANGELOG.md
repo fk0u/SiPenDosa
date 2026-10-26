@@ -4,6 +4,25 @@ Semua perubahan penting pada proyek **SiPenDosa** didokumentasikan di sini denga
 
 ---
 
+## [1.5.0] — 2026-10-26
+
+### 🏢 Server Workspace Edition & Multi-Tenant Support
+* **Multi-Tenant Collaboration (`/workspaces`):** Dukungan ruang kerja (workspace) kolaboratif untuk kelas, program studi, atau organisasi mahasiswa. Setiap anggota dapat berpindah antar-workspace melalui Workspace Switcher di navigasi utama.
+* **Fleksibilitas Gateway WhatsApp:** Ruang kerja dapat dikonfigurasi menggunakan **Nomor Pribadi (Personal Gateway)** di mana setiap sipen menautkan nomornya masing-masing, atau **Bot Bersama (Shared Gateway)** menggunakan satu nomor bot WhatsApp resmi milik admin workspace.
+* **Smart Non-IP Registration Rate Limiting:** Pendaftaran akun publik terbuka kini dilindungi oleh sistem token bucket cerdas berbasis device fingerprint (`SHA-256(User-Agent + Accept-Language + Username)`) dan timing entropy. Seluruh mahasiswa dalam jaringan WiFi/NAT kampus yang sama bebas mendaftar tanpa terkena pemblokiran IP massal (`HTTP 429`).
+
+### 🤖 Pesan WhatsApp Interaktif & Smart Auto-Reply Chatbot
+* **WhatsApp NativeFlow Interactive Buttons:** Pesan pengingat ke dosen kini dapat dilengkapi dengan tombol interaktif resmi WhatsApp: `[Konfirmasi Hadir Offline]`, `[Konfirmasi Hadir Online]`, dan `[Mohon Jadwal Ulang]`.
+* **Asisten Chatbot Konfirmasi Otomatis:** Sistem mendeteksi ketika dosen menekan tombol atau membalas dengan angka `1`, `2`, atau `3`, secara otomatis membalas secara santun, dan memperbarui status kehadiran dosen secara live di antrian pesan dan WebSocket dashboard.
+* **Structured Text Fallback:** Untuk versi aplikasi WhatsApp lama yang belum mendukung rendering tombol dinamis, sistem otomatis mengalirkan menu interaktif berbasis teks berformat rapi.
+
+### ⚡ Efisiensi Sumber Daya Server Ekstrem (Ultra-Low Footprint)
+* **WhatsApp Socket Hibernation:** Socket WhatsApp otomatis masuk mode hibernasi setelah 15 menit tanpa aktivitas pengiriman, menjaga pemakaian RAM server tetap di bawah 35MB (sangat aman untuk VPS tier 256MB/512MB RAM). Socket otomatis dibangunkan seketika dalam < 1 detik saat ada antrian pesan.
+* **SQLite WAL & Memory Caching Pragma:** Konfigurasi `journal_mode = WAL`, `synchronous = NORMAL`, `temp_store = MEMORY`, dan `cache_size = -4000` untuk performa konkurensi multi-user tanpa database locked.
+* **Docker Server Deployment:** Menyediakan `Dockerfile.server` (multi-stage Alpine < 30MB) dan `docker-compose.server.yml` dengan konfigurasi pembatas resource (`mem_limit: 256M`), serta panduan operasional lengkap di `docs/SERVER_WORKSPACE_GUIDE.md`.
+
+---
+
 ## [1.4.2] — 2026-10-26
 
 ### 📱 Android & Embedded Engine Improvements

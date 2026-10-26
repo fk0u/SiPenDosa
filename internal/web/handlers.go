@@ -37,17 +37,18 @@ import (
 // Handlers bundles all web application controller dependencies
 type Handlers struct {
 	cfg        *config.Config
-	store      *store.Store
-	authSvc    *auth.Service
-	waManager  *whatsapp.Manager
-	tunnelMgr  *tunnel.Manager
-	queueMgr   *queue.Manager
-	scheduler  *scheduler.Scheduler
-	tmplEngine *template.Engine
-	hub        *realtime.Hub
-	renderer   *ViewRenderer
-	updater    *updater.Manager
-	staticFS   fs.FS
+	store           *store.Store
+	authSvc         *auth.Service
+	waManager       *whatsapp.Manager
+	tunnelMgr       *tunnel.Manager
+	queueMgr        *queue.Manager
+	scheduler       *scheduler.Scheduler
+	tmplEngine      *template.Engine
+	hub             *realtime.Hub
+	renderer        *ViewRenderer
+	updater         *updater.Manager
+	staticFS        fs.FS
+	smartRegLimiter *SmartRegistrationLimiter
 }
 
 // NewHandlers creates an instance of application HTTP handlers
@@ -64,17 +65,18 @@ func NewHandlers(
 	r *ViewRenderer,
 ) *Handlers {
 	return &Handlers{
-		cfg:        cfg,
-		store:      s,
-		authSvc:    a,
-		waManager:  wam,
-		tunnelMgr:  tun,
-		queueMgr:   q,
-		scheduler:  sch,
-		tmplEngine: t,
-		hub:        h,
-		renderer:   r,
-		updater:    updater.NewManager(),
+		cfg:             cfg,
+		store:           s,
+		authSvc:         a,
+		waManager:       wam,
+		tunnelMgr:       tun,
+		queueMgr:        q,
+		scheduler:       sch,
+		tmplEngine:      t,
+		hub:             h,
+		renderer:        r,
+		updater:         updater.NewManager(),
+		smartRegLimiter: NewSmartRegistrationLimiter(20, 5, time.Minute),
 	}
 }
 
@@ -83,18 +85,49 @@ func (h *Handlers) SetStaticFS(fsys fs.FS) {
 	h.staticFS = fsys
 }
 
-// Helper to retrieve the isolated WhatsApp client for the authenticated user.
-// Returns nil when there is no authenticated user — never falls back to another account.
+// Helper to retrieve the isolated WhatsApp client for the authenticated user/workspace.
+// Supports personal WhatsApp connection or shared workspace bot gateway.
 func (h *Handlers) getActiveWAClient(r *http.Request) *whatsapp.Client {
 	user := auth.GetUserFromContext(r.Context())
 	if user == nil || user.ID <= 0 {
 		return nil
 	}
-	client, err := h.waManager.GetClient(user.ID)
+	ws, _ := h.store.GetActiveWorkspace(user.ID)
+	client, err := h.waManager.GetClientForWorkspace(ws, user.ID)
 	if err != nil {
-		slog.Error("Failed to get WA client for user", "user_id", user.ID, "err", err)
+		slog.Error("Failed to get WA client for user/workspace", "user_id", user.ID, "err", err)
 	}
 	return client
+}
+
+// populateWorkspaceContext injects active workspace and membership details into page data
+func (h *Handlers) populateWorkspaceContext(r *http.Request, pd *PageData) {
+	user := h.currentUser(r)
+	if user == nil || user.ID <= 0 {
+		return
+	}
+	pd.User = user
+	ws, err := h.store.GetActiveWorkspace(user.ID)
+	if err == nil && ws != nil {
+		pd.CurrentWorkspace = ws
+	}
+	isSuper := isPrivileged(user)
+	list, err := h.store.ListWorkspacesForUser(user.ID, isSuper)
+	if err == nil {
+		pd.UserWorkspaces = list
+	}
+}
+
+// render wraps h.renderer.Render while ensuring workspace context is fully populated
+func (h *Handlers) render(w http.ResponseWriter, r *http.Request, pageTemplate string, data PageData) {
+	h.populateWorkspaceContext(r, &data)
+	h.renderer.Render(w, r, pageTemplate, data)
+}
+
+// renderWithStatus wraps h.renderer.RenderWithStatus while ensuring workspace context is fully populated
+func (h *Handlers) renderWithStatus(w http.ResponseWriter, r *http.Request, pageTemplate string, data PageData, statusCode int) {
+	h.populateWorkspaceContext(r, &data)
+	h.renderer.RenderWithStatus(w, r, pageTemplate, data, statusCode)
 }
 
 // Helper to retrieve the current user ID (0 when unauthenticated)
@@ -236,15 +269,23 @@ func (h *Handlers) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	count, _ := h.store.CountUsers()
 	isFirstUser := count == 0
 
-	// If superadmin already exists, public registration is completely closed!
-	if !isFirstUser {
+	settings, err := h.store.GetSettings()
+	regOpen := (err == nil && settings.RegistrationOpen) || h.cfg.ServerMode
+
+	if !isFirstUser && !regOpen {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 
+	title := "Pendaftaran Akun Baru — SiPenDosa"
+	if isFirstUser {
+		title = "Inisialisasi Superadmin — SiPenDosa"
+	}
+
 	h.renderer.RenderPlain(w, "auth/register.html", PageData{
-		Title:          "Inisialisasi Superadmin — SiPenDosa",
+		Title:          title,
 		IsRegistration: true,
+		IsFirstUser:    isFirstUser,
 	})
 }
 
@@ -257,19 +298,35 @@ func (h *Handlers) RegisterPostHandler(w http.ResponseWriter, r *http.Request) {
 	count, _ := h.store.CountUsers()
 	isFirstUser := count == 0
 
-	// Disallow public registration if user already exists
-	if !isFirstUser {
+	settings, err := h.store.GetSettings()
+	regOpen := (err == nil && settings.RegistrationOpen) || h.cfg.ServerMode
+
+	if !isFirstUser && !regOpen {
 		h.renderer.RenderPlain(w, "auth/register.html", PageData{
-			Title:      "Pendaftaran Ditutup — SiPenDosa",
-			FlashError: "Pendaftaran publik dinonaktifkan. Akun baru hanya dapat dibuat oleh Administrator melalui Pengaturan.",
+			Title:       "Pendaftaran Ditutup — SiPenDosa",
+			FlashError:  "Pendaftaran publik dinonaktifkan. Akun baru hanya dapat dibuat oleh Administrator melalui Pengaturan.",
+			IsFirstUser: isFirstUser,
 		})
 		return
 	}
 
+	// Smart non-IP based rate limiting (anti-spam & anti-bot without blocking shared campus NAT)
+	if !isFirstUser {
+		if err := h.smartRegLimiter.CheckRegistration(r); err != nil {
+			h.renderer.RenderPlain(w, "auth/register.html", PageData{
+				Title:       "Batas Pendaftaran Tercapai — SiPenDosa",
+				FlashError:  err.Error(),
+				IsFirstUser: isFirstUser,
+			})
+			return
+		}
+	}
+
 	if username == "" || len(password) < 6 {
 		h.renderer.RenderPlain(w, "auth/register.html", PageData{
-			Title:          "Inisialisasi Superadmin — SiPenDosa",
+			Title:          "Pendaftaran — SiPenDosa",
 			IsRegistration: isFirstUser,
+			IsFirstUser:    isFirstUser,
 			FlashError:     "Username wajib diisi dan kata sandi minimal 6 karakter.",
 		})
 		return
@@ -277,24 +334,34 @@ func (h *Handlers) RegisterPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	if password != confirmPassword {
 		h.renderer.RenderPlain(w, "auth/register.html", PageData{
-			Title:          "Inisialisasi Superadmin — SiPenDosa",
+			Title:          "Pendaftaran — SiPenDosa",
 			IsRegistration: isFirstUser,
+			IsFirstUser:    isFirstUser,
 			FlashError:     "Konfirmasi kata sandi tidak cocok.",
 		})
 		return
 	}
 
-	_, err := h.authSvc.RegisterFirstUser(username, password)
+	if isFirstUser {
+		_, err = h.authSvc.RegisterFirstUser(username, password)
+	} else {
+		_, err = h.authSvc.RegisterUser(username, password, "kelas", true)
+	}
+
 	if err != nil {
 		h.renderer.RenderPlain(w, "auth/register.html", PageData{
-			Title:          "Inisialisasi Superadmin — SiPenDosa",
+			Title:          "Pendaftaran — SiPenDosa",
 			IsRegistration: isFirstUser,
+			IsFirstUser:    isFirstUser,
 			FlashError:     err.Error(),
 		})
 		return
 	}
 
-	http.Redirect(w, r, "/login", http.StatusSeeOther)
+	h.renderer.RenderPlain(w, "auth/login.html", PageData{
+		Title:        "Masuk ke SiPenDosa",
+		FlashSuccess: "Akun berhasil didaftarkan! Silakan masuk dengan kredensial Anda.",
+	})
 }
 
 func (h *Handlers) LogoutHandler(w http.ResponseWriter, r *http.Request) {
@@ -545,7 +612,7 @@ func (h *Handlers) OverviewHandler(w http.ResponseWriter, r *http.Request) {
 		"Tunnel":         tunnelStatus,
 	}
 
-	h.renderer.Render(w, r, "pages/overview.html", PageData{
+	h.render(w, r, "pages/overview.html", PageData{
 		Title:      "Dashboard Overview",
 		ActivePage: "overview",
 		Data:       data,
@@ -570,7 +637,7 @@ func (h *Handlers) ContactsHandler(w http.ResponseWriter, r *http.Request) {
 		"FilterType": filterType,
 	}
 
-	h.renderer.Render(w, r, "pages/contacts.html", PageData{
+	h.render(w, r, "pages/contacts.html", PageData{
 		Title:      "Dosen & Kontak",
 		ActivePage: "contacts",
 		Data:       data,
@@ -664,7 +731,7 @@ func (h *Handlers) SchedulesHandler(w http.ResponseWriter, r *http.Request) {
 		"Templates": templates,
 	}
 
-	h.renderer.Render(w, r, "pages/schedules.html", PageData{
+	h.render(w, r, "pages/schedules.html", PageData{
 		Title:      "Jadwal Mata Kuliah",
 		ActivePage: "schedules",
 		Data:       data,
@@ -1062,7 +1129,7 @@ func (h *Handlers) TemplatesHandler(w http.ResponseWriter, r *http.Request) {
 		"PreviewText": previewText,
 	}
 
-	h.renderer.Render(w, r, "pages/templates.html", PageData{
+	h.render(w, r, "pages/templates.html", PageData{
 		Title:      "Template Pesan",
 		ActivePage: "templates",
 		Data:       data,
@@ -1180,7 +1247,7 @@ func (h *Handlers) HistoryHandler(w http.ResponseWriter, r *http.Request) {
 		"SelectedStatus": status,
 	}
 
-	h.renderer.Render(w, r, "pages/history.html", PageData{
+	h.render(w, r, "pages/history.html", PageData{
 		Title:      "Riwayat Pengiriman",
 		ActivePage: "history",
 		Data:       data,
@@ -1201,7 +1268,7 @@ func (h *Handlers) QueueHandler(w http.ResponseWriter, r *http.Request) {
 		"Processing": processing,
 	}
 
-	h.renderer.Render(w, r, "pages/queue.html", PageData{
+	h.render(w, r, "pages/queue.html", PageData{
 		Title:      "Antrian Pesan",
 		ActivePage: "queue",
 		Data:       data,
@@ -1270,7 +1337,7 @@ func (h *Handlers) SettingsHandler(w http.ResponseWriter, r *http.Request) {
 		"Tunnel":      tunnelStatus,
 	}
 
-	h.renderer.Render(w, r, "pages/settings.html", PageData{
+	h.render(w, r, "pages/settings.html", PageData{
 		Title:      "Pengaturan Sistem",
 		ActivePage: "settings",
 		Data:       data,
@@ -1490,7 +1557,7 @@ func (h *Handlers) LogsHandler(w http.ResponseWriter, r *http.Request) {
 		"Timezone":         h.cfg.DefaultTimezone,
 	}
 
-	h.renderer.Render(w, r, "pages/logs.html", PageData{
+	h.render(w, r, "pages/logs.html", PageData{
 		Title:      "Log & Observabilitas",
 		ActivePage: "logs",
 		Data:       data,
@@ -1725,49 +1792,49 @@ func (h *Handlers) HealthzHandler(w http.ResponseWriter, r *http.Request) {
 // ==========================================
 
 func (h *Handlers) NotFoundHandler(w http.ResponseWriter, r *http.Request) {
-	h.renderer.RenderWithStatus(w, r, "errors/404.html", PageData{
+	h.renderWithStatus(w, r, "errors/404.html", PageData{
 		Title:      "404 Halaman Tidak Ditemukan — SiPenDosa",
 		ActivePage: "404",
 	}, http.StatusNotFound)
 }
 
 func (h *Handlers) InternalServerErrorHandler(w http.ResponseWriter, r *http.Request) {
-	h.renderer.RenderWithStatus(w, r, "errors/500.html", PageData{
+	h.renderWithStatus(w, r, "errors/500.html", PageData{
 		Title:      "500 Kesalahan Server — SiPenDosa",
 		ActivePage: "500",
 	}, http.StatusInternalServerError)
 }
 
 func (h *Handlers) TermsHandler(w http.ResponseWriter, r *http.Request) {
-	h.renderer.Render(w, r, "pages/terms.html", PageData{
+	h.render(w, r, "pages/terms.html", PageData{
 		Title:      "Ketentuan Layanan (ToS) — SiPenDosa",
 		ActivePage: "terms",
 	})
 }
 
 func (h *Handlers) PrivacyHandler(w http.ResponseWriter, r *http.Request) {
-	h.renderer.Render(w, r, "pages/privacy.html", PageData{
+	h.render(w, r, "pages/privacy.html", PageData{
 		Title:      "Kebijakan Privasi — SiPenDosa",
 		ActivePage: "privacy",
 	})
 }
 
 func (h *Handlers) AboutHandler(w http.ResponseWriter, r *http.Request) {
-	h.renderer.Render(w, r, "pages/about.html", PageData{
+	h.render(w, r, "pages/about.html", PageData{
 		Title:      "Tentang & Filosofi — SiPenDosa",
 		ActivePage: "about",
 	})
 }
 
 func (h *Handlers) ChangelogHandler(w http.ResponseWriter, r *http.Request) {
-	h.renderer.Render(w, r, "pages/changelog.html", PageData{
+	h.render(w, r, "pages/changelog.html", PageData{
 		Title:      "Catatan Rilis & Changelog — SiPenDosa",
 		ActivePage: "changelog",
 	})
 }
 
 func (h *Handlers) TerminalHandler(w http.ResponseWriter, r *http.Request) {
-	h.renderer.Render(w, r, "pages/terminal.html", PageData{
+	h.render(w, r, "pages/terminal.html", PageData{
 		Title:      "Terminal Android & Service — SiPenDosa",
 		ActivePage: "terminal",
 	})

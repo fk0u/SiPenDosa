@@ -31,7 +31,49 @@ func TestAllTemplatesRender(t *testing.T) {
 		ActivePage:  "overview",
 		User:        dummyUser,
 		CurrentYear: 2026,
+		CurrentWorkspace: &store.Workspace{
+			ID:          1,
+			Name:        "Workspace Utama",
+			Slug:        "utama",
+			GatewayMode: "personal",
+		},
+		UserWorkspaces: []store.WorkspaceDetail{
+			{
+				Workspace: store.Workspace{
+					ID:          1,
+					Name:        "Workspace Utama",
+					Slug:        "utama",
+					GatewayMode: "personal",
+				},
+				OwnerUsername: "admin_test",
+				MemberCount:   1,
+				Role:          "owner",
+				UserRole:      "owner",
+			},
+		},
 		Data: map[string]interface{}{
+			"ActiveWorkspace": &store.Workspace{
+				ID:          1,
+				Name:        "Workspace Utama",
+				Slug:        "utama",
+				GatewayMode: "personal",
+				SharedPhone: "6281234567890",
+			},
+			"Workspaces": []store.WorkspaceDetail{
+				{
+					Workspace: store.Workspace{
+						ID:          1,
+						Name:        "Workspace Utama",
+						Slug:        "utama",
+						GatewayMode: "personal",
+						SharedPhone: "6281234567890",
+					},
+					OwnerUsername: "admin_test",
+					MemberCount:   1,
+					Role:          "owner",
+					UserRole:      "owner",
+				},
+			},
 			"Stats": &store.DashboardStats{
 				TotalSentToday:  5,
 				TotalSentAll:    42,
@@ -107,6 +149,7 @@ func TestAllTemplatesRender(t *testing.T) {
 		"pages/about.html",
 		"pages/changelog.html",
 		"pages/terminal.html",
+		"workspaces/index.html",
 		"errors/404.html",
 		"errors/500.html",
 	}

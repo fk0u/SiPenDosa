@@ -35,8 +35,11 @@ type PageData struct {
 	Data            interface{}
 	FlashSuccess    string
 	FlashError      string
-	IsRegistration  bool
-	CurrentYear     int
+	IsRegistration   bool
+	IsFirstUser      bool
+	CurrentYear      int
+	CurrentWorkspace *store.Workspace
+	UserWorkspaces   []store.WorkspaceDetail
 }
 
 // NewViewRenderer creates a new view renderer supporting embedded fs and optional disk fallback

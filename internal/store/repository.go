@@ -1046,3 +1046,206 @@ func (s *Store) GetDashboardStats(userID int64) (*DashboardStats, error) {
 
 	return &stats, nil
 }
+
+// ==========================================
+// Workspaces & Multi-Tenant Collaboration
+// ==========================================
+
+func (s *Store) CreateWorkspace(ws *Workspace) (*Workspace, error) {
+	now := time.Now()
+	if ws.Slug == "" {
+		ws.Slug = fmt.Sprintf("ws-%d", now.UnixNano())
+	}
+	if ws.GatewayMode == "" {
+		ws.GatewayMode = "personal"
+	}
+
+	res, err := s.db.Exec(`INSERT INTO workspaces 
+		(name, slug, description, owner_id, gateway_mode, shared_wa_user_id, shared_phone, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		ws.Name, ws.Slug, ws.Description, ws.OwnerID, ws.GatewayMode, ws.SharedWAUserID, ws.SharedPhone, now, now)
+	if err != nil {
+		return nil, fmt.Errorf("gagal membuat workspace: %w", err)
+	}
+
+	id, _ := res.LastInsertId()
+	ws.ID = id
+	ws.CreatedAt = now
+	ws.UpdatedAt = now
+
+	// Automatically add creator as owner
+	_, _ = s.db.Exec(`INSERT OR IGNORE INTO workspace_members (workspace_id, user_id, role, created_at)
+		VALUES (?, ?, 'owner', ?)`, id, ws.OwnerID, now)
+
+	// Set as active workspace for owner
+	_ = s.SetActiveWorkspace(ws.OwnerID, id)
+
+	return ws, nil
+}
+
+func (s *Store) GetWorkspaceByID(id int64) (*Workspace, error) {
+	var ws Workspace
+	err := s.db.QueryRow(`SELECT id, name, slug, description, owner_id, gateway_mode, shared_wa_user_id, COALESCE(shared_phone, ''), created_at, updated_at
+		FROM workspaces WHERE id = ?`, id).
+		Scan(&ws.ID, &ws.Name, &ws.Slug, &ws.Description, &ws.OwnerID, &ws.GatewayMode, &ws.SharedWAUserID, &ws.SharedPhone, &ws.CreatedAt, &ws.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &ws, nil
+}
+
+func (s *Store) GetWorkspaceBySlug(slug string) (*Workspace, error) {
+	var ws Workspace
+	err := s.db.QueryRow(`SELECT id, name, slug, description, owner_id, gateway_mode, shared_wa_user_id, COALESCE(shared_phone, ''), created_at, updated_at
+		FROM workspaces WHERE slug = ?`, slug).
+		Scan(&ws.ID, &ws.Name, &ws.Slug, &ws.Description, &ws.OwnerID, &ws.GatewayMode, &ws.SharedWAUserID, &ws.SharedPhone, &ws.CreatedAt, &ws.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &ws, nil
+}
+
+func (s *Store) ListWorkspacesForUser(userID int64, isSuperadmin bool) ([]WorkspaceDetail, error) {
+	var query string
+	var args []interface{}
+
+	if isSuperadmin {
+		query = `SELECT w.id, w.name, w.slug, w.description, w.owner_id, w.gateway_mode, w.shared_wa_user_id, COALESCE(w.shared_phone, ''), w.created_at, w.updated_at,
+			COALESCE(u.username, 'admin') as owner_username,
+			(SELECT COUNT(*) FROM workspace_members WHERE workspace_id = w.id) as member_count,
+			COALESCE(wm.role, 'superadmin') as user_role
+			FROM workspaces w
+			LEFT JOIN users u ON u.id = w.owner_id
+			LEFT JOIN workspace_members wm ON wm.workspace_id = w.id AND wm.user_id = ?
+			ORDER BY w.id ASC`
+		args = append(args, userID)
+	} else {
+		query = `SELECT w.id, w.name, w.slug, w.description, w.owner_id, w.gateway_mode, w.shared_wa_user_id, COALESCE(w.shared_phone, ''), w.created_at, w.updated_at,
+			COALESCE(u.username, 'admin') as owner_username,
+			(SELECT COUNT(*) FROM workspace_members WHERE workspace_id = w.id) as member_count,
+			wm.role as user_role
+			FROM workspaces w
+			JOIN workspace_members wm ON wm.workspace_id = w.id AND wm.user_id = ?
+			LEFT JOIN users u ON u.id = w.owner_id
+			ORDER BY w.id ASC`
+		args = append(args, userID)
+	}
+
+	rows, err := s.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []WorkspaceDetail
+	for rows.Next() {
+		var wd WorkspaceDetail
+		err := rows.Scan(&wd.ID, &wd.Name, &wd.Slug, &wd.Description, &wd.OwnerID, &wd.GatewayMode, &wd.SharedWAUserID, &wd.SharedPhone, &wd.CreatedAt, &wd.UpdatedAt,
+			&wd.OwnerUsername, &wd.MemberCount, &wd.UserRole)
+		if err != nil {
+			return nil, err
+		}
+		wd.Role = wd.UserRole
+		list = append(list, wd)
+	}
+	return list, nil
+}
+
+func (s *Store) UpdateWorkspace(ws *Workspace) error {
+	now := time.Now()
+	_, err := s.db.Exec(`UPDATE workspaces SET 
+		name = ?, description = ?, gateway_mode = ?, shared_wa_user_id = ?, shared_phone = ?, updated_at = ?
+		WHERE id = ?`,
+		ws.Name, ws.Description, ws.GatewayMode, ws.SharedWAUserID, ws.SharedPhone, now, ws.ID)
+	return err
+}
+
+func (s *Store) DeleteWorkspace(id int64) error {
+	// Prevent deleting the last remaining workspace
+	var count int
+	if err := s.db.QueryRow("SELECT COUNT(*) FROM workspaces").Scan(&count); err == nil && count <= 1 {
+		return fmt.Errorf("tidak dapat menghapus satu-satunya workspace sistem")
+	}
+
+	_, err := s.db.Exec("DELETE FROM workspaces WHERE id = ?", id)
+	return err
+}
+
+func (s *Store) AddWorkspaceMember(workspaceID, userID int64, role string) error {
+	if role == "" {
+		role = "member"
+	}
+	_, err := s.db.Exec(`INSERT INTO workspace_members (workspace_id, user_id, role, created_at)
+		VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+		ON CONFLICT(workspace_id, user_id) DO UPDATE SET role = excluded.role`,
+		workspaceID, userID, role)
+	return err
+}
+
+func (s *Store) RemoveWorkspaceMember(workspaceID, userID int64) error {
+	_, err := s.db.Exec("DELETE FROM workspace_members WHERE workspace_id = ? AND user_id = ?", workspaceID, userID)
+	return err
+}
+
+func (s *Store) GetWorkspaceMemberRole(workspaceID, userID int64) (string, error) {
+	var role string
+	err := s.db.QueryRow("SELECT role FROM workspace_members WHERE workspace_id = ? AND user_id = ?", workspaceID, userID).Scan(&role)
+	if err != nil {
+		return "", err
+	}
+	return role, nil
+}
+
+func (s *Store) SetActiveWorkspace(userID, workspaceID int64) error {
+	_, err := s.db.Exec("UPDATE users SET active_workspace_id = ? WHERE id = ?", workspaceID, userID)
+	return err
+}
+
+func (s *Store) GetActiveWorkspace(userID int64) (*Workspace, error) {
+	var activeID sql.NullInt64
+	err := s.db.QueryRow("SELECT active_workspace_id FROM users WHERE id = ?", userID).Scan(&activeID)
+	if err == nil && activeID.Valid && activeID.Int64 > 0 {
+		return s.GetWorkspaceByID(activeID.Int64)
+	}
+
+	// Fallback: get first workspace user belongs to
+	var wsID int64
+	err = s.db.QueryRow(`SELECT workspace_id FROM workspace_members WHERE user_id = ? ORDER BY id ASC LIMIT 1`, userID).Scan(&wsID)
+	if err == nil {
+		_ = s.SetActiveWorkspace(userID, wsID)
+		return s.GetWorkspaceByID(wsID)
+	}
+
+	// Fallback to workspace 1
+	return s.GetWorkspaceByID(1)
+}
+
+func (s *Store) UpdateQueueMessageChoice(id int64, choice string) error {
+	now := time.Now()
+	_, err := s.db.Exec("UPDATE queue_messages SET button_choice = ?, updated_at = ? WHERE id = ?", choice, now, id)
+	return err
+}
+
+// PruneOldLogsAndMessages cleans up completed messages and activity logs older than retentionDays
+// to maintain minimal SQLite database disk size on low-spec server environments.
+func (s *Store) PruneOldLogsAndMessages(retentionDays int) (int64, error) {
+	if retentionDays <= 0 {
+		retentionDays = 30
+	}
+	cutoff := time.Now().AddDate(0, 0, -retentionDays)
+
+	res1, err := s.db.Exec("DELETE FROM activity_logs WHERE created_at < ?", cutoff)
+	if err != nil {
+		return 0, err
+	}
+	deletedLogs, _ := res1.RowsAffected()
+
+	res2, err := s.db.Exec("DELETE FROM queue_messages WHERE status IN ('sent', 'dry_run', 'cancelled') AND created_at < ?", cutoff)
+	if err != nil {
+		return deletedLogs, err
+	}
+	deletedQueue, _ := res2.RowsAffected()
+
+	return deletedLogs + deletedQueue, nil
+}
+

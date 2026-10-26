@@ -33,8 +33,10 @@ type Config struct {
 	SendWindowEnd   string
 	RateLimitMinSec int
 	RateLimitMaxSec int
-	MaxRetries      int
-	GlobalDryRun    bool
+	MaxRetries         int
+	GlobalDryRun       bool
+	ServerMode         bool // Mode server multi-tenant untuk deployment cloud / VPS
+	PruneRetentionDays int  // Hari retensi log untuk optimasi disk SQLite
 }
 
 // Load loads configuration from .env file and environment variables
@@ -112,8 +114,14 @@ func Load() (*Config, error) {
 		SendWindowEnd:   getEnv("SEND_WINDOW_END", "16:00"),
 		RateLimitMinSec: getEnvInt("RATE_LIMIT_MIN_SEC", 5),
 		RateLimitMaxSec: getEnvInt("RATE_LIMIT_MAX_SEC", 15),
-		MaxRetries:      getEnvInt("MAX_RETRIES", 3),
-		GlobalDryRun:    getEnvBool("GLOBAL_DRY_RUN", false),
+		MaxRetries:         getEnvInt("MAX_RETRIES", 3),
+		GlobalDryRun:       getEnvBool("GLOBAL_DRY_RUN", false),
+		ServerMode:         getEnvBool("SIPEN_SERVER_EDITION", false) || getEnvBool("SIPEN_SERVER_MODE", false) || strings.ToLower(getEnv("SIPEN_MODE", "")) == "server",
+		PruneRetentionDays: getEnvInt("SIPEN_LOG_RETENTION_DAYS", 30),
+	}
+
+	if cfg.ServerMode {
+		cfg.UIMode = UIWeb
 	}
 
 	if cfg.UIMode == "" && (runtime.GOOS == "android" || os.Getenv("ANDROID_DATA") != "" || os.Getenv("ANDROID_ROOT") != "") {

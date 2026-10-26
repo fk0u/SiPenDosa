@@ -179,11 +179,24 @@ func (m *Manager) processSingleMessage(msg store.QueueMessage, settings *store.S
 	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 	defer cancel()
 
-	waClient, err := m.waManager.GetClient(msg.UserID)
-	if err != nil {
-		slog.Warn("Failed to obtain WhatsApp client for user", "user_id", msg.UserID, "err", err)
+	var waClient *whatsapp.Client
+	if msg.WorkspaceID.Valid && msg.WorkspaceID.Int64 > 0 {
+		ws, _ := m.store.GetWorkspaceByID(msg.WorkspaceID.Int64)
+		waClient, err = m.waManager.GetClientForWorkspace(ws, msg.UserID)
 	} else {
-		err = waClient.SendMessage(ctx, msg.RecipientJID, msg.Message)
+		waClient, err = m.waManager.GetClient(msg.UserID)
+	}
+
+	if err != nil {
+		slog.Warn("Failed to obtain WhatsApp client for user/workspace", "user_id", msg.UserID, "err", err)
+	} else {
+		// Send with interactive buttons if not explicitly plain
+		if msg.InteractiveType != "plain" && (msg.InteractiveType == "buttons" || strings.Contains(strings.ToLower(msg.Message), "perkuliahan")) {
+			buttons := whatsapp.DefaultReminderButtons("/jadwal")
+			err = waClient.SendInteractiveMessage(ctx, msg.RecipientJID, "📚 PENGINGAT PERKULIAHAN", msg.Message, "SiPenDosa Academic Bot", buttons)
+		} else {
+			err = waClient.SendMessage(ctx, msg.RecipientJID, msg.Message)
+		}
 	}
 	if err != nil {
 		slog.Warn("Failed to send queued WhatsApp message", "id", msg.ID, "err", err)

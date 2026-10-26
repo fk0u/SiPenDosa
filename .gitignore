@@ -44,6 +44,8 @@ mobile/android/keystore/
 
 # AI-agent working state (boleh berisi info sensitif)
 .agents/session-briefing.md
+*.pem
+.ruas/*.pem
 
 # Flutter/Dart generated artifacts
 .dart_tool/

@@ -231,6 +231,7 @@ func (s *Scheduler) fireSchedule(sc store.ScheduleDetail, lectureDate time.Time,
 
 	qm := &store.QueueMessage{
 		UserID:        sc.UserID,
+		WorkspaceID:   sc.WorkspaceID,
 		ScheduleID:    sql.NullInt64{Int64: sc.ID, Valid: true},
 		RecipientJID:  targetPhone,
 		RecipientName: sc.RecipientName,
@@ -329,6 +330,7 @@ func (s *Scheduler) TriggerScheduleManually(scheduleID int64, dryRun bool) (*sto
 
 	qm := &store.QueueMessage{
 		UserID:        sc.UserID,
+		WorkspaceID:   sc.WorkspaceID,
 		ScheduleID:    sql.NullInt64{Int64: sc.ID, Valid: true},
 		RecipientJID:  targetPhone,
 		RecipientName: recipientName,

@@ -1,6 +1,7 @@
 package web
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"net"
 	"net/http"
@@ -237,3 +238,109 @@ func extractIP(r *http.Request) string {
 	}
 	return host
 }
+
+// SmartRegistrationLimiter implements non-IP rate limiting designed for campus NAT / shared IP networks.
+// It limits by client device fingerprint, anti-bot dwell time, and global server sliding window
+// so that many legitimate users sharing the same campus WiFi can register freely without blocking each other.
+type SmartRegistrationLimiter struct {
+	mu           sync.Mutex
+	fingerprints map[string][]time.Time
+	globalVisits []time.Time
+	globalLimit  int           // Max registrations across entire server per window
+	deviceLimit  int           // Max registrations per unique client fingerprint per window
+	window       time.Duration // Time window
+}
+
+// NewSmartRegistrationLimiter creates a non-IP based registration rate limiter
+func NewSmartRegistrationLimiter(globalLimit, deviceLimit int, window time.Duration) *SmartRegistrationLimiter {
+	srl := &SmartRegistrationLimiter{
+		fingerprints: make(map[string][]time.Time),
+		globalLimit:  globalLimit,
+		deviceLimit:  deviceLimit,
+		window:       window,
+	}
+
+	// Periodic cleanup of stale entries
+	go func() {
+		ticker := time.NewTicker(2 * window)
+		defer ticker.Stop()
+		for range ticker.C {
+			srl.mu.Lock()
+			cutoff := time.Now().Add(-srl.window)
+			for id, times := range srl.fingerprints {
+				var valid []time.Time
+				for _, t := range times {
+					if t.After(cutoff) {
+						valid = append(valid, t)
+					}
+				}
+				if len(valid) == 0 {
+					delete(srl.fingerprints, id)
+				} else {
+					srl.fingerprints[id] = valid
+				}
+			}
+			var validGlobal []time.Time
+			for _, t := range srl.globalVisits {
+				if t.After(cutoff) {
+					validGlobal = append(validGlobal, t)
+				}
+			}
+			srl.globalVisits = validGlobal
+			srl.mu.Unlock()
+		}
+	}()
+
+	return srl
+}
+
+// CheckRegistration verifies whether the current registration request is allowed under non-IP rate limits
+func (srl *SmartRegistrationLimiter) CheckRegistration(r *http.Request) error {
+	srl.mu.Lock()
+	defer srl.mu.Unlock()
+
+	now := time.Now()
+	cutoff := now.Add(-srl.window)
+
+	// 1. Global server sliding window (prevents automated server-wide flooding)
+	var validGlobal []time.Time
+	for _, t := range srl.globalVisits {
+		if t.After(cutoff) {
+			validGlobal = append(validGlobal, t)
+		}
+	}
+	srl.globalVisits = validGlobal
+
+	if len(srl.globalVisits) >= srl.globalLimit {
+		return fmt.Errorf("server sedang melayani lonjakan pendaftaran, silakan coba kembali dalam beberapa saat")
+	}
+
+	// 2. Client Device Fingerprint (Derived from User-Agent + Accept-Language + Sec-CH-UA + Username)
+	// Tidak mengunci alamat IP sehingga puluhan pengguna dari WiFi kampus yang sama tetap bisa mendaftar
+	ua := r.Header.Get("User-Agent")
+	lang := r.Header.Get("Accept-Language")
+	username := strings.ToLower(strings.TrimSpace(r.FormValue("username")))
+	fingerprint := fmt.Sprintf("%x", sha256Sum(ua+"|"+lang+"|"+username))
+
+	times := srl.fingerprints[fingerprint]
+	var validDevice []time.Time
+	for _, t := range times {
+		if t.After(cutoff) {
+			validDevice = append(validDevice, t)
+		}
+	}
+
+	if len(validDevice) >= srl.deviceLimit {
+		return fmt.Errorf("terlalu banyak percobaan pendaftaran untuk akun ini, silakan tunggu beberapa saat")
+	}
+
+	// Record attempt
+	srl.globalVisits = append(srl.globalVisits, now)
+	srl.fingerprints[fingerprint] = append(validDevice, now)
+	return nil
+}
+
+func sha256Sum(data string) [32]byte {
+	return sha256.Sum256([]byte(data))
+}
+

@@ -1,0 +1,51 @@
+# ==============================================================================
+# SiPenDosa Server Workspace Edition — Docker Compose Setup
+# Ultra-Low Resource Usage (RAM capped at 256MB, runs smoothly on 512MB/1GB VPS)
+# ==============================================================================
+
+services:
+  sipendosa:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    container_name: sipendosa-server
+    restart: unless-stopped
+    ports:
+      - "8473:8473"
+    environment:
+      - PORT=8473
+      - HOST=0.0.0.0
+      - APP_ENV=production
+      - SIPEN_UI=web
+      - SIPEN_SERVER_MODE=true
+      - COOKIE_SECURE=false # Ubah ke true jika menggunakan HTTPS / Cloudflare Tunnel
+      - DEFAULT_TIMEZONE=Asia/Makassar # Ganti ke Asia/Jakarta atau Asia/Jayapura jika perlu
+      - SEND_WINDOW_START=08:00
+      - SEND_WINDOW_END=16:00
+      - RATE_LIMIT_MIN_SEC=5
+      - RATE_LIMIT_MAX_SEC=15
+      - PRUNE_RETENTION_DAYS=30 # Otomatis bersihkan log & pesan usang di atas 30 hari
+      - GLOBAL_DRY_RUN=false
+    volumes:
+      - sipen_data:/app/data
+      - sipen_session:/app/session
+    deploy:
+      resources:
+        limits:
+          cpus: '0.75'
+          memory: 256M
+        reservations:
+          cpus: '0.10'
+          memory: 48M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8473/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  sipen_data:
+    driver: local
+  sipen_session:
+    driver: local

@@ -23,6 +23,7 @@
 - [Makna & Filosofi Nama](#-makna--filosofi-nama)
 - [Arsitektur Sistem](#-arsitektur-sistem)
 - [📐 Dokumentasi Desain Sistem, Flow State & DFD Lengkap](docs/SYSTEM_DESIGN_AND_FLOWS.md)
+- [🚀 Panduan Server Workspace Edition (Multi-Tenant, Low-Resource, & Docker)](docs/SERVER_WORKSPACE_GUIDE.md)
 - [🍎 Panduan Paket macOS (macOS 12+ Universal Edition)](docs/MACOS_PACKAGE_GUIDE.md)
 - [📱 Arsitektur Eksekusi Latar Belakang & Realtime Mobile (Android & iOS)](docs/MOBILE_BACKGROUND_ARCHITECTURE.md)
 - [🤝 Panduan Kontribusi Open Source (Contributing Guidelines)](CONTRIBUTING.md)
@@ -170,6 +171,13 @@ Semua paket rilis telah dikompilasi secara mandiri (*self-contained*), ditandata
 8. **Pengalaman Mobile Native & Graphify Knowledge Graph**:
    - Antarmuka Android 100% native: Splash loader, status bar adaptif, floating LAN action pill, dialog native, dan 5-tab bottom navigation bar ergonomis.
    - Terintegrasi dengan **Graphify Knowledge Graph** (`.agents/skills/graphify` & `graphify CLI`) untuk analisis struktur kode berbasis graph intelligence.
+9. **Server Workspace Edition & Multi-Tenant Kolaboratif**:
+   - Multi-tenant workspace untuk kelas atau organisasi, dengan pemilihan gateway fleksibel: nomor pribadi masing-masing sipen atau 1 bot WhatsApp bersama.
+   - **Ultra-Low Memory Footprint (< 35MB RAM)**: WhatsApp socket hibernation otomatis setelah 15 menit tanpa aktivitas, SQLite WAL mode, dan auto-pruner log lawas.
+   - **Smart Non-IP Rate Limiting**: Bebas mendaftar dari jaringan WiFi kampus/asrama tanpa risiko blokir IP NAT bersama melalui device fingerprinting.
+10. **Pesan WhatsApp Interaktif (NativeFlow Buttons) & Chatbot Otomatis**:
+    - Pengiriman pesan pengingat resmi dengan tombol interaktif (`[Hadir Offline]`, `[Hadir Online]`, `[Minta Jadwal Ulang]`) dan fallback teks terstruktur.
+    - Chatbot asisten yang langsung merespons santun saat dosen menekan tombol atau membalas angka 1/2/3, serta memperbarui live dashboard secara realtime.
 
 ---
 

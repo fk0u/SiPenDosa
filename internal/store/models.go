@@ -7,15 +7,48 @@ import (
 
 // User represents a system user / administrator
 type User struct {
-	ID                  int64     `json:"id"`
-	Username            string    `json:"username"`
-	PasswordHash        string    `json:"-"`
-	Role                string    `json:"role"` // 'superadmin', 'admin', 'user'
-	TwoFactorSecret     string    `json:"-"`
-	TwoFactorEnabled    bool      `json:"two_factor_enabled"`
-	TwoFactorBackupCodes string   `json:"-"`
-	CreatedAt           time.Time `json:"created_at"`
-	UpdatedAt           time.Time `json:"updated_at"`
+	ID                  int64         `json:"id"`
+	Username            string        `json:"username"`
+	PasswordHash        string        `json:"-"`
+	Role                string        `json:"role"` // 'superadmin', 'admin', 'user', 'kelas'
+	ActiveWorkspaceID   sql.NullInt64 `json:"active_workspace_id"`
+	TwoFactorSecret     string        `json:"-"`
+	TwoFactorEnabled    bool          `json:"two_factor_enabled"`
+	TwoFactorBackupCodes string       `json:"-"`
+	CreatedAt           time.Time     `json:"created_at"`
+	UpdatedAt           time.Time     `json:"updated_at"`
+}
+
+// Workspace represents a collaboration tenant (class, department, faculty, organization)
+type Workspace struct {
+	ID             int64         `json:"id"`
+	Name           string        `json:"name"`
+	Slug           string        `json:"slug"`
+	Description    string        `json:"description"`
+	OwnerID        int64         `json:"owner_id"`
+	GatewayMode    string        `json:"gateway_mode"` // "personal" (individual WA) or "workspace_shared" (shared bot)
+	SharedWAUserID sql.NullInt64 `json:"shared_wa_user_id"` // User ID whose WA connection is shared
+	SharedPhone    string        `json:"shared_phone,omitempty"`
+	CreatedAt      time.Time     `json:"created_at"`
+	UpdatedAt      time.Time     `json:"updated_at"`
+}
+
+// WorkspaceMember represents membership in a workspace
+type WorkspaceMember struct {
+	ID          int64     `json:"id"`
+	WorkspaceID int64     `json:"workspace_id"`
+	UserID      int64     `json:"user_id"`
+	Role        string    `json:"role"` // "owner", "admin", "member", "viewer"
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+// WorkspaceDetail provides workspace info along with owner username and member count
+type WorkspaceDetail struct {
+	Workspace
+	OwnerUsername string `json:"owner_username"`
+	MemberCount   int    `json:"member_count"`
+	Role          string `json:"role,omitempty"`
+	UserRole      string `json:"user_role,omitempty"`
 }
 
 // TwoFactorChallenge represents a short-lived challenge during 2FA login
@@ -49,27 +82,29 @@ type Settings struct {
 
 // Contact represents lecturers, class leaders, students, or WA groups
 type Contact struct {
-	ID          int64     `json:"id"`
-	UserID      int64     `json:"user_id"`
-	Name        string    `json:"name"`
-	Phone       string    `json:"phone"`        // e.g. "628123456789" or "1203630...@g.us"
-	ContactType string    `json:"contact_type"` // 'dosen', 'komti', 'mahasiswa', 'group'
-	NIM         string    `json:"nim"`
-	Email       string    `json:"email"`
-	Notes       string    `json:"notes"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID          int64         `json:"id"`
+	UserID      int64         `json:"user_id"`
+	WorkspaceID sql.NullInt64 `json:"workspace_id"`
+	Name        string        `json:"name"`
+	Phone       string        `json:"phone"`        // e.g. "628123456789" or "1203630...@g.us"
+	ContactType string        `json:"contact_type"` // 'dosen', 'komti', 'mahasiswa', 'group'
+	NIM         string        `json:"nim"`
+	Email       string        `json:"email"`
+	Notes       string        `json:"notes"`
+	CreatedAt   time.Time     `json:"created_at"`
+	UpdatedAt   time.Time     `json:"updated_at"`
 }
 
 // Template represents a reusable message template
 type Template struct {
-	ID        int64         `json:"id"`
-	UserID    sql.NullInt64 `json:"user_id"`
-	Name      string        `json:"name"`
-	Content   string        `json:"content"`
-	IsDefault bool          `json:"is_default"`
-	CreatedAt time.Time     `json:"created_at"`
-	UpdatedAt time.Time     `json:"updated_at"`
+	ID          int64         `json:"id"`
+	UserID      sql.NullInt64 `json:"user_id"`
+	WorkspaceID sql.NullInt64 `json:"workspace_id"`
+	Name        string        `json:"name"`
+	Content     string        `json:"content"`
+	IsDefault   bool          `json:"is_default"`
+	CreatedAt   time.Time     `json:"created_at"`
+	UpdatedAt   time.Time     `json:"updated_at"`
 }
 
 // TemplateVersion stores edit history of message templates
@@ -85,6 +120,7 @@ type TemplateVersion struct {
 type Schedule struct {
 	ID          int64          `json:"id"`
 	UserID      int64          `json:"user_id"`
+	WorkspaceID sql.NullInt64  `json:"workspace_id"`
 	Title       string         `json:"title"`
 	Matkul      string         `json:"matkul"`
 	DosenID     sql.NullInt64  `json:"dosen_id"`
@@ -125,20 +161,23 @@ type Holiday struct {
 
 // QueueMessage represents a queued WhatsApp message
 type QueueMessage struct {
-	ID            int64         `json:"id"`
-	UserID        int64         `json:"user_id"`
-	ScheduleID    sql.NullInt64 `json:"schedule_id"`
-	RecipientJID  string        `json:"recipient_jid"`
-	RecipientName string        `json:"recipient_name"`
-	Message       string        `json:"message"`
-	Status        string        `json:"status"` // 'pending', 'processing', 'sent', 'failed', 'cancelled', 'dry_run'
-	RetryCount    int           `json:"retry_count"`
-	MaxRetries    int           `json:"max_retries"`
-	ErrorMessage  string        `json:"error_message"`
-	ScheduledFor  time.Time     `json:"scheduled_for"`
-	SentAt        *time.Time    `json:"sent_at"`
-	CreatedAt     time.Time     `json:"created_at"`
-	UpdatedAt     time.Time     `json:"updated_at"`
+	ID              int64         `json:"id"`
+	UserID          int64         `json:"user_id"`
+	WorkspaceID     sql.NullInt64 `json:"workspace_id"`
+	ScheduleID      sql.NullInt64 `json:"schedule_id"`
+	RecipientJID    string        `json:"recipient_jid"`
+	RecipientName   string        `json:"recipient_name"`
+	Message         string        `json:"message"`
+	InteractiveType string        `json:"interactive_type"` // 'text', 'buttons', 'list'
+	ButtonChoice    string        `json:"button_choice"`    // response choice: '1', '2', '3', 'hadir', etc.
+	Status          string        `json:"status"`           // 'pending', 'processing', 'sent', 'failed', 'cancelled', 'dry_run'
+	RetryCount      int           `json:"retry_count"`
+	MaxRetries      int           `json:"max_retries"`
+	ErrorMessage    string        `json:"error_message"`
+	ScheduledFor    time.Time     `json:"scheduled_for"`
+	SentAt          *time.Time    `json:"sent_at"`
+	CreatedAt       time.Time     `json:"created_at"`
+	UpdatedAt       time.Time     `json:"updated_at"`
 }
 
 // ActivityLog records operations and security events

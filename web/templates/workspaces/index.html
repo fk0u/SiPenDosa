@@ -1,0 +1,351 @@
+{{define "content"}}
+<style>
+    .workspace-grid { display:grid; gap:24px; align-items:start; grid-template-columns:minmax(0,7fr) minmax(0,5fr); }
+    @media (max-width: 980px) { .workspace-grid { grid-template-columns:1fr; } }
+    .ws-card-active {
+        border-color: var(--md-sys-color-primary) !important;
+        box-shadow: 0 0 0 1px var(--md-sys-color-primary), var(--md-elev-2);
+        background: var(--md-sys-color-surface-container-low);
+    }
+</style>
+
+<div class="md-col md-enter" style="gap:24px;">
+
+    <!-- Header Section -->
+    <div class="md-page-head md-row-between md-wrap">
+        <div>
+            <span class="md-badge md-badge-secondary" style="margin-bottom:10px;">
+                <svg style="width:12px;height:12px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                Server Workspace Edition &bull; Multi-Tenant
+            </span>
+            <h1 class="md-page-title md-balance">Ruang Kerja (Workspaces)</h1>
+            <p class="md-page-sub md-balance" style="max-width:68ch;">
+                Kelola ruang kerja bersama untuk kelas, program studi, atau organisasi Anda. Dukung pemakaian nomor WhatsApp pribadi per-sipen atau satu bot WhatsApp bersama dengan konsumsi resource server ultra-ringan.
+            </p>
+        </div>
+        <div class="md-row md-gap-sm">
+            <button type="button" class="md-btn md-btn-primary" onclick="document.getElementById('modal-create-workspace').showModal()">
+                <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                Buat Ruang Kerja Baru
+            </button>
+        </div>
+    </div>
+
+    <div class="workspace-grid">
+
+        <!-- Left Column: Active Workspace & List -->
+        <div class="md-col" style="gap:24px;">
+
+            <!-- Active Workspace Spotlight Card -->
+            {{if .Data.ActiveWorkspace}}
+            <section class="md-card-outlined md-col ws-card-active" style="gap:16px;">
+                <div class="md-row-between md-wrap" style="gap:12px;">
+                    <div class="md-row md-gap-sm" style="gap:12px;">
+                        <div class="md-center" style="width:44px;height:44px;border-radius:12px;background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);">
+                            <svg style="width:22px;height:22px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        </div>
+                        <div>
+                            <div class="md-row md-gap-sm" style="align-items:center;">
+                                <h2 class="md-title-medium" style="margin:0;">{{.Data.ActiveWorkspace.Name}}</h2>
+                                <span class="md-badge md-badge-success">Ruang Kerja Aktif</span>
+                            </div>
+                            <div class="md-label-small md-mono md-muted" style="margin-top:2px;">/{{.Data.ActiveWorkspace.Slug}}</div>
+                        </div>
+                    </div>
+                    <div class="md-row md-gap-sm">
+                        <span class="md-badge {{if eq .Data.ActiveWorkspace.GatewayMode "shared"}}md-badge-secondary{{else}}md-badge-neutral{{end}}">
+                            {{if eq .Data.ActiveWorkspace.GatewayMode "shared"}}Mode: Bot Bersama{{else}}Mode: Nomor Pribadi Sipen{{end}}
+                        </span>
+                    </div>
+                </div>
+
+                <p class="md-body-medium" style="color:var(--md-sys-color-on-surface-variant);margin:0;">
+                    {{if .Data.ActiveWorkspace.Description}}{{.Data.ActiveWorkspace.Description}}{{else}}Tidak ada deskripsi workspace.{{end}}
+                </p>
+
+                <hr class="md-divider" style="margin:4px 0;">
+
+                <!-- Gateway Mode Configuration Form -->
+                <form action="/workspaces/{{.Data.ActiveWorkspace.ID}}/update" method="POST" class="md-col" style="gap:14px;">
+                    <input type="hidden" name="name" value="{{.Data.ActiveWorkspace.Name}}">
+                    <input type="hidden" name="description" value="{{.Data.ActiveWorkspace.Description}}">
+
+                    <div class="md-title-small" style="display:flex;align-items:center;gap:6px;">
+                        <svg style="width:16px;height:16px;color:var(--md-sys-color-primary);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        Konfigurasi Gateway WhatsApp Workspace
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <label style="border:1px solid var(--md-sys-color-outline-variant);border-radius:12px;padding:12px;cursor:pointer;background:var(--md-sys-color-surface);" class="md-col">
+                            <div class="md-row" style="gap:8px;align-items:center;">
+                                <input type="radio" name="gateway_mode" value="personal" {{if ne .Data.ActiveWorkspace.GatewayMode "shared"}}checked{{end}}>
+                                <strong>Nomor Pribadi (Personal)</strong>
+                            </div>
+                            <span class="md-body-small md-muted" style="margin-top:6px;">
+                                Setiap pengguna (sipen) menautkan nomor WhatsApp pribadinya sendiri untuk mengirim pesan pengingat ke dosen kelasnya.
+                            </span>
+                        </label>
+
+                        <label style="border:1px solid var(--md-sys-color-outline-variant);border-radius:12px;padding:12px;cursor:pointer;background:var(--md-sys-color-surface);" class="md-col">
+                            <div class="md-row" style="gap:8px;align-items:center;">
+                                <input type="radio" name="gateway_mode" value="shared" {{if eq .Data.ActiveWorkspace.GatewayMode "shared"}}checked{{end}}>
+                                <strong>Bot Bersama (Shared Gateway)</strong>
+                            </div>
+                            <span class="md-body-small md-muted" style="margin-top:6px;">
+                                Seluruh anggota workspace memakai 1 nomor WhatsApp bot resmi bersama milik workspace. Anggota tidak perlu scan QR pribadi.
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="md-row-between md-wrap" style="gap:12px;align-items:center;margin-top:4px;">
+                        <div class="md-row md-gap-sm" style="flex:1;min-width:240px;">
+                            <label class="md-label-medium md-muted" style="white-space:nowrap;">Nomor WA Bot Bersama:</label>
+                            <input type="text" name="shared_phone" value="{{if .Data.ActiveWorkspace}}{{.Data.ActiveWorkspace.SharedPhone}}{{end}}" placeholder="6281234567890 (jika mode shared)" class="md-input md-input-sm" style="flex:1;">
+                        </div>
+                        <button type="submit" class="md-btn md-btn-sm md-btn-tonal">
+                            Simpan Konfigurasi
+                        </button>
+                    </div>
+                </form>
+
+                <div class="md-row-between md-wrap" style="gap:8px;padding-top:8px;">
+                    <button type="button" class="md-btn md-btn-sm md-btn-outlined" onclick="openAddMemberModal({{.Data.ActiveWorkspace.ID}}, '{{.Data.ActiveWorkspace.Name}}')">
+                        <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                        Tambah Anggota ke Workspace
+                    </button>
+                </div>
+            </section>
+            {{end}}
+
+            <!-- Workspaces List -->
+            <section class="md-card-outlined md-col" style="gap:16px;">
+                <div class="md-row-between md-wrap">
+                    <div>
+                        <h2 class="md-section-title md-row md-gap-sm">
+                            <svg style="width:18px;height:18px;color:var(--md-sys-color-primary);" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                            Daftar Ruang Kerja Anda
+                        </h2>
+                        <p class="md-section-sub">Ruang kerja yang dapat Anda akses atau kelola di server ini.</p>
+                    </div>
+                </div>
+
+                <div class="md-col" style="gap:12px;">
+                    {{range .Data.Workspaces}}
+                    <div class="md-card-flat md-row-between md-wrap" style="gap:12px;padding:16px;border-radius:12px;border:1px solid var(--md-sys-color-outline-variant);background:var(--md-sys-color-surface);">
+                        <div class="md-row md-gap-sm" style="gap:12px;align-items:flex-start;">
+                            <div class="md-center" style="width:36px;height:36px;border-radius:10px;background:var(--md-sys-color-surface-container);color:var(--md-sys-color-primary);flex-shrink:0;">
+                                <svg style="width:18px;height:18px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                            </div>
+                            <div>
+                                <div class="md-row md-gap-sm" style="align-items:center;">
+                                    <strong>{{.Name}}</strong>
+                                    {{if and $.Data.ActiveWorkspace (eq $.Data.ActiveWorkspace.ID .ID)}}
+                                    <span class="md-badge md-badge-success" style="font-size:10px;">Aktif</span>
+                                    {{end}}
+                                    <span class="md-badge md-badge-neutral" style="font-size:10px;text-transform:capitalize;">{{if .UserRole}}{{.UserRole}}{{else if .Role}}{{.Role}}{{else}}member{{end}}</span>
+                                </div>
+                                <div class="md-body-small md-muted" style="margin-top:2px;">
+                                    {{if .Description}}{{.Description}}{{else}}Ruang kerja kolaboratif SiPenDosa.{{end}}
+                                </div>
+                                <div class="md-row md-gap-sm" style="gap:8px;margin-top:6px;font-size:12px;color:var(--md-sys-color-on-surface-variant);">
+                                    <span>&bull; {{.MemberCount}} Anggota</span>
+                                    <span>&bull; Mode: {{if eq .GatewayMode "shared"}}Bot Bersama{{else}}Nomor Pribadi{{end}}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="md-row md-gap-sm" style="align-items:center;">
+                            {{if and $.Data.ActiveWorkspace (eq $.Data.ActiveWorkspace.ID .ID)}}
+                            <button type="button" class="md-btn md-btn-sm md-btn-text" disabled style="opacity:0.6;">Sedang Aktif</button>
+                            {{else}}
+                            <form action="/workspaces/switch/{{.ID}}" method="POST" style="margin:0;">
+                                <button type="submit" class="md-btn md-btn-sm md-btn-tonal">
+                                    Beralih ke Sini
+                                </button>
+                            </form>
+                            {{end}}
+                        </div>
+                    </div>
+                    {{else}}
+                    <div class="md-center md-stack" style="padding:40px;color:var(--md-sys-color-on-surface-variant);text-align:center;">
+                        <svg style="width:48px;height:48px;opacity:0.4;margin-bottom:8px;" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                        <p class="md-body-medium">Belum ada ruang kerja yang terdaftar.</p>
+                    </div>
+                    {{end}}
+                </div>
+            </section>
+        </div>
+
+        <!-- Right Column: Architecture & Interactive Bot Features -->
+        <div class="md-col" style="gap:24px;">
+
+            <!-- WhatsApp Interactive Buttons & Chatbot Card -->
+            <section class="md-card-outlined md-col" style="gap:16px;background:var(--md-sys-color-surface-container-lowest);">
+                <div class="md-card-header" style="margin-bottom:0;">
+                    <div class="md-card-header-icon" style="background:#25D366;color:#ffffff;">
+                        <svg style="width:20px;height:20px;" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.316 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.818-.981z"/></svg>
+                    </div>
+                    <div>
+                        <h2 class="md-section-title">Pesan Interaktif &amp; Bot Otomatis</h2>
+                        <p class="md-section-sub">Format WhatsApp API Resmi &amp; Auto-Reply Cerdas</p>
+                    </div>
+                </div>
+
+                <div class="md-col" style="gap:12px;font-size:13px;line-height:1.5;">
+                    <div class="md-row md-gap-sm" style="align-items:flex-start;">
+                        <span class="md-badge md-badge-success" style="margin-top:2px;">1</span>
+                        <div>
+                            <strong>Tombol Interaktif (NativeFlow Buttons):</strong>
+                            <p class="md-body-small md-muted" style="margin:2px 0 0 0;">
+                                Pesan yang dikirimkan ke dosen dilengkapi dengan tombol pilihan cepat:
+                                <code class="md-code">[Hadir Offline]</code>, <code class="md-code">[Hadir Online]</code>, dan <code class="md-code">[Minta Jadwal Ulang]</code>.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="md-row md-gap-sm" style="align-items:flex-start;">
+                        <span class="md-badge md-badge-primary" style="margin-top:2px;">2</span>
+                        <div>
+                            <strong>Chatbot Asisten Dosen Otomatis:</strong>
+                            <p class="md-body-small md-muted" style="margin:2px 0 0 0;">
+                                Ketika dosen menekan tombol atau membalas angka <code>1</code>, <code>2</code>, atau <code>3</code>, bot SiPenDosa langsung membalas santun secara otomatis dan memperbarui status kehadiran di antrian pesan.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="md-row md-gap-sm" style="align-items:flex-start;">
+                        <span class="md-badge md-badge-secondary" style="margin-top:2px;">3</span>
+                        <div>
+                            <strong>Fallback Teks Terstruktur:</strong>
+                            <p class="md-body-small md-muted" style="margin:2px 0 0 0;">
+                                Pada perangkat WhatsApp versi lama yang belum mendukung rendering NativeFlow Buttons, sistem secara otomatis mengalirkan menu interaktif berbasis teks dengan opsi balasan angka.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Server Efficiency & Anti-NAT Rate Limiting Card -->
+            <section class="md-card-outlined md-col" style="gap:14px;">
+                <div class="md-card-header" style="margin-bottom:0;">
+                    <div class="md-card-header-icon" style="background:var(--md-sys-color-tertiary-container);color:var(--md-sys-color-on-tertiary-container);">
+                        <svg style="width:20px;height:20px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    </div>
+                    <div>
+                        <h2 class="md-section-title">Efisiensi Server &amp; Proteksi Smart</h2>
+                        <p class="md-section-sub">Didesain untuk VPS Kecil (RAM 256MB - 512MB)</p>
+                    </div>
+                </div>
+
+                <div class="md-col" style="gap:10px;font-size:13px;">
+                    <div style="padding:10px 12px;border-radius:8px;background:var(--md-sys-color-surface-container);border-left:3px solid var(--md-sys-color-primary);">
+                        <strong>Hemat RAM (Client Hibernation):</strong>
+                        <p class="md-body-small md-muted" style="margin:2px 0 0 0;">
+                            Socket WhatsApp masuk mode tidur (hibernasi) otomatis setelah 15 menit tanpa aktivitas pengiriman, menjaga pemakaian RAM server tetap di bawah 35MB.
+                        </p>
+                    </div>
+
+                    <div style="padding:10px 12px;border-radius:8px;background:var(--md-sys-color-surface-container);border-left:3px solid var(--md-sys-color-secondary);">
+                        <strong>Smart Rate Limiting (Non-IP):</strong>
+                        <p class="md-body-small md-muted" style="margin:2px 0 0 0;">
+                            Pendaftaran publik terbuka dilindungi oleh device fingerprint &amp; entropy timing, bukan pemblokiran IP. Seluruh mahasiswa dalam WiFi/NAT kampus yang sama tetap bisa mendaftar tanpa terkena 429 Too Many Requests.
+                        </p>
+                    </div>
+
+                    <div style="padding:10px 12px;border-radius:8px;background:var(--md-sys-color-surface-container);border-left:3px solid var(--md-sys-color-tertiary);">
+                        <strong>SQLite WAL Mode &amp; Auto-Prune:</strong>
+                        <p class="md-body-small md-muted" style="margin:2px 0 0 0;">
+                            Database SQLite dikonfigurasi dengan Write-Ahead Logging (WAL) dan sinkronisasi normal untuk konkurensi tinggi tanpa lock timeout, dilengkapi pembersihan log lawas otomatis.
+                        </p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Buat Workspace Baru -->
+<dialog id="modal-create-workspace" class="md-dialog">
+    <div class="md-dialog-header md-row-between">
+        <div>
+            <span class="md-badge md-badge-primary">Workspace Baru</span>
+            <h3 class="md-title-large" style="margin-top:8px;">Buat Ruang Kerja</h3>
+            <p class="md-body-small md-muted">Buat ruang kerja untuk memisahkan kontak, jadwal, dan nomor WhatsApp.</p>
+        </div>
+        <form method="dialog"><button class="md-icon-btn" aria-label="Tutup">✕</button></form>
+    </div>
+    <form action="/workspaces/create" method="POST">
+        <div class="md-dialog-body md-col" style="gap:16px;">
+            <div class="md-col" style="gap:6px;">
+                <label class="md-label-medium">Nama Ruang Kerja *</label>
+                <input type="text" name="name" required placeholder="Contoh: TI Angkatan 2024 atau Prodi Sistem Informasi" class="md-input">
+            </div>
+
+            <div class="md-col" style="gap:6px;">
+                <label class="md-label-medium">Slug URL (Opsional)</label>
+                <input type="text" name="slug" placeholder="ti-2024 (kosongkan untuk otomatis)" class="md-input">
+            </div>
+
+            <div class="md-col" style="gap:6px;">
+                <label class="md-label-medium">Deskripsi Ruang Kerja</label>
+                <textarea name="description" rows="2" placeholder="Keterangan singkat mengenai lingkup kelas atau organisasi ini" class="md-input"></textarea>
+            </div>
+
+            <div class="md-col" style="gap:8px;">
+                <label class="md-label-medium">Mode Gateway WhatsApp</label>
+                <select name="gateway_mode" class="md-input">
+                    <option value="personal" selected>Nomor Pribadi (Personal Sipen) — Setiap anggota menautkan nomor sendiri</option>
+                    <option value="shared">Bot Bersama (Shared Gateway) — Menggunakan 1 bot WA resmi milik workspace</option>
+                </select>
+            </div>
+        </div>
+        <div class="md-dialog-actions">
+            <button type="button" class="md-btn-text" onclick="document.getElementById('modal-create-workspace').close()">Batal</button>
+            <button type="submit" class="md-btn md-btn-primary">Buat Ruang Kerja</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- Modal: Tambah Anggota ke Workspace -->
+<dialog id="modal-add-member" class="md-dialog">
+    <div class="md-dialog-header md-row-between">
+        <div>
+            <span class="md-badge md-badge-secondary">Manajemen Tim</span>
+            <h3 class="md-title-large" style="margin-top:8px;">Undang Anggota</h3>
+            <p class="md-body-small md-muted" id="modal-add-member-subtitle">Tambahkan pengguna yang sudah terdaftar ke workspace ini.</p>
+        </div>
+        <form method="dialog"><button class="md-icon-btn" aria-label="Tutup">✕</button></form>
+    </div>
+    <form id="form-add-member" action="/workspaces/0/members/add" method="POST">
+        <div class="md-dialog-body md-col" style="gap:16px;">
+            <div class="md-col" style="gap:6px;">
+                <label class="md-label-medium">Username Anggota *</label>
+                <input type="text" name="username" required placeholder="Ketik username anggota yang terdaftar" class="md-input">
+            </div>
+
+            <div class="md-col" style="gap:6px;">
+                <label class="md-label-medium">Peran (Role) dalam Workspace</label>
+                <select name="role" class="md-input">
+                    <option value="member" selected>Member (Dapat mengelola kontak &amp; jadwal workspace)</option>
+                    <option value="admin">Admin (Dapat mengelola workspace &amp; anggota)</option>
+                </select>
+            </div>
+        </div>
+        <div class="md-dialog-actions">
+            <button type="button" class="md-btn-text" onclick="document.getElementById('modal-add-member').close()">Batal</button>
+            <button type="submit" class="md-btn md-btn-primary">Tambahkan Anggota</button>
+        </div>
+    </form>
+</dialog>
+
+<script>
+    function openAddMemberModal(wsId, wsName) {
+        const modal = document.getElementById('modal-add-member');
+        const form = document.getElementById('form-add-member');
+        const subtitle = document.getElementById('modal-add-member-subtitle');
+        if (form) form.action = '/workspaces/' + wsId + '/members/add';
+        if (subtitle) subtitle.textContent = 'Menambahkan anggota ke ' + wsName;
+        if (modal) modal.showModal();
+    }
+</script>
+{{end}}

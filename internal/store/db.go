@@ -22,7 +22,8 @@ func New(dbPath string) (*Store, error) {
 		return nil, fmt.Errorf("failed to create database directory: %w", err)
 	}
 
-	dsn := fmt.Sprintf("file:%s?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(1)", dbPath)
+	// Server-tuned SQLite DSN: WAL mode, synchronous NORMAL, 4MB cache limit, memory temp store
+	dsn := fmt.Sprintf("file:%s?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=cache_size(-4000)&_pragma=temp_store(MEMORY)&_pragma=foreign_keys(1)", dbPath)
 	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open sqlite database: %w", err)
@@ -59,11 +60,34 @@ func (s *Store) migrate() error {
 			username TEXT UNIQUE NOT NULL,
 			password_hash TEXT NOT NULL,
 			role TEXT NOT NULL DEFAULT 'admin',
+			active_workspace_id INTEGER DEFAULT NULL,
 			two_factor_secret TEXT DEFAULT '',
 			two_factor_enabled INTEGER NOT NULL DEFAULT 0,
 			two_factor_backup_codes TEXT DEFAULT '',
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+		);`,
+
+		`CREATE TABLE IF NOT EXISTS workspaces (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT NOT NULL,
+			slug TEXT UNIQUE NOT NULL,
+			description TEXT DEFAULT '',
+			owner_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			gateway_mode TEXT NOT NULL DEFAULT 'personal',
+			shared_wa_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+			shared_phone TEXT DEFAULT '',
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+		);`,
+
+		`CREATE TABLE IF NOT EXISTS workspace_members (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+			user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			role TEXT NOT NULL DEFAULT 'member',
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			UNIQUE(workspace_id, user_id)
 		);`,
 
 		`CREATE TABLE IF NOT EXISTS sessions (
@@ -193,14 +217,22 @@ func (s *Store) migrate() error {
 		column string
 		def    string
 	}{
+		{"users", "active_workspace_id", "INTEGER DEFAULT NULL"},
 		{"users", "two_factor_secret", "TEXT DEFAULT ''"},
 		{"users", "two_factor_enabled", "INTEGER NOT NULL DEFAULT 0"},
 		{"users", "two_factor_backup_codes", "TEXT DEFAULT ''"},
 		{"contacts", "user_id", "INTEGER NOT NULL DEFAULT 1"},
+		{"contacts", "workspace_id", "INTEGER DEFAULT NULL"},
 		{"templates", "user_id", "INTEGER DEFAULT NULL"},
+		{"templates", "workspace_id", "INTEGER DEFAULT NULL"},
 		{"schedules", "user_id", "INTEGER NOT NULL DEFAULT 1"},
+		{"schedules", "workspace_id", "INTEGER DEFAULT NULL"},
 		{"schedules", "is_public", "INTEGER NOT NULL DEFAULT 0"},
 		{"queue_messages", "user_id", "INTEGER NOT NULL DEFAULT 1"},
+		{"queue_messages", "workspace_id", "INTEGER DEFAULT NULL"},
+		{"queue_messages", "interactive_type", "TEXT DEFAULT 'text'"},
+		{"queue_messages", "button_choice", "TEXT DEFAULT ''"},
+		{"workspaces", "shared_phone", "TEXT DEFAULT ''"},
 		{"activity_logs", "user_id", "INTEGER DEFAULT NULL"},
 	}
 
@@ -221,6 +253,13 @@ func (s *Store) migrate() error {
 		`CREATE INDEX IF NOT EXISTS idx_contacts_user ON contacts(user_id);`,
 		`CREATE INDEX IF NOT EXISTS idx_schedules_user ON schedules(user_id);`,
 		`CREATE INDEX IF NOT EXISTS idx_queue_user ON queue_messages(user_id);`,
+		`CREATE INDEX IF NOT EXISTS idx_workspaces_owner ON workspaces(owner_id);`,
+		`CREATE INDEX IF NOT EXISTS idx_workspaces_slug ON workspaces(slug);`,
+		`CREATE INDEX IF NOT EXISTS idx_ws_members_user ON workspace_members(user_id);`,
+		`CREATE INDEX IF NOT EXISTS idx_ws_members_ws ON workspace_members(workspace_id);`,
+		`CREATE INDEX IF NOT EXISTS idx_contacts_ws ON contacts(workspace_id);`,
+		`CREATE INDEX IF NOT EXISTS idx_schedules_ws ON schedules(workspace_id);`,
+		`CREATE INDEX IF NOT EXISTS idx_queue_ws ON queue_messages(workspace_id);`,
 	}
 
 	for _, query := range indexQueries {
@@ -263,6 +302,28 @@ Hormat kami,
 			templateID, _ := res.LastInsertId()
 			_, _ = s.db.Exec(`INSERT INTO template_versions (template_id, content, version, created_at) VALUES (?, ?, 1, CURRENT_TIMESTAMP)`,
 				templateID, defaultContent)
+		}
+	}
+
+	// Seed default workspace if no workspaces exist
+	var wsCount int
+	if err := s.db.QueryRow("SELECT COUNT(*) FROM workspaces").Scan(&wsCount); err == nil && wsCount == 0 {
+		var ownerID int64 = 1
+		_ = s.db.QueryRow("SELECT id FROM users ORDER BY id ASC LIMIT 1").Scan(&ownerID)
+		if ownerID > 0 {
+			res, err := s.db.Exec(`INSERT INTO workspaces (name, slug, description, owner_id, gateway_mode, created_at, updated_at) 
+				VALUES (?, ?, ?, ?, 'personal', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+				"Workspace Utama", "utama", "Workspace default untuk seluruh jadwal dan kontak bersama SiPenDosa", ownerID)
+			if err == nil {
+				wsID, _ := res.LastInsertId()
+				_, _ = s.db.Exec(`INSERT OR IGNORE INTO workspace_members (workspace_id, user_id, role, created_at) VALUES (?, ?, 'owner', CURRENT_TIMESTAMP)`, wsID, ownerID)
+				// Backfill existing rows without workspace_id
+				_, _ = s.db.Exec(`UPDATE contacts SET workspace_id = ? WHERE workspace_id IS NULL`, wsID)
+				_, _ = s.db.Exec(`UPDATE schedules SET workspace_id = ? WHERE workspace_id IS NULL`, wsID)
+				_, _ = s.db.Exec(`UPDATE templates SET workspace_id = ? WHERE workspace_id IS NULL`, wsID)
+				_, _ = s.db.Exec(`UPDATE queue_messages SET workspace_id = ? WHERE workspace_id IS NULL`, wsID)
+				_, _ = s.db.Exec(`UPDATE users SET active_workspace_id = ? WHERE active_workspace_id IS NULL`, wsID)
+			}
 		}
 	}
 

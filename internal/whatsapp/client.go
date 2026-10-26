@@ -37,6 +37,7 @@ const (
 	StateConnecting   State = "connecting"
 	StateNeedQR       State = "need_qr"
 	StateConnected    State = "connected"
+	StateHibernated   State = "hibernated"
 	StateLoggedOut    State = "logged_out"
 )
 
@@ -54,6 +55,7 @@ type Client struct {
 	phoneJID    string
 	pushName    string
 	mu          sync.RWMutex
+	lastActive  time.Time
 	cancelFunc       context.CancelFunc
 	ctx              context.Context
 	stopChan         chan struct{}
@@ -88,6 +90,7 @@ func NewClient(dbPath string, hub *realtime.Hub, port string, userID int64) (*Cl
 		port:       port,
 		userID:     userID,
 		state:      StateDisconnected,
+		lastActive: time.Now(),
 		ctx:        ctx,
 		cancelFunc: cancel,
 		stopChan:   make(chan struct{}),
@@ -212,7 +215,88 @@ func (c *Client) handleEvent(evt interface{}) {
 		c.mu.Unlock()
 
 		c.hub.BroadcastToast("error", "Sesi WhatsApp telah dikeluarkan dari perangkat.")
+
+	case *events.Message:
+		c.handleIncomingMessage(evt.(*events.Message))
 	}
+}
+
+// Touch updates client activity timestamp
+func (c *Client) Touch() {
+	c.mu.Lock()
+	c.lastActive = time.Now()
+	c.mu.Unlock()
+}
+
+// IsIdle reports whether client has had no activity for duration d
+func (c *Client) IsIdle(d time.Duration) bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	if c.state == StateNeedQR || c.pairingCode != "" {
+		return false
+	}
+	if c.lastActive.IsZero() {
+		return false
+	}
+	return time.Since(c.lastActive) > d
+}
+
+// Hibernate puts the WhatsApp socket into standby without logging out
+func (c *Client) Hibernate() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.client != nil && c.client.IsConnected() {
+		slog.Info("Hibernating idle WhatsApp client", "user_id", c.userID)
+		c.client.Disconnect()
+		c.state = StateHibernated
+	}
+}
+
+// EnsureConnected checks connection and wakes up client if disconnected or hibernated
+func (c *Client) EnsureConnected(ctx context.Context) error {
+	c.mu.RLock()
+	client := c.client
+	state := c.state
+	c.mu.RUnlock()
+
+	if client == nil {
+		return errors.New("whatsapp client is nil")
+	}
+
+	if client.IsConnected() {
+		return nil
+	}
+
+	if client.Store == nil || client.Store.ID == nil {
+		if state == StateNeedQR {
+			return errors.New("whatsapp requires pairing QR code")
+		}
+		return errors.New("whatsapp device not logged in")
+	}
+
+	slog.Info("Waking up WhatsApp client connection", "user_id", c.userID)
+	if err := client.Connect(); err != nil {
+		return fmt.Errorf("failed reconnecting whatsapp client: %w", err)
+	}
+
+	// Wait briefly for connection to establish
+	for i := 0; i < 30; i++ {
+		if client.IsConnected() {
+			c.setState(StateConnected)
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(100 * time.Millisecond):
+		}
+	}
+
+	if client.IsConnected() {
+		c.setState(StateConnected)
+		return nil
+	}
+	return errors.New("timeout waiting for whatsapp to connect")
 }
 
 func (c *Client) keepAliveLoop() {
@@ -227,9 +311,11 @@ func (c *Client) keepAliveLoop() {
 			c.mu.RLock()
 			isConnected := c.client != nil && c.client.IsConnected()
 			hasSession := c.client != nil && c.client.Store.ID != nil
+			isHibernated := c.state == StateHibernated
 			c.mu.RUnlock()
 
-			if hasSession && !isConnected {
+			// Do not auto-reconnect if explicitly hibernated to keep usage low
+			if hasSession && !isConnected && !isHibernated {
 				slog.Info("Auto-reconnect: trying to reconnect to WhatsApp...", "backoff", backoff)
 				err := c.client.Connect()
 				if err != nil {

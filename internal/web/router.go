@@ -163,7 +163,7 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 	r.With(authRateLimiter.Middleware).Post("/login/2fa", h.Login2FAPostHandler)
 
 	r.Get("/register", h.RegisterHandler)
-	r.With(authRateLimiter.Middleware).Post("/register", h.RegisterPostHandler)
+	r.Post("/register", h.RegisterPostHandler)
 	r.Get("/logout", h.LogoutHandler)
 	r.Post("/logout", h.LogoutHandler)
 
@@ -191,6 +191,18 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 		// Overview
 		protected.Get("/", h.OverviewHandler)
 		protected.Get("/dashboard", h.OverviewHandler)
+
+		// Workspaces
+		protected.Route("/workspaces", func(wr chi.Router) {
+			wr.Get("/", h.WorkspacesPageHandler)
+			wr.Post("/create", h.CreateWorkspaceHandler)
+			wr.Get("/switch/{id}", h.SwitchWorkspaceHandler)
+			wr.Post("/switch/{id}", h.SwitchWorkspaceHandler)
+			wr.Post("/switch", h.SwitchWorkspaceHandler)
+			wr.Post("/{id}/update", h.UpdateWorkspaceHandler)
+			wr.Post("/{id}/delete", h.DeleteWorkspaceHandler)
+			wr.Post("/{id}/members/add", h.AddWorkspaceMemberHandler)
+		})
 
 		// Contacts
 		protected.Route("/contacts", func(cr chi.Router) {

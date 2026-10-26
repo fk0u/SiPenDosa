@@ -1,0 +1,61 @@
+# ==============================================================================
+# SiPenDosa Server Edition — Multi-Tenant Workspace & WhatsApp Bot
+# Multi-stage ultra-lightweight Dockerfile (< 35MB RAM footprint)
+# ==============================================================================
+
+# Stage 1: Build binary using pure Go (Zero-CGO)
+FROM golang:1.24-alpine AS builder
+
+RUN apk add --no-cache git ca-certificates tzdata
+
+WORKDIR /src
+
+# Cache dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source tree
+COPY . .
+
+# Compile optimized static binary
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -trimpath \
+    -ldflags="-s -w -extldflags '-static'" \
+    -o /bin/sipen ./cmd/sipen
+
+# Stage 2: Final minimal production runtime
+FROM alpine:3.21
+
+RUN apk add --no-cache ca-certificates tzdata curl && \
+    addgroup -S sipen && adduser -S sipen -G sipen
+
+WORKDIR /app
+
+# Copy binary & SSL certs from builder
+COPY --from=builder /bin/sipen /usr/local/bin/sipen
+
+# Create required persistent data directories
+RUN mkdir -p /app/data /app/session && \
+    chown -R sipen:sipen /app
+
+USER sipen
+
+# Default Environment for Server Workspace deployment
+ENV PORT=8473 \
+    HOST=0.0.0.0 \
+    APP_ENV=production \
+    SIPEN_UI=web \
+    SIPEN_SERVER_MODE=true \
+    DEFAULT_TIMEZONE=Asia/Makassar \
+    DB_PATH=/app/data/sipen.db \
+    WA_SESSION_PATH=/app/session/whatsapp.db \
+    COOKIE_SECURE=false
+
+EXPOSE 8473
+
+VOLUME ["/app/data", "/app/session"]
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://127.0.0.1:8473/healthz || exit 1
+
+ENTRYPOINT ["/usr/local/bin/sipen", "serve"]

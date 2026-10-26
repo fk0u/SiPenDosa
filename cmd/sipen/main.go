@@ -28,6 +28,7 @@ import (
 	"sipen/internal/template"
 	"sipen/internal/termui"
 	"sipen/internal/tunnel"
+	"sipen/internal/version"
 	"sipen/internal/web"
 	"sipen/internal/whatsapp"
 	webassets "sipen/web"
@@ -73,6 +74,9 @@ func main() {
 			return
 		case "help", "--help", "-h":
 			printCliHelp()
+			return
+		case "version", "--version", "-v":
+			fmt.Printf("SiPenDosa %s\n", version.FullVersion())
 			return
 		}
 	}

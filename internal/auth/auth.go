@@ -90,6 +90,13 @@ func (s *Service) RegisterUser(username, password, role string, allowOverride bo
 		return nil, ErrUserExists
 	}
 
+	// Auto-assign new user to default workspace if available
+	ws, err := s.store.GetWorkspaceByID(1)
+	if err == nil && ws != nil {
+		_ = s.store.AddWorkspaceMember(ws.ID, user.ID, "member")
+		_ = s.store.SetActiveWorkspace(user.ID, ws.ID)
+	}
+
 	s.store.AddActivityLog("auth", "Pendaftaran Pengguna Baru", "User: "+username+" Role: "+role)
 	return user, nil
 }
