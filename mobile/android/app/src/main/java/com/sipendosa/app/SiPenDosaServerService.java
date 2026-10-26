@@ -186,22 +186,49 @@ public class SiPenDosaServerService extends Service implements Runnable {
             File filesDir = getFilesDir();
             File binFile = null;
 
-            // 1. Prioritaskan eksekusi dari nativeLibraryDir (resmi diizinkan oleh SELinux Android 10-14+)
+            // 1. Cek apakah server sudah aktif di port 8473 (misal dari sesi sebelumnya)
+            try {
+                URL healthUrl = new URL("http://127.0.0.1:8473/healthz");
+                HttpURLConnection testConn = (HttpURLConnection) healthUrl.openConnection();
+                testConn.setConnectTimeout(600);
+                testConn.setReadTimeout(600);
+                if (testConn.getResponseCode() == 200) {
+                    Log.i(TAG, "Server SiPenDosa sudah aktif di port 8473, memantau daemon...");
+                    testConn.disconnect();
+                    while (isRunning) {
+                        Thread.sleep(4000);
+                        try {
+                            HttpURLConnection ping = (HttpURLConnection) new URL("http://127.0.0.1:8473/healthz").openConnection();
+                            ping.setConnectTimeout(1000);
+                            ping.setReadTimeout(1000);
+                            int res = ping.getResponseCode();
+                            ping.disconnect();
+                            if (res < 200 || res >= 500) break;
+                        } catch (Exception e) {
+                            break;
+                        }
+                    }
+                    if (!isRunning) return;
+                }
+            } catch (Exception ignored) {}
+
+            // 2. Prioritaskan eksekusi dari nativeLibraryDir (resmi diizinkan oleh SELinux Android)
             File nativeDir = new File(getApplicationInfo().nativeLibraryDir);
             File nativeBin = new File(nativeDir, "libsipen.so");
-            if (nativeBin.exists() && nativeBin.canExecute()) {
+            if (nativeBin.exists()) {
+                nativeBin.setExecutable(true, false);
                 binFile = nativeBin;
                 Log.i(TAG, "Menggunakan native library binary: " + binFile.getAbsolutePath());
             }
 
-            // 2. Fallback jika nativeLibraryDir belum terisi
-            if (binFile == null) {
-                File fallbackBin = new File(filesDir, "sipen");
-                extractAsset("sipen", fallbackBin);
-                fallbackBin.setExecutable(true, false);
-                fallbackBin.setReadable(true, false);
-                binFile = fallbackBin;
-                Log.i(TAG, "Menggunakan fallback asset binary: " + binFile.getAbsolutePath());
+            // 3. Fallback jika nativeLibraryDir belum terisi: ekstrak langsung dari APK archive
+            if (binFile == null || !binFile.exists()) {
+                binFile = extractBinaryFromApk(filesDir);
+            }
+
+            if (binFile == null || !binFile.exists()) {
+                Log.e(TAG, "FATAL: Binary engine SiPenDosa (libsipen.so) tidak dapat ditemukan!");
+                return;
             }
 
             File dataDir = new File(filesDir, "data");
@@ -209,8 +236,10 @@ public class SiPenDosaServerService extends Service implements Runnable {
             dataDir.mkdirs();
             sessionDir.mkdirs();
 
-            ProcessBuilder pb = new ProcessBuilder(binFile.getAbsolutePath());
+            // PENTING: Wajib menyertakan argumen "web" dan SIPEN_UI=web agar server HTTP port 8473 aktif!
+            ProcessBuilder pb = new ProcessBuilder(binFile.getAbsolutePath(), "web");
             pb.directory(filesDir);
+            pb.environment().put("SIPEN_UI", "web");
             pb.environment().put("PORT", "8473");
             pb.environment().put("HOST", "0.0.0.0");
             pb.environment().put("APP_ENV", "production");
@@ -242,24 +271,55 @@ public class SiPenDosaServerService extends Service implements Runnable {
         }
     }
 
-    private void extractAsset(String assetName, File dest) {
+    private File extractBinaryFromApk(File destDir) {
         try {
-            if (dest.exists() && dest.length() > 0) {
-                return;
+            String sourceApk = getApplicationInfo().sourceDir;
+            java.util.zip.ZipFile zipFile = new java.util.zip.ZipFile(sourceApk);
+            String[] abis = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) ? Build.SUPPORTED_ABIS : new String[]{Build.CPU_ABI, Build.CPU_ABI2};
+
+            java.util.zip.ZipEntry targetEntry = null;
+            for (String abi : abis) {
+                String entryPath = "lib/" + abi + "/libsipen.so";
+                targetEntry = zipFile.getEntry(entryPath);
+                if (targetEntry != null) {
+                    Log.i(TAG, "Ditemukan binary untuk ABI: " + abi);
+                    break;
+                }
             }
-            InputStream in = getAssets().open(assetName);
-            FileOutputStream out = new FileOutputStream(dest);
-            byte[] buffer = new byte[8192];
-            int read;
-            while ((read = in.read(buffer)) != -1) {
-                out.write(buffer, 0, read);
+
+            if (targetEntry == null) {
+                java.util.Enumeration<? extends java.util.zip.ZipEntry> entries = zipFile.entries();
+                while (entries.hasMoreElements()) {
+                    java.util.zip.ZipEntry entry = entries.nextElement();
+                    if (entry.getName().endsWith("libsipen.so")) {
+                        targetEntry = entry;
+                        break;
+                    }
+                }
             }
-            out.flush();
-            out.close();
-            in.close();
+
+            if (targetEntry != null) {
+                File dest = new File(destDir, "libsipen.so");
+                InputStream in = zipFile.getInputStream(targetEntry);
+                FileOutputStream out = new FileOutputStream(dest);
+                byte[] buffer = new byte[8192];
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, read);
+                }
+                out.flush();
+                out.close();
+                in.close();
+                zipFile.close();
+                dest.setExecutable(true, false);
+                dest.setReadable(true, false);
+                return dest;
+            }
+            zipFile.close();
         } catch (Exception e) {
-            Log.w(TAG, "Asset " + assetName + " tidak ditemukan atau gagal diekstrak: " + e.getMessage());
+            Log.e(TAG, "Gagal mengekstrak binary dari APK: " + e.getMessage(), e);
         }
+        return null;
     }
 
     public static List<String> getRecentLogs() {

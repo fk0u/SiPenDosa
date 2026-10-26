@@ -73,6 +73,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
     private ProgressBar pageProgressBar;
     private LinearLayout splashOverlay;
     private TextView tvSplashStatus;
+    private Button btnSplashRetry;
 
     // Top Bar Views
     private View daemonStatusDot;
@@ -367,7 +368,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
         splashOverlay.addView(tvTitle);
 
         TextView tvSub = new TextView(this);
-        tvSub.setText("Academic Assistant • v1.2.0");
+        tvSub.setText("Academic Assistant • v1.4.1");
         tvSub.setTextColor(COLOR_GOLD);
         tvSub.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         tvSub.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
@@ -388,6 +389,32 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
         tvSplashStatus.setTypeface(Typeface.SANS_SERIF);
         tvSplashStatus.setGravity(Gravity.CENTER);
         splashOverlay.addView(tvSplashStatus);
+
+        btnSplashRetry = new Button(this);
+        btnSplashRetry.setText("🔄 Mulai Ulang Engine & Hubungkan");
+        btnSplashRetry.setTextColor(Color.WHITE);
+        btnSplashRetry.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+        btnSplashRetry.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
+        GradientDrawable retryBg = new GradientDrawable();
+        retryBg.setColor(Color.parseColor("#1e293b"));
+        retryBg.setCornerRadius(dp(8));
+        retryBg.setStroke(dp(1), Color.parseColor("#334155"));
+        btnSplashRetry.setBackground(retryBg);
+        LinearLayout.LayoutParams retryParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                dp(36)
+        );
+        retryParams.setMargins(0, dp(16), 0, 0);
+        btnSplashRetry.setLayoutParams(retryParams);
+        btnSplashRetry.setPadding(dp(14), 0, dp(14), 0);
+        btnSplashRetry.setVisibility(View.GONE);
+        btnSplashRetry.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                retryConnection();
+            }
+        });
+        splashOverlay.addView(btnSplashRetry);
     }
 
     @Override
@@ -565,7 +592,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
     @Override
     public void run() {
         int attempts = 0;
-        while (attempts < 60 && !isServerReady) {
+        while (!isServerReady && !isFinishing()) {
             attempts++;
             try {
                 URL url = new URL(SERVER_URL + "/healthz");
@@ -574,18 +601,57 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
                 conn.setReadTimeout(1000);
                 conn.setRequestMethod("GET");
                 int code = conn.getResponseCode();
+                conn.disconnect();
                 if (code >= 200 && code < 500) {
                     isServerReady = true;
                     break;
                 }
             } catch (Exception ignored) {}
 
+            final int curAttempts = attempts;
+            if (curAttempts == 8) {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (tvSplashStatus != null) tvSplashStatus.setText("Memulai mesin server SiPenDosa...");
+                    }
+                });
+            } else if (curAttempts == 18) {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (tvSplashStatus != null) tvSplashStatus.setText("Engine sedang menyiapkan database & sesi...");
+                        if (btnSplashRetry != null) btnSplashRetry.setVisibility(View.VISIBLE);
+                    }
+                });
+            }
+
             try {
                 Thread.sleep(600);
-            } catch (InterruptedException ignored) {}
+            } catch (InterruptedException e) {
+                break;
+            }
         }
 
-        handler.post(new UpdateUiTask(this, isServerReady));
+        if (isServerReady) {
+            handler.post(new UpdateUiTask(this, true));
+        }
+    }
+
+    private void retryConnection() {
+        if (btnSplashRetry != null) {
+            btnSplashRetry.setVisibility(View.GONE);
+        }
+        if (tvSplashStatus != null) {
+            tvSplashStatus.setText("Memulai ulang background service...");
+        }
+        Intent serviceIntent = new Intent(this, SiPenDosaServerService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent);
+        } else {
+            startService(serviceIntent);
+        }
+        new Thread(this).start();
     }
 
     public void onServerStatusChecked(boolean ready) {
@@ -606,7 +672,10 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
             }
         } else {
             if (tvSplashStatus != null) {
-                tvSplashStatus.setText("Memulai daemon server...");
+                tvSplashStatus.setText("Menunggu respon server...");
+            }
+            if (btnSplashRetry != null) {
+                btnSplashRetry.setVisibility(View.VISIBLE);
             }
         }
     }
@@ -668,7 +737,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
             URL url = new URL(targetUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setInstanceFollowRedirects(true);
-            conn.setRequestProperty("User-Agent", "SiPenDosa-Android/1.2.0");
+            conn.setRequestProperty("User-Agent", "SiPenDosa-Android/1.4.2");
             conn.connect();
 
             int status = conn.getResponseCode();
@@ -677,7 +746,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
                 conn.disconnect();
                 url = new URL(newUrl);
                 conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestProperty("User-Agent", "SiPenDosa-Android/1.2.0");
+                conn.setRequestProperty("User-Agent", "SiPenDosa-Android/1.4.2");
                 conn.connect();
             }
 

@@ -4,6 +4,16 @@ Semua perubahan penting pada proyek **SiPenDosa** didokumentasikan di sini denga
 
 ---
 
+## [1.4.2] — 2026-10-26
+
+### 📱 Android & Embedded Engine Improvements
+* **Otomasi Mode Web pada Android:** Binary engine mendeteksi lingkungan Android (`netutil.IsAndroid()` dan `runtime.GOOS == "android"` / variabel lingkungan Android) dan secara otomatis berjalan dalam mode web (`SIPEN_UI=web`) tanpa meminta input TTY atau wizard.
+* **Deteksi Daemon & Pemulihan Service Android:** `SiPenDosaServerService` memverifikasi ketersediaan port 8473 (`/healthz`) sebelum memulai instance baru, mencegah konflik port saat service direstart.
+* **Ekstraksi Biner APK Otomatis:** Menambahkan fallback ekstraksi `libsipen.so` langsung dari arsip APK jika sistem Android menolak akses `nativeLibraryDir`.
+* **Koneksi WebView Tangguh:** `InternalWebClient` kini otomatis me-reload WebView saat daemon lokal sedang dalam proses booting.
+
+---
+
 ## [1.4.1] — 2026-10-25
 
 ### 🐛 Perbaikan Bug

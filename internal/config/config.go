@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -113,6 +114,10 @@ func Load() (*Config, error) {
 		RateLimitMaxSec: getEnvInt("RATE_LIMIT_MAX_SEC", 15),
 		MaxRetries:      getEnvInt("MAX_RETRIES", 3),
 		GlobalDryRun:    getEnvBool("GLOBAL_DRY_RUN", false),
+	}
+
+	if cfg.UIMode == "" && (runtime.GOOS == "android" || os.Getenv("ANDROID_DATA") != "" || os.Getenv("ANDROID_ROOT") != "") {
+		cfg.UIMode = UIWeb
 	}
 
 	return cfg, nil

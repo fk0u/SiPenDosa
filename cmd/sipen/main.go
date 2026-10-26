@@ -337,6 +337,11 @@ func resolveUIMode(cfg *config.Config, forced string) string {
 		return cfg.UIMode
 	}
 
+	// Lingkungan Android / Embedded selalu berjalan dalam mode web
+	if netutil.IsAndroid() {
+		return config.UIWeb
+	}
+
 	// Nilai SIPEN_UI belum tersimpan.
 	if isTTY() {
 		return runFirstRunWizard(cfg)

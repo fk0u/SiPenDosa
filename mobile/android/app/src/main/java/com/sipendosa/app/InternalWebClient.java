@@ -42,4 +42,16 @@ public class InternalWebClient extends WebViewClient {
             activity.onPageNavigated(url);
         }
     }
+
+    @Override
+    public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+        if (failingUrl != null && (failingUrl.startsWith(SERVER_URL) || failingUrl.startsWith("http://localhost:8473"))) {
+            view.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    view.loadUrl(SERVER_URL);
+                }
+            }, 1200);
+        }
+    }
 }
