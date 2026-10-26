@@ -141,7 +141,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusMenu.delegate = self
 
         // 1. Header Identitas
-        titleMenuItem = NSMenuItem(title: "⚡ SiPenDosa v1.4.1 (Universal)", action: nil, keyEquivalent: "")
+        titleMenuItem = NSMenuItem(title: "⚡ SiPenDosa v1.4.2 (Universal)", action: nil, keyEquivalent: "")
         titleMenuItem.isEnabled = false
         statusMenu.addItem(titleMenuItem)
 
@@ -205,7 +205,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusItem.menu = statusMenu
     }
 
-    private let expectedVersion = "1.4.1"
+    private let expectedVersion = "1.4.2"
 
     private func checkRunningBackendVersion() -> String? {
         guard let url = URL(string: "http://127.0.0.1:\(configuredPort)/api/system/version") else { return nil }

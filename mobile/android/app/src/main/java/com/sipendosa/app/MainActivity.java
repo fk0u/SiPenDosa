@@ -368,7 +368,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Runn
         splashOverlay.addView(tvTitle);
 
         TextView tvSub = new TextView(this);
-        tvSub.setText("Academic Assistant • v1.4.1");
+        tvSub.setText("Academic Assistant • v1.4.2");
         tvSub.setTextColor(COLOR_GOLD);
         tvSub.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         tvSub.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);

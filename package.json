@@ -1,6 +1,6 @@
 {
   "name": "sipendosa",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "SiPenDosa — Sistem Pengingat Dosen Otomatis",
   "type": "module",
   "scripts": {
