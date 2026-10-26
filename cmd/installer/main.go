@@ -1,4 +1,7 @@
+//go:build windows && installer
+
 package main
+
 
 import (
 	"bufio"
@@ -98,6 +101,10 @@ func main() {
 	if !isSilent {
 		fmt.Printf("%s[3/6]%s Mengekstrak binary %s.exe (%d MB)...\n", BrightYellow+Bold, Reset, AppName, len(embeddedBinary)/(1024*1024))
 	}
+	// Hentikan proses sipen.exe lama jika sedang berjalan agar file executable tidak terkunci
+	_ = exec.Command("taskkill", "/F", "/IM", "sipen.exe").Run()
+	time.Sleep(300 * time.Millisecond)
+
 	targetExe := filepath.Join(installDir, "sipen.exe")
 	if err := os.WriteFile(targetExe, embeddedBinary, 0755); err != nil {
 		fmt.Printf("%s[ERROR] Gagal menulis binary: %v%s\n", Yellow, err, Reset)

@@ -15,6 +15,9 @@ import (
 
 	"sipen/internal/auth"
 	"sipen/internal/store"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // ViewRenderer manages HTML template parsing and execution
@@ -44,7 +47,7 @@ func NewViewRenderer(templateFS fs.FS, diskDir string) *ViewRenderer {
 		funcMap: template.FuncMap{
 			"upper": strings.ToUpper,
 			"lower": strings.ToLower,
-			"title": strings.Title,
+			"title": cases.Title(language.Und).String,
 			"trim":  strings.TrimSpace,
 			"formatTime": func(t *time.Time, layout string) string {
 				if t == nil {
@@ -67,8 +70,9 @@ func NewViewRenderer(templateFS fs.FS, diskDir string) *ViewRenderer {
 				return template.HTML(s)
 			},
 			"truncate": func(s string, maxLen int) string {
-				if len(s) > maxLen {
-					return s[:maxLen] + "..."
+				runes := []rune(s)
+				if len(runes) > maxLen {
+					return string(runes[:maxLen]) + "..."
 				}
 				return s
 			},

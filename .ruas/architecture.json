@@ -1,0 +1,53 @@
+{
+  "layers": {
+    "domain": [
+      "**/internal/database/models.go",
+      "**/internal/config/**"
+    ],
+    "application": [
+      "**/internal/scheduler/**",
+      "**/internal/queue/**",
+      "**/internal/template/**",
+      "**/internal/tunnel/**",
+      "**/internal/updater/**",
+      "**/internal/backup/**"
+    ],
+    "infrastructure": [
+      "**/internal/database/**",
+      "**/internal/auth/**",
+      "**/internal/whatsapp/**",
+      "**/internal/netutil/**",
+      "**/native/**"
+    ],
+    "presentation": [
+      "**/cmd/**",
+      "**/internal/web/**",
+      "**/web/**"
+    ]
+  },
+  "rules": [
+    {
+      "from": "domain",
+      "disallow": [
+        "application",
+        "infrastructure",
+        "presentation"
+      ],
+      "message": "Domain entities and configuration must remain pure and free from outer layer dependencies."
+    },
+    {
+      "from": "application",
+      "disallow": [
+        "presentation"
+      ],
+      "message": "Application business services must not depend on presentation or UI layers."
+    },
+    {
+      "from": "infrastructure",
+      "disallow": [
+        "presentation"
+      ],
+      "message": "Infrastructure adapters must not depend on presentation layer."
+    }
+  ]
+}

@@ -29,7 +29,7 @@ const char* sipen_get_bridge_version(void) {
 }
 
 int64_t sipen_check_socket_latency_us(const char* host, int port, int timeout_ms) {
-    if (!host || port <= 0 || port > 65535) {
+    if (!host || port <= 0 || port > 65535 || timeout_ms <= 0) {
         return -1;
     }
 
@@ -37,6 +37,10 @@ int64_t sipen_check_socket_latency_us(const char* host, int port, int timeout_ms
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
+        return -1;
+    }
+    if (sock >= FD_SETSIZE) {
+        close(sock);
         return -1;
     }
 
@@ -101,8 +105,10 @@ int64_t sipen_check_socket_latency_us(const char* host, int port, int timeout_ms
 
 bool sipen_is_process_alive(int pid) {
     if (pid <= 0) return false;
-    // Signal 0 melakukan pengecekan keberadaan proses tanpa mengirim sinyal fisik
-    return (kill(pid, 0) == 0);
+    // Signal 0 melakukan pengecekan keberadaan proses tanpa mengirim sinyal fisik.
+    // Jika return 0 proses ada; jika return -1 dengan errno EPERM, proses juga ada (hanya beda privilese).
+    if (kill(pid, 0) == 0) return true;
+    return (errno == EPERM);
 }
 
 bool sipen_terminate_pid(int pid, bool force) {

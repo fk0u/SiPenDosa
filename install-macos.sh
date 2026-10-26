@@ -87,13 +87,29 @@ find_binary() {
 
 setup_app_files() {
     echo -e "${BYELLOW}[3/5]${NC} Menyiapkan file aplikasi di ${BGREEN}${INSTALL_DIR}${NC}..."
+    
+    # Hentikan semua proses lama yang sedang berjalan
+    echo -e "      ${GRAY}Menghentikan instance SiPenDosa sebelumnya jika ada...${NC}"
+    killall -9 SiPenDosa 2>/dev/null || true
+    killall -9 sipen 2>/dev/null || true
+    lsof -ti :8473 | xargs kill -9 2>/dev/null || true
+
     mkdir -p "${INSTALL_DIR}"
     mkdir -p "${APP_SUPPORT_DIR}/data"
     mkdir -p "${APP_SUPPORT_DIR}/session"
+    mkdir -p "${HOME}/.local/share/sipendosa"
 
-    # Salin binary
+    # Salin binary ke lokasi instalasi utama
     cp -f "$SRC_BIN" "${INSTALL_DIR}/${APP_NAME}"
     chmod 755 "${INSTALL_DIR}/${APP_NAME}"
+
+    # Sinkronisasi ke lokasi fallback lainnya jika ada
+    cp -f "$SRC_BIN" "${HOME}/.local/share/sipendosa/sipen" 2>/dev/null || true
+    chmod 755 "${HOME}/.local/share/sipendosa/sipen" 2>/dev/null || true
+    if [ -f "/Applications/SiPenDosa.app/Contents/Resources/sipen" ]; then
+        cp -f "$SRC_BIN" "/Applications/SiPenDosa.app/Contents/Resources/sipen" 2>/dev/null || true
+        chmod 755 "/Applications/SiPenDosa.app/Contents/Resources/sipen" 2>/dev/null || true
+    fi
 
     # Generate .env jika belum ada
     ENV_FILE="${INSTALL_DIR}/.env"
@@ -154,6 +170,7 @@ setup_launchagent() {
 
     # Unload daemon jika sedang berjalan
     launchctl unload "$PLIST_PATH" 2>/dev/null || true
+    launchctl bootout "gui/$(id -u)" "$PLIST_PATH" 2>/dev/null || true
 
     cat <<EOF > "$PLIST_PATH"
 <?xml version="1.0" encoding="UTF-8"?>
@@ -165,7 +182,13 @@ setup_launchagent() {
     <key>ProgramArguments</key>
     <array>
         <string>${INSTALL_DIR}/${APP_NAME}</string>
+        <string>web</string>
     </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>SIPEN_UI</key>
+        <string>web</string>
+    </dict>
     <key>WorkingDirectory</key>
     <string>${INSTALL_DIR}</string>
     <key>RunAtLoad</key>
@@ -180,7 +203,9 @@ setup_launchagent() {
 </plist>
 EOF
 
-    launchctl load "$PLIST_PATH"
+    launchctl load -w "$PLIST_PATH" 2>/dev/null || true
+    launchctl bootstrap "gui/$(id -u)" "$PLIST_PATH" 2>/dev/null || true
+    launchctl kickstart -k "gui/$(id -u)/com.sipendosa.daemon" 2>/dev/null || true
     echo -e "      ${BGREEN}✓ Daemon LaunchAgent berhasil dipasang dan dijalankan.${NC}"
 }
 

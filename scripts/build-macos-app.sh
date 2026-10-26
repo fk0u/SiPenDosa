@@ -41,8 +41,12 @@ if [ ! -f "${ASSETS_DIR}/AppIcon.icns" ]; then
 fi
 
 # Pastikan Go tersedia di PATH
-if [ -x "/Users/kou/go/bin/go" ]; then
-    export PATH="/Users/kou/go/bin:${PATH}"
+if [ -x "${HOME}/go/bin/go" ]; then
+    export PATH="${HOME}/go/bin:${PATH}"
+elif [ -x "/usr/local/go/bin/go" ]; then
+    export PATH="/usr/local/go/bin:${PATH}"
+elif [ -x "/opt/homebrew/bin/go" ]; then
+    export PATH="/opt/homebrew/bin:${PATH}"
 fi
 
 # 2. Pastikan Go binary untuk macOS tersedia

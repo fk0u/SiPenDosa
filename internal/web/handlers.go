@@ -1990,6 +1990,8 @@ func (h *Handlers) APITokenLoginHandler(w http.ResponseWriter, r *http.Request) 
 	var req struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
+		Passcode string `json:"passcode"`
+		Code     string `json:"code"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&req)
 	if req.Username == "" || req.Password == "" {
@@ -2003,6 +2005,28 @@ func (h *Handlers) APITokenLoginHandler(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusUnauthorized)
 		_ = json.NewEncoder(w).Encode(map[string]string{"error": "username atau password salah"})
 		return
+	}
+
+	// 2FA enforcement: cegah bypass 2FA melalui API login
+	if user.TwoFactorEnabled {
+		totpCode := strings.TrimSpace(req.Passcode)
+		if totpCode == "" {
+			totpCode = strings.TrimSpace(req.Code)
+		}
+		if totpCode == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+				"error":        "2fa_required",
+				"message":      "Kode verifikasi 2FA (TOTP) wajib disertakan",
+				"requires_2fa": true,
+			})
+			return
+		}
+		if !totp.ValidatePasscode(user.TwoFactorSecret, totpCode, 1) {
+			w.WriteHeader(http.StatusUnauthorized)
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "kode verifikasi 2FA tidak valid atau kedaluwarsa"})
+			return
+		}
 	}
 
 	token, err := h.authSvc.CreateSession(user.ID)

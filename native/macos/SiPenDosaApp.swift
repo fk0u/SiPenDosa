@@ -141,7 +141,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusMenu.delegate = self
 
         // 1. Header Identitas
-        titleMenuItem = NSMenuItem(title: "⚡ SiPenDosa v1.4.0 (Universal)", action: nil, keyEquivalent: "")
+        titleMenuItem = NSMenuItem(title: "⚡ SiPenDosa v1.4.1 (Universal)", action: nil, keyEquivalent: "")
         titleMenuItem.isEnabled = false
         statusMenu.addItem(titleMenuItem)
 
@@ -205,14 +205,94 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusItem.menu = statusMenu
     }
 
+    private let expectedVersion = "1.4.1"
+
+    private func checkRunningBackendVersion() -> String? {
+        guard let url = URL(string: "http://127.0.0.1:\(configuredPort)/api/system/version") else { return nil }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 0.8
+        var verStr: String?
+        let sem = DispatchSemaphore(value: 0)
+        let task = URLSession.shared.dataTask(with: request) { data, _, _ in
+            defer { sem.signal() }
+            guard let data = data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let v = json["version"] as? String else {
+                return
+            }
+            verStr = v
+        }
+        task.resume()
+        _ = sem.wait(timeout: .now() + 1.0)
+        return verStr
+    }
+
+    private func syncBundledBinaryToDisk() {
+        guard let bundledURL = Bundle.main.url(forResource: "sipen", withExtension: nil) else { return }
+        
+        let target1 = dataDir.appendingPathComponent("sipen")
+        try? FileManager.default.removeItem(at: target1)
+        try? FileManager.default.copyItem(at: bundledURL, to: target1)
+        try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: target1.path)
+
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        let appSupportSipen = home.appendingPathComponent("Applications/SiPenDosa/sipen")
+        if FileManager.default.fileExists(atPath: appSupportSipen.deletingLastPathComponent().path) {
+            try? FileManager.default.removeItem(at: appSupportSipen)
+            try? FileManager.default.copyItem(at: bundledURL, to: appSupportSipen)
+            try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: appSupportSipen.path)
+        }
+    }
+
+    private func killOldBackendProcesses() {
+        if let proc = backendProcess, proc.isRunning {
+            proc.terminate()
+            backendProcess = nil
+            backendPid = 0
+        }
+
+        // 1. Matikan proses yang mendengarkan di port yang dikonfigurasi (mis. 8473)
+        let lsofTask = Process()
+        lsofTask.launchPath = "/bin/sh"
+        lsofTask.arguments = ["-c", "/usr/sbin/lsof -ti :\(configuredPort) | xargs kill -9 2>/dev/null || true"]
+        try? lsofTask.run()
+        lsofTask.waitUntilExit()
+
+        // 2. Matikan proses dengan nama biner sipen
+        let killallTask = Process()
+        killallTask.launchPath = "/bin/sh"
+        killallTask.arguments = ["-c", "killall -9 sipen 2>/dev/null || true"]
+        try? killallTask.run()
+        killallTask.waitUntilExit()
+    }
+
     private func startBackendIfNeeded() {
+        // Sinkronisasi biner terbaru dari App Bundle ke lokasi disk
+        syncBundledBinaryToDisk()
+
         // Periksa apakah port sudah dijawab oleh backend yang ada
         let latency = sipen_check_socket_latency_us("127.0.0.1", Int32(configuredPort), 300)
         if latency >= 0 {
-            // Sudah berjalan (misal via launchagent atau terminal)
-            isEngineOnline = true
-            updateMenuUI(online: true, latencyUs: latency, rssBytes: -1)
-            return
+            // Ada proses yang merespons di port ini. Periksa versinya!
+            if let runningVer = checkRunningBackendVersion() {
+                if runningVer == expectedVersion {
+                    // Backend sudah berjalan dengan versi yang tepat
+                    isEngineOnline = true
+                    updateMenuUI(online: true, latencyUs: latency, rssBytes: -1)
+                    return
+                }
+                print("[SiPenDosa] Engine versi lama terdeteksi (v\(runningVer) != v\(expectedVersion)). Mematikan engine lama...")
+                showNativeNotification(
+                    title: "⚡ Memperbarui SiPenDosa ke v\(expectedVersion)",
+                    body: "Engine versi lama (v\(runningVer)) dimatikan dan digantikan dengan engine terbaru."
+                )
+            } else {
+                print("[SiPenDosa] Port \(configuredPort) terbuka tapi tidak merespons versi. Mematikan proses lama...")
+            }
+
+            // Hentikan backend lama yang out-of-date atau zombie
+            killOldBackendProcesses()
+            Thread.sleep(forTimeInterval: 0.6)
         }
 
         // Cari lokasi binary sipen di dalam bundle: Contents/Resources/sipen
@@ -231,6 +311,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func launchBinary(at binURL: URL) {
         let proc = Process()
         proc.executableURL = binURL
+        proc.arguments = ["web"]
+        var env = ProcessInfo.processInfo.environment
+        env["SIPEN_UI"] = "web"
+        proc.environment = env
         proc.currentDirectoryURL = dataDir
 
         // Buat log file stream
@@ -348,21 +432,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func restartEngine() {
         stopEngine()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
             self?.startBackendIfNeeded()
             self?.checkBackendStatus()
         }
     }
 
     @objc private func stopEngine() {
-        if let proc = backendProcess, proc.isRunning {
-            proc.terminate()
-            backendProcess = nil
-            backendPid = 0
-        } else if backendPid > 0 {
-            sipen_terminate_pid(backendPid, false)
-            backendPid = 0
-        }
+        killOldBackendProcesses()
         checkBackendStatus()
     }
 

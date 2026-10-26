@@ -134,6 +134,12 @@ func (s *Scheduler) evaluateTick() {
 			continue
 		}
 
+		// Lewati jika jam kuliah hari ini sudah lewat untuk mode H-0
+		if sc.Mode != "H-1" && sc.StartTime != "" && currentTimeStr > sc.StartTime {
+			slog.Debug("Jadwal hari ini dilewati karena jam mulai kuliah sudah berlalu", "matkul", sc.Matkul, "jam_mulai", sc.StartTime)
+			continue
+		}
+
 		var targetLectureDate time.Time
 		var isEligibleDay bool
 
@@ -266,7 +272,12 @@ func (s *Scheduler) TriggerScheduleManually(scheduleID int64, dryRun bool) (*sto
 	now := time.Now().In(loc)
 
 	// Calculate next lecture occurrence date
-	lectureDate := s.calculateNextLectureDate(sc.DayOfWeek, now)
+	var lectureDate time.Time
+	if int(now.Weekday()) == sc.DayOfWeek {
+		lectureDate = now
+	} else {
+		lectureDate = s.calculateNextLectureDate(sc.DayOfWeek, now)
+	}
 
 	tmplContent := ""
 	if sc.TemplateID.Valid {
@@ -402,8 +413,11 @@ func (s *Scheduler) updateCountdown() {
 		remHuman = fmt.Sprintf("%d hari %02d jam %02d menit", days, hours%24, minutes)
 	}
 
-	// Preview message
-	lectureDate := s.calculateNextLectureDate(nearestSchedule.DayOfWeek, now)
+	// Preview message: derivasikan langsung dari waktu kirim terdekat
+	lectureDate := nearestTime
+	if nearestSchedule.Mode == "H-1" {
+		lectureDate = nearestTime.AddDate(0, 0, 1)
+	}
 	ctx := s.tmplEngine.BuildContext(nearestSchedule, lectureDate, nil)
 	previewTmpl := ""
 	if nearestSchedule.TemplateID.Valid {
@@ -462,6 +476,11 @@ func (s *Scheduler) calculateNextFireTime(sc *store.ScheduleDetail, now time.Tim
 
 	fireTime := time.Date(now.Year(), now.Month(), now.Day(), sendHour, sendMinute, 0, 0, loc).AddDate(0, 0, daysUntil)
 	if fireTime.Before(now) {
+		fireTime = fireTime.AddDate(0, 0, 7)
+	}
+
+	// Jika jadwal sudah dikirimkan hari ini, majukan ke jadwal pekan berikutnya
+	if sc.LastSentAt != nil && sc.LastSentAt.In(loc).Format("2006-01-02") == fireTime.Format("2006-01-02") {
 		fireTime = fireTime.AddDate(0, 0, 7)
 	}
 

@@ -1,6 +1,7 @@
 package auth_test
 
 import (
+	"net/http/httptest"
 	"path/filepath"
 	"testing"
 	"time"
@@ -103,5 +104,30 @@ func TestAuthFlowWith2FA(t *testing.T) {
 	}
 	if normalUser.Role != "user" {
 		t.Errorf("Expected role 'user', got %s", normalUser.Role)
+	}
+}
+
+func TestClearSessionCookie(t *testing.T) {
+	rec := httptest.NewRecorder()
+	auth.ClearSessionCookie(rec)
+
+	res := rec.Result()
+	cookies := res.Cookies()
+	if len(cookies) == 0 {
+		t.Fatalf("Expected cookie to be set for clearing")
+	}
+
+	c := cookies[0]
+	if c.Name != auth.CookieName {
+		t.Errorf("Expected cookie name %s, got %s", auth.CookieName, c.Name)
+	}
+	if c.Value != "" {
+		t.Errorf("Expected empty cookie value, got %s", c.Value)
+	}
+	if c.MaxAge != -1 {
+		t.Errorf("Expected MaxAge -1, got %d", c.MaxAge)
+	}
+	if c.Secure {
+		t.Errorf("Expected Secure to be false for HTTP logout compatibility, got true")
 	}
 }

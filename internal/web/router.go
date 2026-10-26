@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"io/fs"
 	"net"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"sipen/internal/auth"
+	"sipen/internal/store"
 	"sipen/internal/tunnel"
 
 	"github.com/go-chi/chi/v5"
@@ -102,7 +104,9 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 
 	// Internal loopback API for local CLI / Android / Termux commands.
 	// Saat tunnel publik aktif, trafik internet juga datang dari 127.0.0.1
-	// (lewat cloudflared) — maka selain loopback, sesi login valid juga wajib.
+	// Internal loopback API for local CLI / Android / Termux commands.
+	// Saat tunnel publik aktif atau diakses via remote/LAN, trafik mewajibkan sesi login valid.
+	// Saat dipanggil dari localhost (loopback CLI/Android lokal), otomatis menggunakan akun utama (User ID 1).
 	loopbackPairPhone := func(w http.ResponseWriter, r *http.Request) {
 		host, _, _ := net.SplitHostPort(r.RemoteAddr)
 		if host == "" {
@@ -111,12 +115,42 @@ func SetupRouter(h *Handlers, staticFS fs.FS, staticDiskDir string) http.Handler
 		isLoopback := host == "127.0.0.1" || host == "::1" || host == "localhost"
 		tunnelActive := h.tunnelMgr.Status().State == tunnel.StateActive
 
+		user := auth.GetUserFromContext(r.Context())
+		if user == nil {
+			// Periksa apakah ada cookie sesi atau Bearer token
+			token := ""
+			if cookie, err := r.Cookie(auth.CookieName); err == nil && cookie.Value != "" {
+				token = cookie.Value
+			} else {
+				authHeader := r.Header.Get("Authorization")
+				if strings.HasPrefix(authHeader, "Bearer ") {
+					token = strings.TrimPrefix(authHeader, "Bearer ")
+				}
+			}
+			if token != "" {
+				if u, err := h.authSvc.ValidateSession(token); err == nil && u != nil {
+					user = u
+					r = r.WithContext(context.WithValue(r.Context(), auth.UserContextKey, u))
+				}
+			}
+		}
+
 		if !isLoopback || tunnelActive {
-			if auth.GetUserFromContext(r.Context()) == nil {
+			if user == nil {
 				http.Error(w, "Forbidden: loopback only", http.StatusForbidden)
 				return
 			}
+		} else if user == nil {
+			// Skenario CLI lokal (sipen pair) / Android loopback tanpa sesi
+			u, err := h.store.GetUserByID(1)
+			if err == nil && u != nil {
+				r = r.WithContext(context.WithValue(r.Context(), auth.UserContextKey, u))
+			} else {
+				fallbackUser := &store.User{ID: 1, Username: "admin", Role: "superadmin"}
+				r = r.WithContext(context.WithValue(r.Context(), auth.UserContextKey, fallbackUser))
+			}
 		}
+
 		h.WhatsAppPairPhoneHandler(w, r)
 	}
 	r.Post("/api/internal/pair-phone", loopbackPairPhone)

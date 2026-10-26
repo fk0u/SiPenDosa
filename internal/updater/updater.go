@@ -388,11 +388,34 @@ func (m *Manager) ApplyBinarySelfUpdate(ctx context.Context, downloadURL string)
 	}
 
 	if err := os.Rename(tmpFilePath, exePath); err != nil {
-		// Rollback
-		_ = os.Rename(oldBackup, exePath)
-		return fmt.Errorf("failed to replace executable: %w", err)
+		// Jika os.Rename gagal (misalnya EXDEV / cross-device link saat /tmp berada di mount berbeda), fallback ke copy
+		if copyErr := copyFile(tmpFilePath, exePath); copyErr != nil {
+			// Rollback
+			_ = os.Rename(oldBackup, exePath)
+			return fmt.Errorf("failed to replace executable: %w (copy error: %v)", err, copyErr)
+		}
+		_ = os.Chmod(exePath, 0755)
 	}
 
 	_ = os.Remove(oldBackup)
+	return nil
+}
+
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	if _, err := io.Copy(out, in); err != nil {
+		return err
+	}
 	return nil
 }

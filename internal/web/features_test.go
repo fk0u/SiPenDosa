@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -20,6 +21,7 @@ import (
 	"sipen/internal/scheduler"
 	"sipen/internal/store"
 	"sipen/internal/template"
+	"sipen/internal/totp"
 	"sipen/internal/tunnel"
 	"sipen/internal/web"
 	"sipen/internal/whatsapp"
@@ -303,5 +305,94 @@ func TestScheduleCSVImport(t *testing.T) {
 	}
 	if sc.SendAtTime != "20:00" {
 		t.Errorf("jam kirim default H-1 harus 20:00, got %q", sc.SendAtTime)
+	}
+}
+
+func TestAPITokenLoginEnforces2FA(t *testing.T) {
+	router, s, _, adminUser := setupTestWeb(t)
+	defer s.Close()
+
+	// Enable 2FA for admin
+	secret, err := totp.GenerateSecret(20)
+	if err != nil {
+		t.Fatalf("Failed to generate secret: %v", err)
+	}
+	if err := s.UpdateUser2FA(adminUser.ID, secret, true); err != nil {
+		t.Fatalf("Failed to enable 2FA on admin: %v", err)
+	}
+
+	// 1. Login without 2FA code should be rejected
+	payloadNo2FA := `{"username":"superadmin","password":"password123"}`
+	req := httptest.NewRequest("POST", "/api/auth/login", strings.NewReader(payloadNo2FA))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("Expected 401 Unauthorized for 2FA-enabled account without code, got %d", w.Code)
+	}
+	if !strings.Contains(w.Body.String(), "2fa_required") {
+		t.Errorf("Expected response body to mention 2fa_required, got: %s", w.Body.String())
+	}
+
+	// 2. Login with wrong 2FA code should be rejected
+	payloadWrong2FA := `{"username":"superadmin","password":"password123","passcode":"000000"}`
+	req = httptest.NewRequest("POST", "/api/auth/login", strings.NewReader(payloadWrong2FA))
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("Expected 401 Unauthorized for wrong 2FA code, got %d", w.Code)
+	}
+
+	// 3. Login with valid 2FA code should succeed
+	validCode, err := totp.GeneratePasscode(secret, time.Now())
+	if err != nil {
+		t.Fatalf("Failed to generate valid passcode: %v", err)
+	}
+	payloadValid2FA := fmt.Sprintf(`{"username":"superadmin","password":"password123","passcode":"%s"}`, validCode)
+	req = httptest.NewRequest("POST", "/api/auth/login", strings.NewReader(payloadValid2FA))
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("Expected 200 OK for valid 2FA code, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var res struct {
+		Token string `json:"token"`
+	}
+	if err := json.NewDecoder(w.Body).Decode(&res); err != nil || res.Token == "" {
+		t.Errorf("Expected valid token in response, got: %+v", res)
+	}
+}
+
+func TestLoopbackPairPhoneAuth(t *testing.T) {
+	router, s, _, _ := setupTestWeb(t)
+	defer s.Close()
+
+	// 1. Remote request without session should be forbidden (403)
+	payload := `{"phone":"081234567890"}`
+	req := httptest.NewRequest("POST", "/api/internal/pair-phone", strings.NewReader(payload))
+	req.RemoteAddr = "192.168.1.100:54321"
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusForbidden {
+		t.Fatalf("Expected 403 Forbidden for remote unauthenticated request, got %d", w.Code)
+	}
+
+	// 2. Loopback request from local CLI should NOT be forbidden (403)
+	req = httptest.NewRequest("POST", "/api/internal/pair-phone", strings.NewReader(payload))
+	req.RemoteAddr = "127.0.0.1:54321"
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code == http.StatusForbidden {
+		t.Fatalf("Loopback CLI request should not be rejected with 403 Forbidden")
 	}
 }

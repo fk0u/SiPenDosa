@@ -234,6 +234,9 @@ func (m *Manager) processSingleMessage(msg store.QueueMessage, settings *store.S
 
 	// BUG-02 Fix: Non-blocking jitter delay that respects graceful shutdown
 	minDelay := settings.RateLimitMinSec
+	if minDelay < 0 {
+		minDelay = 0
+	}
 	maxDelay := settings.RateLimitMaxSec
 	if maxDelay <= minDelay {
 		maxDelay = minDelay + 5

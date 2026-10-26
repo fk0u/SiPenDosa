@@ -1,0 +1,22 @@
+{
+  "name": "sipendosa",
+  "version": "1.4.1",
+  "description": "SiPenDosa — Sistem Pengingat Dosen Otomatis",
+  "type": "module",
+  "scripts": {
+    "ruas": "ruas",
+    "ruas:index": "ruas index .",
+    "ruas:status": "ruas status .",
+    "ruas:audit": "ruas audit .",
+    "ruas:lint": "ruas lint .",
+    "ruas:vibe": "ruas vibe sync .",
+    "ruas:ui": "ruas ui .",
+    "ruas:mcp": "ruas mcp ."
+  },
+  "dependencies": {
+    "@fk0u/ruas": "^1.4.0",
+    "@supabase/ssr": "^0.5.5",
+    "@supabase/supabase-js": "^2.58.0",
+    "dotenv": "^17.2.3"
+  }
+}

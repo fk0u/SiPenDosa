@@ -20,8 +20,12 @@ echo "========================================================================"
 echo "💿 MEMBANGUN APPLE DISK IMAGE: SiPenDosa.dmg"
 echo "========================================================================"
 
-if [ -x "/Users/kou/go/bin/go" ]; then
-    export PATH="/Users/kou/go/bin:${PATH}"
+if [ -x "${HOME}/go/bin/go" ]; then
+    export PATH="${HOME}/go/bin:${PATH}"
+elif [ -x "/usr/local/go/bin/go" ]; then
+    export PATH="/usr/local/go/bin:${PATH}"
+elif [ -x "/opt/homebrew/bin/go" ]; then
+    export PATH="/opt/homebrew/bin:${PATH}"
 fi
 
 # 1. Pastikan SiPenDosa.app sudah terbangun

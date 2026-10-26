@@ -18,8 +18,12 @@ echo "========================================================================"
 echo "📦 MEMBANGUN APPLE INSTALLER PACKAGE: SiPenDosa.pkg"
 echo "========================================================================"
 
-if [ -x "/Users/kou/go/bin/go" ]; then
-    export PATH="/Users/kou/go/bin:${PATH}"
+if [ -x "${HOME}/go/bin/go" ]; then
+    export PATH="${HOME}/go/bin:${PATH}"
+elif [ -x "/usr/local/go/bin/go" ]; then
+    export PATH="/usr/local/go/bin:${PATH}"
+elif [ -x "/opt/homebrew/bin/go" ]; then
+    export PATH="/opt/homebrew/bin:${PATH}"
 fi
 
 # 1. Pastikan SiPenDosa.app sudah terbangun
@@ -38,6 +42,7 @@ cat <<'EOF' > "${SCRIPTS_DIR}/postinstall"
 # Ambil user aktif konsol saat ini
 CURRENT_USER=$(stat -f "%Su" /dev/console 2>/dev/null || echo "$USER")
 USER_HOME=$(eval echo "~$CURRENT_USER")
+USER_UID=$(id -u "$CURRENT_USER" 2>/dev/null || echo "501")
 
 SIPEN_DATA_DIR="${USER_HOME}/.local/share/sipendosa"
 LAUNCH_AGENTS_DIR="${USER_HOME}/Library/LaunchAgents"
@@ -47,7 +52,18 @@ mkdir -p "${SIPEN_DATA_DIR}/data"
 mkdir -p "${SIPEN_DATA_DIR}/session"
 mkdir -p "${LAUNCH_AGENTS_DIR}"
 
-# Generate .env jika belum ada
+# 1. Hentikan seluruh instance SiPenDosa dan backend lama yang sedang berjalan
+killall -9 SiPenDosa 2>/dev/null || true
+killall -9 sipen 2>/dev/null || true
+lsof -ti :8473 | xargs kill -9 2>/dev/null || true
+
+# 2. Unload daemon lama jika terdaftar di launchd
+if [ -f "${PLIST_FILE}" ]; then
+    launchctl asuser "${USER_UID}" launchctl unload "${PLIST_FILE}" 2>/dev/null || true
+    launchctl asuser "${USER_UID}" launchctl bootout "gui/${USER_UID}" "${PLIST_FILE}" 2>/dev/null || true
+fi
+
+# 3. Generate .env jika belum ada
 if [ ! -f "${SIPEN_DATA_DIR}/.env" ]; then
     SECRET=$(head -c 32 /dev/urandom | od -A n -t x1 | tr -d ' \n' 2>/dev/null || echo "sipen-secure-random-token-32char-len")
     cat <<ENV > "${SIPEN_DATA_DIR}/.env"
@@ -73,13 +89,25 @@ ENV
     chmod 600 "${SIPEN_DATA_DIR}/.env"
 fi
 
-# Salin binary backend ke data dir sebagai referensi fallback jika diperlukan
-if [ -f "/Applications/SiPenDosa.app/Contents/Resources/sipen" ]; then
-    cp -f "/Applications/SiPenDosa.app/Contents/Resources/sipen" "${SIPEN_DATA_DIR}/sipen"
+# 4. Sinkronisasikan binary backend terbaru ke seluruh lokasi instalasi yang mungkin ada
+NEW_SIPEN="/Applications/SiPenDosa.app/Contents/Resources/sipen"
+if [ -f "${NEW_SIPEN}" ]; then
+    cp -f "${NEW_SIPEN}" "${SIPEN_DATA_DIR}/sipen"
     chmod 755 "${SIPEN_DATA_DIR}/sipen"
+
+    # Jika user sebelumnya menginstal lewat install-macos.sh di ~/Applications/SiPenDosa
+    if [ -d "${USER_HOME}/Applications/SiPenDosa" ]; then
+        cp -f "${NEW_SIPEN}" "${USER_HOME}/Applications/SiPenDosa/sipen"
+        chmod 755 "${USER_HOME}/Applications/SiPenDosa/sipen"
+    fi
 fi
 
-# Buat LaunchAgent plist
+# 5. Pastikan .env yang ada memiliki mode web (bukan terminal yang mati saat background)
+if [ -f "${SIPEN_DATA_DIR}/.env" ]; then
+    sed -i '' 's/^SIPEN_UI=terminal/SIPEN_UI=web/g' "${SIPEN_DATA_DIR}/.env" 2>/dev/null || true
+fi
+
+# 6. Buat dan perbarui LaunchAgent plist resmi
 cat <<PLIST > "${PLIST_FILE}"
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -90,7 +118,13 @@ cat <<PLIST > "${PLIST_FILE}"
     <key>ProgramArguments</key>
     <array>
         <string>/Applications/SiPenDosa.app/Contents/Resources/sipen</string>
+        <string>web</string>
     </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>SIPEN_UI</key>
+        <string>web</string>
+    </dict>
     <key>WorkingDirectory</key>
     <string>${SIPEN_DATA_DIR}</string>
     <key>RunAtLoad</key>
@@ -106,6 +140,17 @@ cat <<PLIST > "${PLIST_FILE}"
 PLIST
 
 chown -R "${CURRENT_USER}" "${SIPEN_DATA_DIR}" "${PLIST_FILE}" 2>/dev/null || true
+if [ -d "${USER_HOME}/Applications/SiPenDosa" ]; then
+    chown -R "${CURRENT_USER}" "${USER_HOME}/Applications/SiPenDosa" 2>/dev/null || true
+fi
+
+# 7. Muat ulang LaunchAgent di domain user yang aktif
+launchctl asuser "${USER_UID}" launchctl load -w "${PLIST_FILE}" 2>/dev/null || true
+launchctl asuser "${USER_UID}" launchctl bootstrap "gui/${USER_UID}" "${PLIST_FILE}" 2>/dev/null || true
+launchctl asuser "${USER_UID}" launchctl kickstart -k "gui/${USER_UID}/com.sipendosa.daemon" 2>/dev/null || true
+
+# 7. Luncurkan aplikasi native companion SiPenDosa.app
+launchctl asuser "${USER_UID}" open -a "/Applications/SiPenDosa.app" 2>/dev/null || true
 
 exit 0
 EOF

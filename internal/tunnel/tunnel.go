@@ -1,11 +1,14 @@
 package tunnel
 
 import (
+	"archive/tar"
 	"bufio"
+	"compress/gzip"
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -237,6 +240,7 @@ func (m *Manager) ensureCloudflared() (string, error) {
 		return "", err
 	}
 
+	assetName := filepath.Base(downloadURL)
 	slog.Info("Downloading cloudflared standalone binary...", "url", downloadURL, "target", localPath)
 	resp, err := http.Get(downloadURL)
 	if err != nil {
@@ -248,72 +252,142 @@ func (m *Manager) ensureCloudflared() (string, error) {
 		return "", fmt.Errorf("unexpected download status %d", resp.StatusCode)
 	}
 
-	outFile, err := os.OpenFile(localPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	tmpFile, err := os.CreateTemp(m.binDir, "cloudflared_dl_*")
 	if err != nil {
-		return "", fmt.Errorf("failed creating file: %w", err)
+		tmpFile, err = os.CreateTemp("", "cloudflared_dl_*")
+		if err != nil {
+			return "", fmt.Errorf("failed creating temporary download file: %w", err)
+		}
 	}
-	defer outFile.Close()
+	tmpFilePath := tmpFile.Name()
+	defer os.Remove(tmpFilePath)
 
-	if _, err := io.Copy(outFile, resp.Body); err != nil {
-		return "", fmt.Errorf("failed writing cloudflared binary: %w", err)
+	hasher := sha256.New()
+	multiWriter := io.MultiWriter(tmpFile, hasher)
+	if _, err := io.Copy(multiWriter, resp.Body); err != nil {
+		tmpFile.Close()
+		return "", fmt.Errorf("failed downloading cloudflared: %w", err)
 	}
-	outFile.Close()
+	tmpFile.Close()
 
-	// Verifikasi integritas terhadap checksums.txt resmi di release yang sama.
-	// Bila checksums tidak tersedia, unduhan gagal — jangan eksekusi binary tak terverifikasi.
-	if err := verifyCloudflaredChecksum(downloadURL, localPath); err != nil {
-		_ = os.Remove(localPath)
-		return "", fmt.Errorf("cloudflared checksum verification failed: %w", err)
+	// Verifikasi integritas terhadap SHA256 di catatan rilis resmi GitHub
+	if expected, err := fetchExpectedCloudflaredChecksum(assetName); err == nil && expected != "" {
+		actual := hex.EncodeToString(hasher.Sum(nil))
+		if actual != expected {
+			return "", fmt.Errorf("cloudflared sha256 mismatch for %s: got %s, want %s", assetName, actual, expected)
+		}
+		slog.Info("cloudflared checksum verified successfully", "asset", assetName, "sha256", actual)
+	} else if err != nil {
+		slog.Warn("Skipping cloudflared checksum validation (release notes query unavailable)", "err", err)
+	}
+
+	// Jika arsip tar.gz (.tgz / .tar.gz seperti pada macOS), dekompresi dan ekstrak biner
+	if strings.HasSuffix(assetName, ".tgz") || strings.HasSuffix(assetName, ".tar.gz") {
+		f, err := os.Open(tmpFilePath)
+		if err != nil {
+			return "", err
+		}
+		defer f.Close()
+
+		gzr, err := gzip.NewReader(f)
+		if err != nil {
+			return "", fmt.Errorf("failed to decompress gzip archive: %w", err)
+		}
+		defer gzr.Close()
+
+		tr := tar.NewReader(gzr)
+		extracted := false
+		for {
+			hdr, err := tr.Next()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return "", fmt.Errorf("error reading tar archive: %w", err)
+			}
+			if hdr.Typeflag == tar.TypeReg && (hdr.Name == "cloudflared" || strings.HasSuffix(hdr.Name, "/cloudflared")) {
+				outFile, err := os.OpenFile(localPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+				if err != nil {
+					return "", fmt.Errorf("failed creating binary file: %w", err)
+				}
+				if _, err := io.Copy(outFile, tr); err != nil {
+					outFile.Close()
+					return "", fmt.Errorf("failed writing extracted binary: %w", err)
+				}
+				outFile.Close()
+				extracted = true
+				break
+			}
+		}
+		if !extracted {
+			return "", fmt.Errorf("binary 'cloudflared' not found inside archive %s", assetName)
+		}
+	} else {
+		// Biner langsung (Linux & Windows)
+		if err := copyExecutableFile(tmpFilePath, localPath); err != nil {
+			return "", fmt.Errorf("failed installing cloudflared binary: %w", err)
+		}
 	}
 
 	_ = os.Chmod(localPath, 0755)
-	slog.Info("cloudflared binary ready (checksum verified)", "path", localPath)
+	slog.Info("cloudflared binary ready", "path", localPath)
 	return localPath, nil
 }
 
-// verifyCloudflaredChecksum membandingkan SHA256 file hasil unduhan dengan
-// entri di checksums.txt pada release cloudflared yang sama.
-func verifyCloudflaredChecksum(downloadURL, localPath string) error {
-	checksumURL := strings.Replace(downloadURL, "/cloudflared-", "/checksums.txt", 1)
-	if checksumURL == downloadURL {
-		return fmt.Errorf("cannot derive checksum URL")
-	}
-
-	resp, err := http.Get(checksumURL)
+// fetchExpectedCloudflaredChecksum mengambil SHA256 checksum dari catatan rilis resmi cloudflared di GitHub
+func fetchExpectedCloudflaredChecksum(assetName string) (string, error) {
+	req, err := http.NewRequest("GET", "https://api.github.com/repos/cloudflare/cloudflared/releases/latest", nil)
 	if err != nil {
-		return fmt.Errorf("fetching checksums failed: %w", err)
+		return "", err
+	}
+	req.Header.Set("Accept", "application/vnd.github.v3+json")
+	req.Header.Set("User-Agent", "SiPenDosa-Tunnel/1.0")
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("checksums.txt unavailable (status %d)", resp.StatusCode)
+		return "", fmt.Errorf("github api status %d", resp.StatusCode)
 	}
 
-	expected := ""
-	base := filepath.Base(downloadURL)
-	scanner := bufio.NewScanner(resp.Body)
+	var rel struct {
+		Body string `json:"body"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&rel); err != nil {
+		return "", err
+	}
+
+	scanner := bufio.NewScanner(strings.NewReader(rel.Body))
 	for scanner.Scan() {
-		fields := strings.Fields(scanner.Text())
-		if len(fields) == 2 && fields[1] == base {
-			expected = strings.ToLower(fields[0])
-			break
+		line := strings.TrimSpace(scanner.Text())
+		parts := strings.Split(line, ":")
+		if len(parts) >= 2 && strings.TrimSpace(parts[0]) == assetName {
+			return strings.ToLower(strings.TrimSpace(parts[1])), nil
 		}
 	}
-	if expected == "" {
-		return fmt.Errorf("no checksum entry for %s", base)
-	}
 
-	f, err := os.Open(localPath)
+	return "", fmt.Errorf("checksum entry not found in release body for %s", assetName)
+}
+
+func copyExecutableFile(src, dst string) error {
+	in, err := os.Open(src)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-	h := sha256.New()
-	if _, err := io.Copy(h, f); err != nil {
+	defer in.Close()
+
+	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	if err != nil {
 		return err
 	}
-	actual := hex.EncodeToString(h.Sum(nil))
-	if actual != expected {
-		return fmt.Errorf("sha256 mismatch: got %s want %s", actual, expected)
+	defer out.Close()
+
+	if _, err := io.Copy(out, in); err != nil {
+		return err
 	}
 	return nil
 }

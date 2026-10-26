@@ -1,4 +1,4 @@
-.PHONY: build run test clean install-service installer-windows build-linux build-windows build-darwin build-all package-deb package-linux package-macos package-all
+.PHONY: build run test clean install-service installer-windows build-linux build-windows build-darwin build-all package-deb package-linux package-macos package-all ruas-index ruas-status ruas-audit ruas-lint ruas-vibe ruas-ui
 
 APP_NAME = sipen
 DIST_DIR = dist
@@ -49,7 +49,7 @@ installer-windows: build-windows
 	@echo "==> Menyiapkan binary embedded untuk Windows Installer..."
 	cp -f $(BIN_DIR)/$(APP_NAME)_windows_amd64.exe cmd/installer/sipen.exe
 	@echo "==> Mengompilasi SiPenDosa-Setup.exe standalone installer..."
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GO) build -ldflags="$(LDFLAGS)" -o $(DIST_DIR)/SiPenDosa-Setup.exe ./cmd/installer
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GO) build -tags installer -ldflags="$(LDFLAGS)" -o $(DIST_DIR)/SiPenDosa-Setup.exe ./cmd/installer
 	cp -f $(DIST_DIR)/SiPenDosa-Setup.exe ./SiPenDosa-Setup.exe
 	@echo "==> Windows Installer siap: $(DIST_DIR)/SiPenDosa-Setup.exe (dan ./SiPenDosa-Setup.exe)"
 
@@ -121,11 +121,11 @@ package-all: build-all installer-windows package-deb package-linux package-macos
 	@echo "╠════════════════════════════════════════════════════════════════════════╣"
 	@echo "║  • Android Standalone APK   : $(DIST_DIR)/SiPenDosa-Android.apk"
 	@echo "║  • Google App Bundle (AAB)  : $(DIST_DIR)/SiPenDosa-Android.aab"
-	@echo "║  • Apple Disk Image (.dmg)  : $(DIST_DIR)/SiPenDosa-1.2.0.dmg"
-	@echo "║  • Apple Installer (.pkg)   : $(DIST_DIR)/SiPenDosa-1.2.0-Installer.pkg"
+	@echo "║  • Apple Disk Image (.dmg)  : $(DIST_DIR)/SiPenDosa-1.4.1.dmg"
+	@echo "║  • Apple Installer (.pkg)   : $(DIST_DIR)/SiPenDosa-1.4.1-Installer.pkg"
 	@echo "║  • Apple Native (.app)      : $(DIST_DIR)/SiPenDosa.app"
 	@echo "║  • Windows Standalone Setup : $(DIST_DIR)/SiPenDosa-Setup.exe"
-	@echo "║  • Debian/Ubuntu (.deb)     : $(DIST_DIR)/sipendosa_1.2.0_amd64.deb"
+	@echo "║  • Debian/Ubuntu (.deb)     : $(DIST_DIR)/sipendosa_1.4.1_amd64.deb"
 	@echo "║  • Linux Universal Tarball  : $(DIST_DIR)/sipendosa_linux_amd64.tar.gz"
 	@echo "║  • macOS Standalone Package : $(DIST_DIR)/sipendosa_macos_universal.tar.gz"
 	@echo "╚════════════════════════════════════════════════════════════════════════╝"
@@ -143,3 +143,25 @@ install-service:
 clean:
 	@echo "==> Membersihkan direktori build dan temporary..."
 	rm -rf $(APP_NAME) $(APP_NAME).exe SiPenDosa-Setup.exe cmd/installer/sipen.exe $(DIST_DIR)
+
+# 9. Ruas Code Intelligence (@fk0u/ruas)
+ruas-index:
+	@echo "==> Mengindeks basis kode SiPenDosa ke dalam basis data grafik Ruas..."
+	npx ruas index .
+
+ruas-status:
+	@npx ruas status .
+
+ruas-audit:
+	@npx ruas audit .
+
+ruas-lint:
+	@npx ruas lint .
+
+ruas-vibe:
+	@npx ruas vibe sync .
+
+ruas-ui:
+	@echo "==> Menjalankan Ruas Visual Graph Explorer di http://localhost:4200..."
+	npx ruas ui .
+

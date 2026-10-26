@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "ruas": {
+      "command": "npx",
+      "args": [
+        "@fk0u/ruas",
+        "mcp",
+        "."
+      ]
+    }
+  }
+}

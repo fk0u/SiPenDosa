@@ -8,6 +8,9 @@ import (
 	"time"
 
 	"sipen/internal/store"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var indonesianDays = []string{
@@ -46,7 +49,7 @@ func NewEngine() *Engine {
 		funcMap: template.FuncMap{
 			"upper": strings.ToUpper,
 			"lower": strings.ToLower,
-			"title": strings.Title,
+			"title": cases.Title(language.Und).String,
 			"trim":  strings.TrimSpace,
 			"formatDate": func(t time.Time, layout string) string {
 				return t.Format(layout)
@@ -95,6 +98,10 @@ func (e *Engine) BuildContext(sc *store.ScheduleDetail, lectureDate time.Time, s
 		namaDosen = "Bapak/Ibu Dosen Pengampu"
 	}
 
+	now := time.Now()
+	zone, _ := now.Zone()
+	waktuSekarang := fmt.Sprintf("%s %s", now.Format("15:04:05"), zone)
+
 	return Context{
 		NamaDosen:       namaDosen,
 		NamaMahasiswa:   namaMahasiswa,
@@ -106,7 +113,7 @@ func (e *Engine) BuildContext(sc *store.ScheduleDetail, lectureDate time.Time, s
 		JamSelesai:      sc.EndTime,
 		Lokasi:          sc.Location,
 		LinkGroup:       sc.LinkGroup,
-		WaktuSekarang:   time.Now().Format("15:04:05 WITA"),
+		WaktuSekarang:   waktuSekarang,
 		HariDalamBahasa: dayName,
 	}
 }
@@ -115,6 +122,10 @@ func (e *Engine) BuildContext(sc *store.ScheduleDetail, lectureDate time.Time, s
 func (e *Engine) DummyContext() Context {
 	tomorrow := time.Now().Add(24 * time.Hour)
 	dayName := DayName(tomorrow.Weekday())
+
+	now := time.Now()
+	zone, _ := now.Zone()
+	waktuSekarang := fmt.Sprintf("%s %s", now.Format("15:04:05"), zone)
 
 	return Context{
 		NamaDosen:       "Dr. Eng. Ir. Hendra Gunawan, S.T., M.T.",
@@ -127,7 +138,7 @@ func (e *Engine) DummyContext() Context {
 		JamSelesai:      "10:30",
 		Lokasi:          "Gedung Kuliah Bersama R.304 / Lab Cloud",
 		LinkGroup:       "https://chat.whatsapp.com/GXYZ1234567890",
-		WaktuSekarang:   time.Now().Format("15:04:05 WITA"),
+		WaktuSekarang:   waktuSekarang,
 		HariDalamBahasa: dayName,
 	}
 }
